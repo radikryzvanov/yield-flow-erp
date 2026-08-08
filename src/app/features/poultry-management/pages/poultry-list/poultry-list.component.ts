@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { PoultryManagementService } from '../../services/poultry-management.service';
 import { PoultryHouse } from '../../interfaces/poultry-house.interface';
@@ -29,6 +29,7 @@ import { PoultryHouse } from '../../interfaces/poultry-house.interface';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .poultry-container { padding: 20px; font-family: sans-serif; }
     .subtitle { color: #666; margin-bottom: 20px; }
