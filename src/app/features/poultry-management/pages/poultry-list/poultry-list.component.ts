@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { PoultryManagementService } from '../../services/poultry-management.service';
 import { PoultryHouse } from '../../interfaces/poultry-house.interface';
 
 @Component({
   selector: 'app-poultry-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="poultry-container">
       <h2>Управление птицеводством</h2>
