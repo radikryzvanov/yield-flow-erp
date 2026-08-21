@@ -131,3 +131,51 @@
 .btn-submit:hover {
   background: #047857;
 }
+.transfer-box {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.transfer-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  color: #92400e;
+}
+
+.transfer-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.transfer-alert {
+  margin-top: 8px;
+  font-weight: 600;
+  color: #b45309;
+  font-size: 0.9rem;
+}
+
+.btn-transfer {
+  background: #d97706;
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-transfer:hover {
+  background: #b45309;
+}

@@ -28,6 +28,22 @@
     }
   </section>
 
+  <!-- Блок межцеховой логистики: Передача боя в кормоцех -->
+  <section class="transfer-box">
+    <div class="transfer-info">
+      <h3>🌾 Межцеховая передача: Бой и насечка &rarr; Кормоцех</h3>
+      <p>Списание некондиционного яйца со склада и передача на переработку в кормовые добавки (кальций/протеин).</p>
+      @if (transferMessage()) {
+        <div class="transfer-alert">
+          {{ transferMessage() }}
+        </div>
+      }
+    </div>
+    <button type="button" (click)="transferLosses()" class="btn-transfer">
+      Отправить весь бой в Кормоцех
+    </button>
+  </section>
+
   <!-- Форма приемки партии -->
   <section class="form-section">
     <h2>Провести сортировку валовой партии</h2>

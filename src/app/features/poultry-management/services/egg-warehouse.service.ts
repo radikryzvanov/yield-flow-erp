@@ -69,4 +69,27 @@ export class EggWarehouseService {
       });
     });
   }
+  // Перемещение боя в кормоцех (списание со склада яиц)
+  transferLossesToFeedMill(): { count: number; weightKg: number } {
+    let transferredCount = 0;
+
+    this.inventoryStockSignal.update(currentStock =>
+      currentStock.map(item => {
+        if (item.category === 'Насечка/Бой') {
+          transferredCount = item.inStockCount;
+          return {
+            ...item,
+            inStockCount: 0,
+            packagedTraysCount: 0,
+            packagedBoxesCount: 0
+          };
+        }
+        return item;
+      })
+    );
+
+    // Средний вес одного яйца ~55-60г (0.055 кг)
+    const weightKg = Math.round(transferredCount * 0.055);
+    return { count: transferredCount, weightKg };
+  }
 }

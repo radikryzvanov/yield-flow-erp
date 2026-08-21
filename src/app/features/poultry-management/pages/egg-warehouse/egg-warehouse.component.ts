@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
@@ -19,6 +19,9 @@ export class EggWarehouseComponent {
   readonly sortingBatches = this.warehouseService.sortingBatches;
   readonly totalEggs = this.warehouseService.totalEggsInStock;
 
+  // Сообщение о перемещении в кормоцех
+  readonly transferMessage = signal<string | null>(null);
+
   // Поля быстрой формы приема партии валового яйца
   sourceHouseId = 'Птичник №1';
   totalGrossReceived = 12000;
@@ -34,7 +37,8 @@ export class EggWarehouseComponent {
     const sortedYield: { category: EggCategory; count: number }[] = [
       { category: 'С0', count: Number(this.c0Count) || 0 },
       { category: 'С1', count: Number(this.c1Count) || 0 },
-      { category: 'С2', count: Number(this.c2Count) || 0 }
+      { category: 'С2', count: Number(this.c2Count) || 0 },
+      { category: 'Насечка/Бой', count: Number(this.lossesCount) || 0 }
     ];
 
     this.warehouseService.addSortingBatch({
@@ -45,5 +49,16 @@ export class EggWarehouseComponent {
       lossesCount: Number(this.lossesCount),
       operatorName: this.operatorName
     });
+  }
+
+  transferLosses(): void {
+    const result = this.warehouseService.transferLossesToFeedMill();
+    if (result.count > 0) {
+      this.transferMessage.set(
+        `Передано в кормоцех: ${result.count} шт. боя (~${result.weightKg} кг белково-минерального сырья).`
+      );
+    } else {
+      this.transferMessage.set('На складе нет боя для перемещения.');
+    }
   }
 }
