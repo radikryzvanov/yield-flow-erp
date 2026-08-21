@@ -1,0 +1,72 @@
+<div class="warehouse-container">
+  <header class="page-header">
+    <div>
+      <h1>🥚 Цех сортировки и склад яйца</h1>
+      <p class="subtitle">Учет остатков готовой продукции по ГОСТ и сортировка валового сбора</p>
+    </div>
+    <div class="total-badge">
+      <span>Всего на складе:</span>
+      <strong>{{ totalEggs() | number }} шт.</strong>
+    </div>
+  </header>
+
+  <!-- Сетка: Остатки по категориям -->
+  <section class="cards-grid">
+    @for (item of inventoryStock(); track item.category) {
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Категория {{ item.category }}</h3>
+        </div>
+        <div class="category-body">
+          <div class="stat-main">{{ item.inStockCount | number }} <span>шт.</span></div>
+          <div class="stat-sub">
+            <span>📦 Коробки (по 360 шт): <strong>{{ item.packagedBoxesCount }}</strong></span>
+            <span>🔲 Лотки (по 30 шт): <strong>{{ item.packagedTraysCount }}</strong></span>
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Форма приемки партии -->
+  <section class="form-section">
+    <h2>Провести сортировку валовой партии</h2>
+    <form (ngSubmit)="submitBatch()" class="sorting-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Источник (Корпус)</label>
+          <input type="text" [(ngModel)]="sourceHouseId" name="sourceHouseId" required />
+        </div>
+        <div class="form-group">
+          <label>Валовый сбор (шт)</label>
+          <input type="number" [(ngModel)]="totalGrossReceived" name="totalGrossReceived" required />
+        </div>
+        <div class="form-group">
+          <label>Оператор / Учетчик</label>
+          <input type="text" [(ngModel)]="operatorName" name="operatorName" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>С0 (шт)</label>
+          <input type="number" [(ngModel)]="c0Count" name="c0Count" />
+        </div>
+        <div class="form-group">
+          <label>С1 (шт)</label>
+          <input type="number" [(ngModel)]="c1Count" name="c1Count" />
+        </div>
+        <div class="form-group">
+          <label>С2 (шт)</label>
+          <input type="number" [(ngModel)]="c2Count" name="c2Count" />
+        </div>
+        <div class="form-group">
+          <label>Бой / Некондиция (шт)</label>
+          <input type="number" [(ngModel)]="lossesCount" name="lossesCount" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Оприходовать партию на склад</button>
+    </form>
+  </section>
+</div>

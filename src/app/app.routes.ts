@@ -22,14 +22,19 @@ export const routes: Routes = [
   {
     path: 'poultry',
     loadChildren: () =>
-      import('./features/poultry-management/poultry-management.routes').then(m => m.POULTRY_MANAGEMENT_ROUTES)
-  },
-  {
-    path: 'incubator',
-    component: PlaceholderComponent
+      import('./features/poultry-management/poultry-management.routes').then(
+        m => m.POULTRY_MANAGEMENT_ROUTES
+      )
   },
   {
     path: 'egg-warehouse',
+    loadComponent: () =>
+      import('./features/poultry-management/pages/egg-warehouse/egg-warehouse.component').then(
+        m => m.EggWarehouseComponent
+      )
+  },
+  {
+    path: 'incubator',
     component: PlaceholderComponent
   },
   {
