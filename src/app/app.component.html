@@ -1,1 +1,60 @@
-<router-outlet></router-outlet>
+<div class="layout-container">
+  <!-- Боковое меню навигации по фабрике -->
+  <aside class="sidebar">
+    <div class="logo-block">
+      <h2>YieldFlow ERP</h2>
+      <span class="sub-logo">Птицеводческий комплекс</span>
+    </div>
+
+    <nav class="nav-menu">
+      <div class="nav-section-title">Производственные цеха</div>
+
+      <a routerLink="/poultry" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🏠</span>
+        <span>Птичники</span>
+      </a>
+
+      <a routerLink="/incubator" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🐣</span>
+        <span>Инкубаторий</span>
+      </a>
+
+      <a routerLink="/egg-warehouse" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🥚</span>
+        <span>Яйцесклад (Сортировка)</span>
+      </a>
+
+      <a routerLink="/feed-warehouse" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🌾</span>
+        <span>Кормоцех</span>
+      </a>
+
+      <a routerLink="/veterinary" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">💉</span>
+        <span>Ветблок</span>
+      </a>
+
+      <a routerLink="/slaughter" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🍗</span>
+        <span>Убойный цех</span>
+      </a>
+
+      <div class="nav-section-title">Сбыт и Аналитика</div>
+
+      <a routerLink="/logistics" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">🚚</span>
+        <span>Логистика и Сбыт</span>
+      </a>
+
+      <a routerLink="/finance-calc" routerLinkActive="active-link" class="nav-item">
+        <span class="icon">📊</span>
+        <span>Директорат / Финансы</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Рабочая область, куда загружаются страницы -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
