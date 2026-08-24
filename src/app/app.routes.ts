@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { Routes } from '@angular/router';
 
-// Временный компонент-заглушка для модулей в разработке
 @Component({
   standalone: true,
   template: `
@@ -34,14 +33,17 @@ export const routes: Routes = [
       )
   },
   {
-    path: 'incubator',
-    component: PlaceholderComponent
-  },
-  {
     path: 'feed-warehouse',
     loadComponent: () =>
       import('./features/feed-warehouse/pages/feed-dashboard/feed-dashboard.component').then(
         m => m.FeedDashboardComponent
+      )
+  },
+  {
+    path: 'incubator',
+    loadComponent: () =>
+      import('./features/incubator/pages/incubator-dashboard/incubator-dashboard.component').then(
+        m => m.IncubatorDashboardComponent
       )
   },
   {
