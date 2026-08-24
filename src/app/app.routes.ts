@@ -55,7 +55,10 @@ export const routes: Routes = [
   },
   {
     path: 'slaughter',
-    component: PlaceholderComponent
+    loadComponent: () =>
+      import('./features/slaughter/pages/slaughter-dashboard/slaughter-dashboard.component').then(
+        m => m.SlaughterDashboardComponent
+      )
   },
   {
     path: 'logistics',

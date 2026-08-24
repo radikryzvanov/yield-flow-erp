@@ -1,0 +1,178 @@
+<div class="slaughter-container">
+  <header class="page-header">
+    <div>
+      <h1>Цех первичной переработки птицы (Убойный цех)</h1>
+      <p class="subtitle">Приемка птицы на убой, разделка, сортировка тушек и учет ветеринарного брака</p>
+    </div>
+  </header>
+
+  <!-- KPI метрики -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Мясо ГОСТ (1 и 2 сорт)</div>
+      <div class="kpi-value text-primary">{{ totalMeatProcessedKg() | number }} <span class="unit">кг</span></div>
+      <div class="kpi-note">За текущую смену</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Средний убойный выход</div>
+      <div class="kpi-value text-success">{{ avgYieldPercentage() }} <span class="unit">%</span></div>
+      <div class="kpi-note">Технологическая норма: 71-73%</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Ветбрак / Конфискат</div>
+      <div class="kpi-value text-danger">{{ totalCondemnedKg() | number }} <span class="unit">кг</span></div>
+      <div class="kpi-note">Списано на ветсанутиль</div>
+    </div>
+  </section>
+
+  <!-- Сетка страниц -->
+  <div class="content-grid">
+    <!-- Левая колонка: Очередь и Акты -->
+    <div class="main-column">
+      <!-- Партии на убой -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Очередь партий на убой из птичников</h2>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Партия / Корпус</th>
+                <th>Голов</th>
+                <th>Живой вес</th>
+                <th>Ср. вес головы</th>
+                <th>Дата подачи</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (batch of pendingBatches(); track batch.id) {
+                <tr>
+                  <td>
+                    <strong>{{ batch.batchNumber }}</strong>
+                    <div class="text-muted small">{{ batch.houseId }}</div>
+                  </td>
+                  <td>{{ batch.headsCount | number }} гол.</td>
+                  <td><strong>{{ batch.liveWeightKg | number }} кг</strong></td>
+                  <td>{{ batch.avgWeightKg }} кг</td>
+                  <td>{{ batch.arrivalDate }}</td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" (click)="selectBatch(batch)">
+                      Принять в убой
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-3">
+                    Все поступившие партии переработаны
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Журнал завершенных убоев -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Акты завершенных убоев</h2>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Дата / Акт</th>
+                <th>Партия</th>
+                <th>Живой вес</th>
+                <th>Мясо (1+2 сорт)</th>
+                <th>Субпродукты</th>
+                <th>Выход мяса</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (report of reports(); track report.id) {
+                <tr>
+                  <td>
+                    <strong>{{ report.date }}</strong>
+                    <div class="text-muted small">{{ report.id }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ report.batchNumber }}</strong>
+                    <div class="text-muted small">{{ report.houseId }}</div>
+                  </td>
+                  <td>{{ report.initialLiveWeightKg | number }} кг</td>
+                  <td>
+                    <strong>{{ (report.yield.grade1Kg + report.yield.grade2Kg) | number }} кг</strong>
+                    <div class="text-muted small">1 сорт: {{ report.yield.grade1Kg | number }} кг</div>
+                  </td>
+                  <td>{{ report.yield.byProductsKg | number }} кг</td>
+                  <td>
+                    <span class="badge badge-success">{{ report.meatYieldPercentage }}%</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Правая колонка: Форма переработки партии -->
+    <div class="side-column">
+      @if (selectedBatch) {
+        <div class="card active-processing-card">
+          <div class="card-header">
+            <h2>Акт разделки: {{ selectedBatch.batchNumber }}</h2>
+            <div class="text-muted small">Живой вес партии: {{ selectedBatch.liveWeightKg | number }} кг</div>
+          </div>
+          <form (ngSubmit)="submitSlaughter()" class="form-container">
+            <div class="form-group">
+              <label>Тушка ГОСТ 1 сорт (кг)</label>
+              <input type="number" [(ngModel)]="grade1Kg" name="grade1Kg" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label>Тушка 2 сорт (кг)</label>
+              <input type="number" [(ngModel)]="grade2Kg" name="grade2Kg" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label>Субпродукты (печень, сердце, желудки) (кг)</label>
+              <input type="number" [(ngModel)]="byProductsKg" name="byProductsKg" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label>Ветеринарный брак / Конфискат (кг)</label>
+              <input type="number" [(ngModel)]="condemnedKg" name="condemnedKg" min="0" class="form-control text-danger" />
+            </div>
+
+            <div class="form-group">
+              <label>Технические отходы (перо, кровь, вода) (кг)</label>
+              <input type="number" [(ngModel)]="wasteKg" name="wasteKg" min="0" class="form-control" />
+            </div>
+
+            <div class="actions-group">
+              <button type="submit" class="btn btn-primary btn-block">
+                Закрыть партию и сохранить акт
+              </button>
+              <button type="button" class="btn btn-secondary btn-block" (click)="cancelSelection()">
+                Отмена
+              </button>
+            </div>
+          </form>
+        </div>
+      } @else {
+        <div class="card empty-selection-card">
+          <div class="empty-icon">🍗</div>
+          <h3>Линия переработки свободна</h3>
+          <p class="text-muted small">Выберите партию из таблицы слева, чтобы внести фактические показатели выхода продукции.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
