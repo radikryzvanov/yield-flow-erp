@@ -39,7 +39,10 @@ export const routes: Routes = [
   },
   {
     path: 'feed-warehouse',
-    component: PlaceholderComponent
+    loadComponent: () =>
+      import('./features/feed-warehouse/pages/feed-dashboard/feed-dashboard.component').then(
+        m => m.FeedDashboardComponent
+      )
   },
   {
     path: 'veterinary',
