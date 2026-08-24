@@ -1,88 +1,142 @@
 <div class="warehouse-container">
   <header class="page-header">
     <div>
-      <h1>🥚 Цех сортировки и склад яйца</h1>
-      <p class="subtitle">Учет остатков готовой продукции по ГОСТ и сортировка валового сбора</p>
-    </div>
-    <div class="total-badge">
-      <span>Всего на складе:</span>
-      <strong>{{ totalEggs() | number }} шт.</strong>
+      <h1>Яйцесклад и цех сортировки</h1>
+      <p class="subtitle">Учёт сбора, калибровки по категориям, отбраковки и остатков на складе</p>
     </div>
   </header>
 
-  <!-- Сетка: Остатки по категориям -->
-  <section class="cards-grid">
-    @for (item of inventoryStock(); track item.category) {
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Категория {{ item.category }}</h3>
-        </div>
-        <div class="category-body">
-          <div class="stat-main">{{ item.inStockCount | number }} <span>шт.</span></div>
-          <div class="stat-sub">
-            <span>📦 Коробки (по 360 шт): <strong>{{ item.packagedBoxesCount }}</strong></span>
-            <span>🔲 Лотки (по 30 шт): <strong>{{ item.packagedTraysCount }}</strong></span>
-          </div>
-        </div>
-      </div>
-    }
-  </section>
-
-  <!-- Блок межцеховой логистики: Передача боя в кормоцех -->
-  <section class="transfer-box">
-    <div class="transfer-info">
-      <h3>🌾 Межцеховая передача: Бой и насечка &rarr; Кормоцех</h3>
-      <p>Списание некондиционного яйца со склада и передача на переработку в кормовые добавки (кальций/протеин).</p>
-      @if (transferMessage()) {
-        <div class="transfer-alert">
-          {{ transferMessage() }}
-        </div>
-      }
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Всего яиц на складе</div>
+      <div class="kpi-value text-primary">{{ totalEggsInStock() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">Готово к реализации и инкубации</div>
     </div>
-    <button type="button" (click)="transferLosses()" class="btn-transfer">
-      Отправить весь бой в Кормоцех
-    </button>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Сортировка за смену</div>
+      <div class="kpi-value text-success">{{ todaySortedCount() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">Калибровано и упаковано</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Доля отбраковки / боя</div>
+      <div class="kpi-value" [class.text-danger]="rejectPercent() > 3" [class.text-warning]="rejectPercent() <= 3">
+        {{ rejectPercent() | number:'1.1-1' }}%
+      </div>
+      <div class="kpi-note">Насечка, бой, нестандарт</div>
+    </div>
   </section>
 
-  <!-- Форма приемки партии -->
-  <section class="form-section">
-    <h2>Провести сортировку валовой партии</h2>
-    <form (ngSubmit)="submitBatch()" class="sorting-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Источник (Корпус)</label>
-          <input type="text" [(ngModel)]="sourceHouseId" name="sourceHouseId" required />
+  <div class="content-grid">
+    <div class="main-column">
+      <div class="card">
+        <div class="card-header">
+          <h2>Остатки по категориям</h2>
         </div>
-        <div class="form-group">
-          <label>Валовый сбор (шт)</label>
-          <input type="number" [(ngModel)]="totalGrossReceived" name="totalGrossReceived" required />
-        </div>
-        <div class="form-group">
-          <label>Оператор / Учетчик</label>
-          <input type="text" [(ngModel)]="operatorName" name="operatorName" required />
+        <div class="category-grid">
+          @for (cat of categories(); track cat.id) {
+            <div class="category-card">
+              <div class="category-top">
+                <span class="category-name">{{ cat.name }}</span>
+                <span class="badge badge-cat">{{ cat.code }}</span>
+              </div>
+              <div class="category-metrics">
+                <div class="metric">
+                  <span class="label">Остаток:</span>
+                  <span class="val">{{ cat.countInStock | number }} шт</span>
+                </div>
+                <div class="metric">
+                  <span class="label">Зарезервировано:</span>
+                  <span class="val text-muted">{{ cat.reservedCount | number }} шт</span>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>С0 (шт)</label>
-          <input type="number" [(ngModel)]="c0Count" name="c0Count" />
+      <div class="card">
+        <div class="card-header">
+          <h2>Журнал поступления из птичников</h2>
         </div>
-        <div class="form-group">
-          <label>С1 (шт)</label>
-          <input type="number" [(ngModel)]="c1Count" name="c1Count" />
-        </div>
-        <div class="form-group">
-          <label>С2 (шт)</label>
-          <input type="number" [(ngModel)]="c2Count" name="c2Count" />
-        </div>
-        <div class="form-group">
-          <label>Бой / Некондиция (шт)</label>
-          <input type="number" [(ngModel)]="lossesCount" name="lossesCount" />
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Дата / Смена</th>
+                <th>Источник (Птичник)</th>
+                <th>Собрано (всего)</th>
+                <th>Товарное яйцо</th>
+                <th>Бой / Брак</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of incomingLogs(); track entry.id) {
+                <tr>
+                  <td>{{ entry.date }} ({{ entry.shift }})</td>
+                  <td><strong>{{ entry.houseName }}</strong></td>
+                  <td>{{ entry.totalCollected | number }} шт</td>
+                  <td><span class="badge badge-success">{{ entry.commercialGrade | number }} шт</span></td>
+                  <td><span class="badge badge-danger">{{ entry.damagedCount | number }} шт</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <button type="submit" class="btn-submit">Оприходовать партию на склад</button>
-    </form>
-  </section>
+    <div class="side-column">
+      <div class="card">
+        <div class="card-header">
+          <h2>Приёмка партии яиц</h2>
+        </div>
+        <form (submit)="$event.preventDefault(); onReceive()" class="form-layout">
+          <div class="form-group">
+            <label>Птичник-отправитель:</label>
+            <input
+              type="text"
+              [(ngModel)]="receiveForm.houseName"
+              name="houseName"
+              class="form-control"
+              placeholder="Птичник № 1"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Количество (шт):</label>
+            <input
+              type="number"
+              [(ngModel)]="receiveForm.totalCount"
+              name="totalCount"
+              class="form-control"
+              min="1"
+              step="100"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Бой / дефект (шт):</label>
+            <input
+              type="number"
+              [(ngModel)]="receiveForm.damagedCount"
+              name="damagedCount"
+              class="form-control"
+              min="0"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="btn-submit"
+            [disabled]="!receiveForm.houseName || !receiveForm.totalCount || receiveForm.totalCount <= 0">
+            Заприходовать на склад
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>

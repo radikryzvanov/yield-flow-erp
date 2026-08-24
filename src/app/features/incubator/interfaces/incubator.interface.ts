@@ -1,9 +1,11 @@
-export type IncubationStage = 'setting' | 'hatching' | 'completed';
+export type CabinetType = 'setter' | 'hatcher';
+export type CabinetStatus = 'active' | 'warning' | 'empty';
+export type IncubationStage = 'setting' | 'transfer' | 'hatching';
 
 export interface IncubationCabinet {
   id: string;
   name: string;
-  type: 'setter' | 'hatcher'; // Инкубационный (1-18 день) или выводной (19-21 день)
+  type: CabinetType;
   capacityEggs: number;
   currentEggs: number;
   currentDay: number;
@@ -12,7 +14,7 @@ export interface IncubationCabinet {
   humidityPercent: number;
   targetHumidityPercent: number;
   eggTurningActive: boolean;
-  status: 'active' | 'empty' | 'warning';
+  status: CabinetStatus;
 }
 
 export interface IncubationBatch {
@@ -25,4 +27,20 @@ export interface IncubationBatch {
   cabinetId: string;
   stage: IncubationStage;
   expectedHatchRatePercent: number;
+}
+
+export interface HatchHistoryRecord {
+  id: string;
+  batchNumber: string;
+  date: string;
+  eggsSet: number;
+  chicksHatched: number;
+  hatchRatePercent: number;
+}
+
+export interface StartIncubationPayload {
+  cabinetId: string;
+  batchNumber: string;
+  eggSourceHouse: string;
+  eggsCount: number;
 }

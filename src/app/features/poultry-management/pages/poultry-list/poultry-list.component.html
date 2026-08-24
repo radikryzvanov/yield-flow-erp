@@ -1,0 +1,55 @@
+<div class="poultry-container">
+  <header class="page-header">
+    <div>
+      <h1>Птичники</h1>
+      <p class="subtitle">Управление поголовьем, микроклиматом и производственными показателями</p>
+    </div>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Общее поголовье</div>
+      <div class="kpi-value text-primary">{{ totalBirds() | number }} <span class="unit">гол.</span></div>
+      <div class="kpi-note">По всем активным птичникам</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Средняя сохранность</div>
+      <div class="kpi-value text-success">{{ averageSurvivalRate() | number:'1.1-1' }}%</div>
+      <div class="kpi-note">От начального стада</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Активных птичников</div>
+      <div class="kpi-value">{{ activeHousesCount() }} <span class="unit">из {{ houses().length }}</span></div>
+      <div class="kpi-note">В рабочем цикле</div>
+    </div>
+  </section>
+
+  <div class="houses-grid">
+    @for (house of houses(); track house.id) {
+      <div class="house-card" [class.status-warning]="house.status === 'warning'">
+        <div class="house-header">
+          <h3 class="house-title">{{ house.name }}</h3>
+          <span class="badge" [class.badge-active]="house.status === 'active'" [class.badge-warning]="house.status === 'warning'">
+            {{ house.status === 'active' ? 'В норме' : 'Внимание' }}
+          </span>
+        </div>
+        <div class="house-metrics">
+          <div class="metric-row">
+            <span class="label">Поголовье:</span>
+            <span class="val">{{ house.birdCount | number }} гол.</span>
+          </div>
+          <div class="metric-row">
+            <span class="label">Возраст:</span>
+            <span class="val">{{ house.ageDays }} дней</span>
+          </div>
+          <div class="metric-row">
+            <span class="label">Температура:</span>
+            <span class="val" [class.text-danger]="house.temperature !== house.targetTemperature">{{ house.temperature }}°C</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

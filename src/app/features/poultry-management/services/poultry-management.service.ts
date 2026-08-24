@@ -1,103 +1,78 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { PoultryHouse } from '../interfaces/poultry-house.interface';
-import { PoultryBatch } from '../interfaces/poultry-batch.interface';
-import { PoultryDailyLog } from '../interfaces/poultry-daily-log.interface';
+import { Injectable, computed, signal } from '@angular/core';
+
+export interface PoultryHouse {
+  id: string;
+  name: string;
+  birdCount: number;
+  initialBirdCount: number;
+  ageDays: number;
+  temperature: number;
+  targetTemperature: number;
+  status: 'active' | 'warning' | 'empty';
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PoultryManagementService {
-  // Моковые данные птичников
-  private mockHouses: PoultryHouse[] = [
-    { id: '1', name: 'Птичник №1 (Бройлеры)', capacity: 5000, isActive: true },
-    { id: '2', name: 'Птичник №2 (Несушки)', capacity: 3500, isActive: true },
-    { id: '3', name: 'Птичник №3 (Карантин)', capacity: 1000, isActive: false }
-  ];
-
-  // Моковые данные активных партий
-  private mockBatches: PoultryBatch[] = [
+  private readonly _houses = signal<PoultryHouse[]>([
     {
-      id: 'b-101',
-      houseId: '1',
-      batchNumber: 'ПАРТИЯ-2026-01',
-      initialCount: 5000,
-      currentCount: 4920,
-      placementDate: '2026-07-15',
+      id: 'house-1',
+      name: 'Птичник № 1 (Бройлер)',
+      birdCount: 42500,
+      initialBirdCount: 44000,
+      ageDays: 28,
+      temperature: 24.5,
+      targetTemperature: 24.5,
       status: 'active'
     },
     {
-      id: 'b-102',
-      houseId: '2',
-      batchNumber: 'ПАРТИЯ-2026-02',
-      initialCount: 3500,
-      currentCount: 3480,
-      placementDate: '2026-06-01',
-      status: 'active'
-    }
-  ];
-
-  // Моковые данные суточного журнала
-  private mockDailyLogs: PoultryDailyLog[] = [
-    {
-      id: 'log-1',
-      batchId: 'b-101',
-      houseId: '1',
-      date: '2026-08-16',
-      mortalityCount: 5,
-      cullingCount: 1,
-      eggCount: 0,
-      feedConsumedKg: 520,
-      notes: 'Температурный режим в норме'
+      id: 'house-2',
+      name: 'Птичник № 2 (Бройлер)',
+      birdCount: 41800,
+      initialBirdCount: 44000,
+      ageDays: 32,
+      temperature: 26.2,
+      targetTemperature: 23.5,
+      status: 'warning'
     },
     {
-      id: 'log-2',
-      batchId: 'b-102',
-      houseId: '2',
-      date: '2026-08-16',
-      mortalityCount: 2,
-      cullingCount: 0,
-      eggCount: 3100,
-      brokenEggCount: 15,
-      feedConsumedKg: 410,
-      notes: 'Сбор яйца стабильный'
+      id: 'house-3',
+      name: 'Птичник № 3 (Родительское стадо)',
+      birdCount: 28000,
+      initialBirdCount: 29000,
+      ageDays: 140,
+      temperature: 20.0,
+      targetTemperature: 20.0,
+      status: 'active'
+    },
+    {
+      id: 'house-4',
+      name: 'Птичник № 4 (Молодняк)',
+      birdCount: 35000,
+      initialBirdCount: 35500,
+      ageDays: 12,
+      temperature: 29.0,
+      targetTemperature: 29.0,
+      status: 'active'
     }
-  ];
+  ]);
 
-  getHouses(): Observable<PoultryHouse[]> {
-    return of(this.mockHouses);
-  }
+  readonly houses = this._houses.asReadonly();
 
-  getBatches(): Observable<PoultryBatch[]> {
-    return of(this.mockBatches);
-  }
+  readonly totalBirds = computed(() =>
+    this._houses().reduce((sum, h) => sum + h.birdCount, 0)
+  );
 
-  getBatchByHouseId(houseId: string): Observable<PoultryBatch | undefined> {
-    const batch = this.mockBatches.find(b => b.houseId === houseId && b.status === 'active');
-    return of(batch);
-  }
+  readonly activeHousesCount = computed(() =>
+    this._houses().filter(h => h.status !== 'empty').length
+  );
 
-  // Получить записи суточного журнала по ID партии
-  getDailyLogsByBatchId(batchId: string): Observable<PoultryDailyLog[]> {
-    const logs = this.mockDailyLogs.filter(log => log.batchId === batchId);
-    return of(logs);
-  }
-
-  // Добавить новую суточную запись бригадира с авто-списанием поголовья
-  addDailyLog(newLogData: Omit<PoultryDailyLog, 'id'>): Observable<PoultryDailyLog> {
-    const newLog: PoultryDailyLog = {
-      ...newLogData,
-      id: `log-${Date.now()}`
-    };
-
-    this.mockDailyLogs.push(newLog);
-
-    // Автоматически уменьшаем текущее поголовье партии на падёж и выбраковку
-    const targetBatch = this.mockBatches.find(b => b.id === newLog.batchId);
-    if (targetBatch) {
-      targetBatch.currentCount -= (newLog.mortalityCount + (newLog.cullingCount || 0));
-    }
-
-    return of(newLog);
-  }
+  readonly averageSurvivalRate = computed(() => {
+    const list = this._houses().filter(h => h.initialBirdCount > 0);
+    if (list.length === 0) return 0;
+    const totalCurrent = list.reduce((sum, h) => sum + h.birdCount, 0);
+    const totalInitial = list.reduce((sum, h) => sum + h.initialBirdCount, 0);
+    return Math.round((totalCurrent / totalInitial) * 1000) / 10;
+  });
 }

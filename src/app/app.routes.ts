@@ -1,25 +1,13 @@
-import { Component } from '@angular/core';
 import { Routes } from '@angular/router';
-
-@Component({
-  standalone: true,
-  template: `
-    <div style="padding: 40px; text-align: center; color: #64748b;">
-      <h2 style="color: #334155;">Раздел находится в разработке</h2>
-      <p>Этот производственный модуль будет подключен на следующем этапе.</p>
-    </div>
-  `
-})
-class PlaceholderComponent {}
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'poultry',
+    redirectTo: 'poultry-management',
     pathMatch: 'full'
   },
   {
-    path: 'poultry',
+    path: 'poultry-management',
     loadComponent: () =>
       import('./features/poultry-management/pages/poultry-list/poultry-list.component').then(
         m => m.PoultryListComponent
@@ -33,17 +21,17 @@ export const routes: Routes = [
       )
   },
   {
-    path: 'feed-warehouse',
-    loadComponent: () =>
-      import('./features/feed-warehouse/pages/feed-dashboard/feed-dashboard.component').then(
-        m => m.FeedDashboardComponent
-      )
-  },
-  {
     path: 'incubator',
     loadComponent: () =>
       import('./features/incubator/pages/incubator-dashboard/incubator-dashboard.component').then(
         m => m.IncubatorDashboardComponent
+      )
+  },
+  {
+    path: 'feed-warehouse',
+    loadComponent: () =>
+      import('./features/feed-warehouse/pages/feed-dashboard/feed-dashboard.component').then(
+        m => m.FeedDashboardComponent
       )
   },
   {
@@ -69,10 +57,13 @@ export const routes: Routes = [
   },
   {
     path: 'finance-calc',
-    component: PlaceholderComponent
+    loadComponent: () =>
+      import('./features/finance-calc/pages/finance-dashboard/finance-dashboard.component').then(
+        m => m.FinanceDashboardComponent
+      )
   },
   {
     path: '**',
-    redirectTo: 'poultry'
+    redirectTo: 'poultry-management'
   }
 ];

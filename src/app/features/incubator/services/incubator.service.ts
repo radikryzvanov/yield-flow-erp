@@ -1,5 +1,10 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { IncubationCabinet, IncubationBatch } from '../interfaces/incubator.interface';
+import {
+  IncubationCabinet,
+  IncubationBatch,
+  HatchHistoryRecord,
+  StartIncubationPayload
+} from '../interfaces/incubator.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -89,8 +94,28 @@ export class IncubatorService {
     }
   ]);
 
+  private readonly _hatchHistory = signal<HatchHistoryRecord[]>([
+    {
+      id: 'hh-1',
+      batchNumber: 'ИНК-2026-12',
+      date: '2026-08-10',
+      eggsSet: 57600,
+      chicksHatched: 50400,
+      hatchRatePercent: 87.5
+    },
+    {
+      id: 'hh-2',
+      batchNumber: 'ИНК-2026-13',
+      date: '2026-08-17',
+      eggsSet: 57600,
+      chicksHatched: 49824,
+      hatchRatePercent: 86.5
+    }
+  ]);
+
   readonly cabinets = this._cabinets.asReadonly();
   readonly batches = this._batches.asReadonly();
+  readonly hatchHistory = this._hatchHistory.asReadonly();
 
   readonly totalEggsInIncubation = computed(() =>
     this._cabinets().reduce((sum, cab) => sum + cab.currentEggs, 0)
@@ -103,4 +128,40 @@ export class IncubatorService {
   readonly activeSettersCount = computed(() =>
     this._cabinets().filter(cab => cab.type === 'setter' && cab.status !== 'empty').length
   );
+
+  readonly averageHatchability = computed(() => {
+    const history = this._hatchHistory();
+    if (history.length === 0) return 0;
+    const total = history.reduce((sum, item) => sum + item.hatchRatePercent, 0);
+    return Math.round((total / history.length) * 10) / 10;
+  });
+
+  startIncubation(payload: StartIncubationPayload): void {
+    this._cabinets.update(list =>
+      list.map(cab =>
+        cab.id === payload.cabinetId
+          ? {
+              ...cab,
+              currentEggs: payload.eggsCount,
+              currentDay: 1,
+              status: 'active' as const
+            }
+          : cab
+      )
+    );
+
+    const newBatch: IncubationBatch = {
+      id: `ib-${Date.now()}`,
+      batchNumber: payload.batchNumber,
+      eggSourceHouse: payload.eggSourceHouse,
+      eggsSetCount: payload.eggsCount,
+      startDate: new Date().toISOString().split('T')[0],
+      plannedHatchDate: new Date(Date.now() + 21 * 86400000).toISOString().split('T')[0],
+      cabinetId: payload.cabinetId,
+      stage: 'setting',
+      expectedHatchRatePercent: 87.0
+    };
+
+    this._batches.update(list => [...list, newBatch]);
+  }
 }

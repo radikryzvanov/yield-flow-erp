@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EggWarehouseService } from '../../services/egg-warehouse.service';
-import { EggCategory } from '../../interfaces/egg-warehouse.interface';
+import { EggWarehouseService, ReceiveEggPayload } from '../../services/egg-warehouse.service';
 
 @Component({
   selector: 'app-egg-warehouse',
@@ -12,53 +11,38 @@ import { EggCategory } from '../../interfaces/egg-warehouse.interface';
   styleUrl: './egg-warehouse.component.css'
 })
 export class EggWarehouseComponent {
-  protected readonly warehouseService = inject(EggWarehouseService);
+  protected readonly eggService = inject(EggWarehouseService);
 
-  // Сигналы остатков и истории из сервиса
-  readonly inventoryStock = this.warehouseService.inventoryStock;
-  readonly sortingBatches = this.warehouseService.sortingBatches;
-  readonly totalEggs = this.warehouseService.totalEggsInStock;
+  readonly categories = this.eggService.categories;
+  readonly incomingLogs = this.eggService.incomingLogs;
+  readonly totalEggsInStock = this.eggService.totalEggsInStock;
+  readonly todaySortedCount = this.eggService.todaySortedCount;
+  readonly rejectPercent = this.eggService.rejectPercent;
 
-  // Сообщение о перемещении в кормоцех
-  readonly transferMessage = signal<string | null>(null);
+  receiveForm: ReceiveEggPayload = {
+    houseName: 'Птичник № 1',
+    totalCount: 45000,
+    damagedCount: 450
+  };
 
-  // Поля быстрой формы приема партии валового яйца
-  sourceHouseId = 'Птичник №1';
-  totalGrossReceived = 12000;
-  operatorName = 'Смирнова А. К.';
+  onReceive(): void {
+    const count = Number(this.receiveForm.totalCount);
+    const damaged = Number(this.receiveForm.damagedCount) || 0;
 
-  // Раскладка по категориям при сортировке
-  c0Count = 3500;
-  c1Count = 6500;
-  c2Count = 1500;
-  lossesCount = 500;
-
-  submitBatch(): void {
-    const sortedYield: { category: EggCategory; count: number }[] = [
-      { category: 'С0', count: Number(this.c0Count) || 0 },
-      { category: 'С1', count: Number(this.c1Count) || 0 },
-      { category: 'С2', count: Number(this.c2Count) || 0 },
-      { category: 'Насечка/Бой', count: Number(this.lossesCount) || 0 }
-    ];
-
-    this.warehouseService.addSortingBatch({
-      date: new Date().toISOString().split('T')[0],
-      sourceHouseId: this.sourceHouseId,
-      totalGrossReceived: Number(this.totalGrossReceived),
-      sortedYield,
-      lossesCount: Number(this.lossesCount),
-      operatorName: this.operatorName
-    });
-  }
-
-  transferLosses(): void {
-    const result = this.warehouseService.transferLossesToFeedMill();
-    if (result.count > 0) {
-      this.transferMessage.set(
-        `Передано в кормоцех: ${result.count} шт. боя (~${result.weightKg} кг белково-минерального сырья).`
-      );
-    } else {
-      this.transferMessage.set('На складе нет боя для перемещения.');
+    if (!this.receiveForm.houseName || count <= 0) {
+      return;
     }
+
+    this.eggService.receiveEggs({
+      houseName: this.receiveForm.houseName,
+      totalCount: count,
+      damagedCount: damaged
+    });
+
+    this.receiveForm = {
+      houseName: 'Птичник № 1',
+      totalCount: 10000,
+      damagedCount: 0
+    };
   }
 }

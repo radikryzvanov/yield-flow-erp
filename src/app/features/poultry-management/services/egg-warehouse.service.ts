@@ -1,95 +1,101 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { EggSortingBatch, EggInventoryStock, EggCategory } from '../interfaces/egg-warehouse.interface';
+import { Injectable, computed, signal } from '@angular/core';
+
+export interface EggCategory {
+  id: string;
+  code: string;
+  name: string;
+  countInStock: number;
+  reservedCount: number;
+}
+
+export interface IncomingEggLog {
+  id: string;
+  date: string;
+  shift: string;
+  houseName: string;
+  totalCollected: number;
+  commercialGrade: number;
+  damagedCount: number;
+}
+
+export interface ReceiveEggPayload {
+  houseName: string;
+  totalCount: number;
+  damagedCount: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class EggWarehouseService {
-  // История партий сортировки
-  private sortingBatchesSignal = signal<EggSortingBatch[]>([
+  private readonly _categories = signal<EggCategory[]>([
+    { id: 'cat-c0', code: 'С0', name: 'Отборное яйцо (65–74.9 г)', countInStock: 85400, reservedCount: 15000 },
+    { id: 'cat-c1', code: 'С1', name: 'Первая категория (55–64.9 г)', countInStock: 142000, reservedCount: 22000 },
+    { id: 'cat-c2', code: 'С2', name: 'Вторая категория (45–54.9 г)', countInStock: 38200, reservedCount: 5000 },
+    { id: 'cat-inc', code: 'ИНК', name: 'Инкубационное яйцо', countInStock: 115200, reservedCount: 57600 }
+  ]);
+
+  private readonly _incomingLogs = signal<IncomingEggLog[]>([
     {
-      id: 'batch-001',
-      date: '2026-08-17',
-      sourceHouseId: 'house-1',
-      totalGrossReceived: 15000,
-      sortedYield: [
-        { category: 'С0', count: 4500 },
-        { category: 'С1', count: 8500 },
-        { category: 'С2', count: 1700 },
-        { category: 'Грязь', count: 180 }
-      ],
-      lossesCount: 120,
-      operatorName: 'Иванова Е. В.'
+      id: 'egg-log-1',
+      date: '2026-08-24',
+      shift: 'Дневная',
+      houseName: 'Птичник № 1',
+      totalCollected: 45000,
+      commercialGrade: 44100,
+      damagedCount: 900
+    },
+    {
+      id: 'egg-log-2',
+      date: '2026-08-24',
+      shift: 'Дневная',
+      houseName: 'Птичник № 2',
+      totalCollected: 48000,
+      commercialGrade: 47040,
+      damagedCount: 960
     }
   ]);
 
-  // Текущие остатки на складе
-  private inventoryStockSignal = signal<EggInventoryStock[]>([
-    { category: 'СВ', inStockCount: 3600, packagedTraysCount: 120, packagedBoxesCount: 10 },
-    { category: 'С0', inStockCount: 36000, packagedTraysCount: 1200, packagedBoxesCount: 100 },
-    { category: 'С1', inStockCount: 54000, packagedTraysCount: 1800, packagedBoxesCount: 150 },
-    { category: 'С2', inStockCount: 18000, packagedTraysCount: 600, packagedBoxesCount: 50 },
-    { category: 'С3', inStockCount: 7200, packagedTraysCount: 240, packagedBoxesCount: 20 },
-    { category: 'Грязь', inStockCount: 900, packagedTraysCount: 30, packagedBoxesCount: 2 },
-    { category: 'Насечка/Бой', inStockCount: 500, packagedTraysCount: 0, packagedBoxesCount: 0 }
-  ]);
+  readonly categories = this._categories.asReadonly();
+  readonly incomingLogs = this._incomingLogs.asReadonly();
 
-  // Публичные сигналы только для чтения
-  readonly sortingBatches = this.sortingBatchesSignal.asReadonly();
-  readonly inventoryStock = this.inventoryStockSignal.asReadonly();
-
-  // Общее количество яйца на складе всех категорий
   readonly totalEggsInStock = computed(() =>
-    this.inventoryStockSignal().reduce((acc, item) => acc + item.inStockCount, 0)
+    this._categories().reduce((sum, cat) => sum + cat.countInStock, 0)
   );
 
-  // Добавление новой партии сортировки и обновление остатков
-  addSortingBatch(batch: Omit<EggSortingBatch, 'id'>): void {
-    const newBatch: EggSortingBatch = {
-      ...batch,
-      id: `batch-${Date.now()}`
-    };
+  readonly todaySortedCount = computed(() =>
+    this._incomingLogs().reduce((sum, log) => sum + log.totalCollected, 0)
+  );
 
-    this.sortingBatchesSignal.update(batches => [newBatch, ...batches]);
+  readonly rejectPercent = computed(() => {
+    const total = this.todaySortedCount();
+    if (total === 0) return 0;
+    const damaged = this._incomingLogs().reduce((sum, log) => sum + log.damagedCount, 0);
+    return Math.round((damaged / total) * 1000) / 10;
+  });
 
-    // Обновляем остатки по категориям
-    this.inventoryStockSignal.update(currentStock => {
-      return currentStock.map(stockItem => {
-        const sortedItem = newBatch.sortedYield.find(y => y.category === stockItem.category);
-        if (sortedItem) {
-          const updatedCount = stockItem.inStockCount + sortedItem.count;
-          return {
-            ...stockItem,
-            inStockCount: updatedCount,
-            packagedTraysCount: Math.floor(updatedCount / 30),
-            packagedBoxesCount: Math.floor(updatedCount / 360)
-          };
-        }
-        return stockItem;
-      });
-    });
-  }
-  // Перемещение боя в кормоцех (списание со склада яиц)
-  transferLossesToFeedMill(): { count: number; weightKg: number } {
-    let transferredCount = 0;
+  receiveEggs(payload: ReceiveEggPayload): void {
+    const total = Number(payload.totalCount) || 0;
+    const damaged = Number(payload.damagedCount) || 0;
+    const validCount = Math.max(0, total - damaged);
 
-    this.inventoryStockSignal.update(currentStock =>
-      currentStock.map(item => {
-        if (item.category === 'Насечка/Бой') {
-          transferredCount = item.inStockCount;
-          return {
-            ...item,
-            inStockCount: 0,
-            packagedTraysCount: 0,
-            packagedBoxesCount: 0
-          };
-        }
-        return item;
-      })
+    this._categories.update(cats =>
+      cats.map(cat =>
+        cat.code === 'С1' ? { ...cat, countInStock: cat.countInStock + validCount } : cat
+      )
     );
 
-    // Средний вес одного яйца ~55-60г (0.055 кг)
-    const weightKg = Math.round(transferredCount * 0.055);
-    return { count: transferredCount, weightKg };
+    this._incomingLogs.update(logs => [
+      {
+        id: `egg-log-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        shift: 'Текущая',
+        houseName: payload.houseName,
+        totalCollected: total,
+        commercialGrade: validCount,
+        damagedCount: damaged
+      },
+      ...logs
+    ]);
   }
 }

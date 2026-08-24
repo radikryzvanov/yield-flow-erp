@@ -1,0 +1,136 @@
+<div class="finance-container">
+  <header class="page-header">
+    <div>
+      <h1>Директорат и финансово-экономический анализ</h1>
+      <p class="subtitle">Сводный расчет себестоимости, конверсии корма (FCR) и рентабельности партий</p>
+    </div>
+  </header>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title">Общая выручка</div>
+      <div class="kpi-value text-primary">{{ (totalRevenue() / 1000000) | number:'1.2-2' }} <span class="unit">млн ₽</span></div>
+      <div class="kpi-note">Реализация мяса и яйца</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Чистая прибыль</div>
+      <div class="kpi-value text-success">{{ (totalNetProfit() / 1000000) | number:'1.2-2' }} <span class="unit">млн ₽</span></div>
+      <div class="kpi-note">После вычета цеховых затрат</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Средний FCR фабрики</div>
+      <div class="kpi-value text-warning">{{ averageFcr() | number:'1.2-2' }}</div>
+      <div class="kpi-note">кг корма на 1 кг привеса</div>
+    </div>
+  </section>
+
+  <div class="content-grid">
+    <div class="main-column">
+      <div class="card">
+        <div class="card-header">
+          <h2>Фактическая себестоимость завершенных партий</h2>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Партия / Поголовье</th>
+                <th>Живой вес / FCR</th>
+                <th>Затраты на корма</th>
+                <th>Итого себестоимость</th>
+                <th>Себест. 1 кг</th>
+                <th>Рентабельность</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (batch of batchSummaries(); track batch.batchId) {
+                <tr>
+                  <td>
+                    <strong>{{ batch.batchNumber }}</strong>
+                    <div class="text-muted small">{{ batch.headsFinished | number }} гол.</div>
+                  </td>
+                  <td>
+                    <strong>{{ (batch.liveWeightTotalKg / 1000) | number:'1.1-2' }} т</strong>
+                    <div class="text-warning small">FCR: {{ batch.fcr }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ batch.costs.feedCostRub | number }} ₽</strong>
+                    <div class="text-muted small">{{ (batch.feedConsumedTotalKg / 1000) | number:'1.1-1' }} т корма</div>
+                  </td>
+                  <td>
+                    <strong>{{ batch.costs.totalCostRub | number }} ₽</strong>
+                  </td>
+                  <td>
+                    <span class="badge badge-cost">{{ batch.costPerKgLiveWeight | number:'1.2-2' }} ₽/кг</span>
+                  </td>
+                  <td>
+                    <span class="badge badge-success">+{{ batch.profitMarginPercent | number:'1.1-1' }}%</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-column">
+      <div class="card">
+        <div class="card-header">
+          <h2>Калькулятор плановой партии</h2>
+        </div>
+        <div class="calc-body">
+          <div class="form-group">
+            <label>Посадка (голов):</label>
+            <input type="number" [(ngModel)]="forecastForm.headsCount" (input)="recalculate()" class="form-control" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Плановый вес (кг):</label>
+              <input type="number" step="0.1" [(ngModel)]="forecastForm.targetWeightKg" (input)="recalculate()" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Целевой FCR:</label>
+              <input type="number" step="0.01" [(ngModel)]="forecastForm.expectedFcr" (input)="recalculate()" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Корм (₽/кг):</label>
+              <input type="number" [(ngModel)]="forecastForm.feedPricePerKg" (input)="recalculate()" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Цена сбыта (₽/кг):</label>
+              <input type="number" [(ngModel)]="forecastForm.sellingPricePerKg" (input)="recalculate()" class="form-control" />
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="calc-results">
+            <div class="calc-result-row">
+              <span>Себестоимость 1 кг:</span>
+              <strong>{{ forecastResult().costPerKg | number:'1.2-2' }} ₽</strong>
+            </div>
+            <div class="calc-result-row">
+              <span>Прогнозная выручка:</span>
+              <strong>{{ forecastResult().revenue | number }} ₽</strong>
+            </div>
+            <div class="calc-result-row highlight">
+              <span>Ожидаемая прибыль:</span>
+              <strong class="text-success">{{ forecastResult().netProfit | number }} ₽</strong>
+            </div>
+            <div class="calc-result-row">
+              <span>Маржинальность:</span>
+              <strong class="text-primary">{{ forecastResult().margin | number:'1.1-1' }}%</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
