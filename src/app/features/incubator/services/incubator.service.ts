@@ -1,128 +1,106 @@
-import { Injectable, signal, computed } from '@angular/core';
-
-export type IncubatorStatus = 'idle' | 'incubating' | 'hatching' | 'maintenance';
-
-export interface IncubatorUnit {
-  id: string;
-  name: string;
-  capacityEggs: number;
-  currentEggs: number;
-  status: IncubatorStatus;
-  currentDay: number;
-  targetTemperature: number;
-  targetHumidity: number;
-  batchNumber?: string;
-  startDate?: string;
-}
-
-export interface HatchResult {
-  id: string;
-  batchNumber: string;
-  date: string;
-  totalEggsSet: number;
-  chicksHatched: number;
-  hatchabilityRate: number;
-  operatorName: string;
-}
-
-export interface CreateIncubationDto {
-  unitId: string;
-  batchNumber: string;
-  eggsCount: number;
-  operatorName: string;
-}
+import { Injectable, computed, signal } from '@angular/core';
+import { IncubationCabinet, IncubationBatch } from '../interfaces/incubator.interface';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class IncubatorService {
-  private readonly unitsSignal = signal<IncubatorUnit[]>([
+  private readonly _cabinets = signal<IncubationCabinet[]>([
     {
-      id: 'inc-1',
-      name: 'Шкаф инкубационный №1 (Стимул-45)',
-      capacityEggs: 45000,
-      currentEggs: 42000,
-      status: 'incubating',
-      currentDay: 14,
-      targetTemperature: 37.6,
-      targetHumidity: 53,
-      batchNumber: 'ИНК-2026-081',
-      startDate: '10.08.2026',
+      id: 'cab-01',
+      name: 'Шкаф инкубационный № 1 (Petersime)',
+      type: 'setter',
+      capacityEggs: 57600,
+      currentEggs: 57600,
+      currentDay: 12,
+      temperatureCelsius: 37.6,
+      targetTempCelsius: 37.6,
+      humidityPercent: 53,
+      targetHumidityPercent: 53,
+      eggTurningActive: true,
+      status: 'active'
     },
     {
-      id: 'inc-2',
-      name: 'Шкаф инкубационный №2 (Стимул-45)',
-      capacityEggs: 45000,
-      currentEggs: 44500,
-      status: 'incubating',
-      currentDay: 19,
-      targetTemperature: 37.2,
-      targetHumidity: 65,
-      batchNumber: 'ИНК-2026-079',
-      startDate: '05.08.2026',
+      id: 'cab-02',
+      name: 'Шкаф инкубационный № 2 (Petersime)',
+      type: 'setter',
+      capacityEggs: 57600,
+      currentEggs: 57600,
+      currentDay: 18,
+      temperatureCelsius: 37.8,
+      targetTempCelsius: 37.5,
+      humidityPercent: 58,
+      targetHumidityPercent: 54,
+      eggTurningActive: true,
+      status: 'warning'
     },
     {
-      id: 'inc-3',
-      name: 'Шкаф инкубационный №3 (Стимул-45)',
-      capacityEggs: 45000,
+      id: 'cab-03',
+      name: 'Шкаф выводной № 1 (Hatcher)',
+      type: 'hatcher',
+      capacityEggs: 19200,
+      currentEggs: 18500,
+      currentDay: 20,
+      temperatureCelsius: 36.8,
+      targetTempCelsius: 36.8,
+      humidityPercent: 72,
+      targetHumidityPercent: 72,
+      eggTurningActive: false,
+      status: 'active'
+    },
+    {
+      id: 'cab-04',
+      name: 'Шкаф выводной № 2 (Hatcher)',
+      type: 'hatcher',
+      capacityEggs: 19200,
       currentEggs: 0,
-      status: 'idle',
       currentDay: 0,
-      targetTemperature: 37.5,
-      targetHumidity: 55,
-    },
+      temperatureCelsius: 22.0,
+      targetTempCelsius: 36.8,
+      humidityPercent: 40,
+      targetHumidityPercent: 70,
+      eggTurningActive: false,
+      status: 'empty'
+    }
   ]);
 
-  private readonly hatchHistorySignal = signal<HatchResult[]>([
+  private readonly _batches = signal<IncubationBatch[]>([
     {
-      id: 'hatch-1',
-      batchNumber: 'ИНК-2026-075',
-      date: '18.08.2026',
-      totalEggsSet: 45000,
-      chicksHatched: 39600,
-      hatchabilityRate: 88.0,
-      operatorName: 'Иванова Е. С.',
+      id: 'ib-101',
+      batchNumber: 'ИНК-2026-14',
+      eggSourceHouse: 'Птичник № 2 (Родительское стадо)',
+      eggsSetCount: 57600,
+      startDate: '2026-08-04',
+      plannedHatchDate: '2026-08-25',
+      cabinetId: 'cab-03',
+      stage: 'hatching',
+      expectedHatchRatePercent: 86.5
     },
     {
-      id: 'hatch-2',
-      batchNumber: 'ИНК-2026-072',
-      date: '12.08.2026',
-      totalEggsSet: 44000,
-      chicksHatched: 39160,
-      hatchabilityRate: 89.0,
-      operatorName: 'Ковалев Д. И.',
-    },
+      id: 'ib-102',
+      batchNumber: 'ИНК-2026-15',
+      eggSourceHouse: 'Птичник № 1',
+      eggsSetCount: 57600,
+      startDate: '2026-08-12',
+      plannedHatchDate: '2026-09-02',
+      cabinetId: 'cab-01',
+      stage: 'setting',
+      expectedHatchRatePercent: 88.0
+    }
   ]);
 
-  readonly units = this.unitsSignal.asReadonly();
-  readonly hatchHistory = this.hatchHistorySignal.asReadonly();
+  readonly cabinets = this._cabinets.asReadonly();
+  readonly batches = this._batches.asReadonly();
 
-  readonly totalEggsInIncubation = computed(() => {
-    return this.unitsSignal().reduce((sum, u) => sum + u.currentEggs, 0);
-  });
+  readonly totalEggsInIncubation = computed(() =>
+    this._cabinets().reduce((sum, cab) => sum + cab.currentEggs, 0)
+  );
 
-  readonly averageHatchability = computed(() => {
-    const history = this.hatchHistorySignal();
-    if (history.length === 0) return 0;
-    const totalRate = history.reduce((sum, h) => sum + h.hatchabilityRate, 0);
-    return Number((totalRate / history.length).toFixed(1));
-  });
+  readonly warningCabinetsCount = computed(() =>
+    this._cabinets().filter(cab => cab.status === 'warning').length
+  );
 
-  startIncubation(dto: CreateIncubationDto): void {
-    this.unitsSignal.update((units) =>
-      units.map((unit) => {
-        if (unit.id === dto.unitId) {
-          return {
-            ...unit,
-            currentEggs: dto.eggsCount,
-            status: 'incubating',
-            currentDay: 1,
-            batchNumber: dto.batchNumber,
-            startDate: new Date().toLocaleDateString('ru-RU'),
-          };
-        }
-        return unit;
-      })
-    );
-  }
+  readonly activeSettersCount = computed(() =>
+    this._cabinets().filter(cab => cab.type === 'setter' && cab.status !== 'empty').length
+  );
 }
