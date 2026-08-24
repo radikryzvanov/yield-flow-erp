@@ -62,7 +62,10 @@ export const routes: Routes = [
   },
   {
     path: 'logistics',
-    component: PlaceholderComponent
+    loadComponent: () =>
+      import('./features/logistics/pages/routes-map/routes-map.component').then(
+        m => m.RoutesMapComponent
+      )
   },
   {
     path: 'finance-calc',
