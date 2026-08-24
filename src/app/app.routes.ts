@@ -20,9 +20,9 @@ export const routes: Routes = [
   },
   {
     path: 'poultry',
-    loadChildren: () =>
-      import('./features/poultry-management/poultry-management.routes').then(
-        m => m.POULTRY_MANAGEMENT_ROUTES
+    loadComponent: () =>
+      import('./features/poultry-management/pages/poultry-list/poultry-list.component').then(
+        m => m.PoultryListComponent
       )
   },
   {
@@ -48,7 +48,10 @@ export const routes: Routes = [
   },
   {
     path: 'veterinary',
-    component: PlaceholderComponent
+    loadComponent: () =>
+      import('./features/veterinary/pages/vet-dashboard/vet-dashboard.component').then(
+        m => m.VetDashboardComponent
+      )
   },
   {
     path: 'slaughter',
