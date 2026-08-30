@@ -1,22 +1,14 @@
-export interface ProductionCostBreakdown {
-  feedCostRub: number;
-  chickCostRub: number;
-  vetCostRub: number;
-  energyCostRub: number;
-  laborAndOtherRub: number;
-  totalCostRub: number;
+export interface FinancialMetric {
+  title: string;
+  value: number;
+  unit: string;
+  trendPercent: number;
+  isPositiveTrendGood: boolean;
 }
 
-export interface BatchFinancialSummary {
-  batchId: string;
-  batchNumber: string;
-  headsFinished: number;
-  liveWeightTotalKg: number;
-  feedConsumedTotalKg: number;
-  fcr: number;
-  costs: ProductionCostBreakdown;
-  costPerKgLiveWeight: number;
-  revenueRub: number;
-  netProfitRub: number;
-  profitMarginPercent: number;
+export interface CostBreakdownItem {
+  category: string;
+  amountRub: number;
+  sharePercent: number;
+  color: string;
 }
