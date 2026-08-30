@@ -1,101 +1,145 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 
-export interface EggCategory {
-  id: string;
-  code: string;
-  name: string;
-  countInStock: number;
-  reservedCount: number;
+export interface EggCategoryStock {
+  category: 'СВ' | 'С0' | 'С1' | 'С2' | 'С3' | 'Грязь/Насечка' | 'Бой';
+  fullName: string;
+  weightRange: string;
+  totalPieces: number;
+  boxed10Pieces: number;  // В боксах по 10 шт
+  boxed30Pieces: number;  // В лотках по 30 шт
+  inBulkPieces: number;   // Нефасованное яйцо
+  reservedPieces: number; // В резерве под сети
 }
 
-export interface IncomingEggLog {
+export interface RetailOrder {
   id: string;
-  date: string;
-  shift: string;
-  houseName: string;
-  totalCollected: number;
-  commercialGrade: number;
-  damagedCount: number;
-}
-
-export interface ReceiveEggPayload {
-  houseName: string;
-  totalCount: number;
-  damagedCount: number;
+  retailer: string;      // X5, Магнит, КБ, СТМ
+  orderDate: string;
+  category: string;
+  packageType: 'Бокс 10 шт' | 'Лоток 30 шт' | 'Короб 360 шт';
+  orderedPieces: number;
+  status: 'В сборке' | 'Зарезервировано' | 'Отгружено';
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class EggWarehouseService {
-  private readonly _categories = signal<EggCategory[]>([
-    { id: 'cat-c0', code: 'С0', name: 'Отборное яйцо (65–74.9 г)', countInStock: 85400, reservedCount: 15000 },
-    { id: 'cat-c1', code: 'С1', name: 'Первая категория (55–64.9 г)', countInStock: 142000, reservedCount: 22000 },
-    { id: 'cat-c2', code: 'С2', name: 'Вторая категория (45–54.9 г)', countInStock: 38200, reservedCount: 5000 },
-    { id: 'cat-inc', code: 'ИНК', name: 'Инкубационное яйцо', countInStock: 115200, reservedCount: 57600 }
-  ]);
-
-  private readonly _incomingLogs = signal<IncomingEggLog[]>([
+  private readonly _stock = signal<EggCategoryStock[]>([
     {
-      id: 'egg-log-1',
-      date: '2026-08-24',
-      shift: 'Дневная',
-      houseName: 'Птичник № 1',
-      totalCollected: 45000,
-      commercialGrade: 44100,
-      damagedCount: 900
+      category: 'СВ',
+      fullName: 'Столовое Высшая категория',
+      weightRange: '≥ 75 г',
+      totalPieces: 18500,
+      boxed10Pieces: 12000,
+      boxed30Pieces: 5000,
+      inBulkPieces: 1500,
+      reservedPieces: 10000
     },
     {
-      id: 'egg-log-2',
-      date: '2026-08-24',
-      shift: 'Дневная',
-      houseName: 'Птичник № 2',
-      totalCollected: 48000,
-      commercialGrade: 47040,
-      damagedCount: 960
+      category: 'С0',
+      fullName: 'Столовое Отборное',
+      weightRange: '65 – 74.9 г',
+      totalPieces: 145000,
+      boxed10Pieces: 95000,
+      boxed30Pieces: 35000,
+      inBulkPieces: 15000,
+      reservedPieces: 85000
+    },
+    {
+      category: 'С1',
+      fullName: 'Столовое Первая категория',
+      weightRange: '55 – 64.9 г',
+      totalPieces: 280000,
+      boxed10Pieces: 180000,
+      boxed30Pieces: 70000,
+      inBulkPieces: 30000,
+      reservedPieces: 190000
+    },
+    {
+      category: 'С2',
+      fullName: 'Столовое Вторая категория',
+      weightRange: '45 – 54.9 г',
+      totalPieces: 62000,
+      boxed10Pieces: 30000,
+      boxed30Pieces: 25000,
+      inBulkPieces: 7000,
+      reservedPieces: 25000
+    },
+    {
+      category: 'Грязь/Насечка',
+      fullName: 'Технический брак (в меланж)',
+      weightRange: 'Любой',
+      totalPieces: 8400,
+      boxed10Pieces: 0,
+      boxed30Pieces: 0,
+      inBulkPieces: 8400,
+      reservedPieces: 8400
     }
   ]);
 
-  readonly categories = this._categories.asReadonly();
-  readonly incomingLogs = this._incomingLogs.asReadonly();
+  private readonly _orders = signal<RetailOrder[]>([
+    {
+      id: 'ORD-1092',
+      retailer: 'АО «Тандер» (Магнит)',
+      orderDate: 'Сегодня, 14:00',
+      category: 'С1',
+      packageType: 'Бокс 10 шт',
+      orderedPieces: 120000,
+      status: 'Зарезервировано'
+    },
+    {
+      id: 'ORD-1093',
+      retailer: 'X5 Group («Пятёрочка»)',
+      orderDate: 'Сегодня, 16:30',
+      category: 'С0',
+      packageType: 'Бокс 10 шт',
+      orderedPieces: 65000,
+      status: 'В сборке'
+    },
+    {
+      id: 'ORD-1094',
+      retailer: 'Красное & Белое',
+      orderDate: 'Завтра, 07:00',
+      category: 'С1',
+      packageType: 'Лоток 30 шт',
+      orderedPieces: 45000,
+      status: 'Зарезервировано'
+    },
+    {
+      id: 'ORD-1095',
+      retailer: 'Меланжевый завод (Цех переработки)',
+      orderDate: 'Сегодня, 18:00',
+      category: 'Грязь/Насечка',
+      packageType: 'Короб 360 шт',
+      orderedPieces: 8400,
+      status: 'Отгружено'
+    }
+  ]);
 
-  readonly totalEggsInStock = computed(() =>
-    this._categories().reduce((sum, cat) => sum + cat.countInStock, 0)
+  readonly stock = this._stock.asReadonly();
+  readonly orders = this._orders.asReadonly();
+
+  // Всего товарного яйца на складе
+  readonly totalStockPieces = computed(() =>
+    this._stock().reduce((sum, item) => sum + item.totalPieces, 0)
   );
 
-  readonly todaySortedCount = computed(() =>
-    this._incomingLogs().reduce((sum, log) => sum + log.totalCollected, 0)
+  // Всего в резерве под контракты
+  readonly totalReservedPieces = computed(() =>
+    this._stock().reduce((sum, item) => sum + item.reservedPieces, 0)
   );
 
-  readonly rejectPercent = computed(() => {
-    const total = this.todaySortedCount();
+  // Свободный остаток к реализации
+  readonly totalFreePieces = computed(() =>
+    this.totalStockPieces() - this.totalReservedPieces()
+  );
+
+  // Процент товарности (без брака)
+  readonly commercialEggRate = computed(() => {
+    const total = this.totalStockPieces();
     if (total === 0) return 0;
-    const damaged = this._incomingLogs().reduce((sum, log) => sum + log.damagedCount, 0);
-    return Math.round((damaged / total) * 1000) / 10;
+    const waste = this._stock().find(s => s.category === 'Грязь/Насечка')?.totalPieces || 0;
+    return Math.round(((total - waste) / total) * 1000) / 10;
   });
-
-  receiveEggs(payload: ReceiveEggPayload): void {
-    const total = Number(payload.totalCount) || 0;
-    const damaged = Number(payload.damagedCount) || 0;
-    const validCount = Math.max(0, total - damaged);
-
-    this._categories.update(cats =>
-      cats.map(cat =>
-        cat.code === 'С1' ? { ...cat, countInStock: cat.countInStock + validCount } : cat
-      )
-    );
-
-    this._incomingLogs.update(logs => [
-      {
-        id: `egg-log-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-        shift: 'Текущая',
-        houseName: payload.houseName,
-        totalCollected: total,
-        commercialGrade: validCount,
-        damagedCount: damaged
-      },
-      ...logs
-    ]);
-  }
 }
