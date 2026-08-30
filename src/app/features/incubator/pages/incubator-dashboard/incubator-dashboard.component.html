@@ -1,144 +1,140 @@
 <div class="incubator-container">
-  <header class="page-header">
+  <div class="page-header">
     <div>
-      <h1>Инкубаторий</h1>
-      <p class="subtitle">Мониторинг инкубационных и выводных шкафов, закладка яиц и вывод цыплят</p>
+      <h1>Промышленный инкубаторий (Petersime)</h1>
+      <p class="subtitle">Управление инкубационными и выводными шкафами, микроклиматом эмбриогенеза и выводом суточного молодняка</p>
     </div>
-  </header>
+  </div>
 
-  <section class="kpi-grid">
+  <!-- KPI панель инкубатора -->
+  <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Яиц на инкубации</div>
-      <div class="kpi-value text-primary">{{ totalEggsInIncubation() | number }} <span class="unit">шт</span></div>
-      <div class="kpi-note">Текущая загрузка шкафов</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Активных шкафов</div>
-      <div class="kpi-value text-success">{{ activeSettersCount() }} <span class="unit">из {{ cabinets().length }}</span></div>
-      <div class="kpi-note">В рабочем цикле</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Яиц в инкубации</span>
+        <span class="kpi-icon">🥚</span>
+      </div>
+      <div class="kpi-value text-primary">{{ totalEggs() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">В {{ activeCabinets() }} рабочих шкафах</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Средняя выводимость</div>
-      <div class="kpi-value text-warning">{{ averageHatchability() }}%</div>
-      <div class="kpi-note">По последним партиям</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Прогноз вывода</span>
+        <span class="kpi-icon">📊</span>
+      </div>
+      <div class="kpi-value text-success">{{ hatchForecast() }}%</div>
+      <div class="kpi-note">Норматив кросса: 86–90%</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Предупреждения</div>
-      <div class="kpi-value" [class.text-danger]="warningCabinetsCount() > 0">{{ warningCabinetsCount() }}</div>
-      <div class="kpi-note">Отклонения по микроклимату</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Ожидаемый молодняк</span>
+        <span class="kpi-icon">🐣</span>
+      </div>
+      <div class="kpi-value text-warning">{{ expectedChicks() | number }} <span class="unit">гол.</span></div>
+      <div class="kpi-note">Суточные курочки / петушки</div>
     </div>
-  </section>
 
-  <div class="content-grid">
-    <div class="main-column">
-      <div class="card">
-        <div class="card-header">
-          <h2>Состояние шкафов инкубатория</h2>
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Статус биозащиты</span>
+        <span class="kpi-icon">🛡️</span>
+      </div>
+      <div class="kpi-value text-success">Зона А</div>
+      <div class="kpi-note">Максимальный барьер чистоты</div>
+    </div>
+  </div>
+
+  <!-- Сетка шкафов инкубации и вывода -->
+  <div class="cabinets-grid">
+    <div *ngFor="let cab of cabinets()" class="cabinet-card" [class.sanitizing]="cab.status === 'sanitization'">
+
+      <div class="cabinet-header">
+        <div>
+          <h3 class="cab-name">{{ cab.name }}</h3>
+          <span class="cab-batch" *ngIf="cab.batchNumber !== '—'">{{ cab.batchNumber }} ({{ cab.crossType }})</span>
+          <span class="cab-batch text-muted" *ngIf="cab.batchNumber === '—'">Шкаф свободен</span>
         </div>
-        <div class="cabinet-grid">
-          @for (cab of cabinets(); track cab.id) {
-            <div class="cabinet-card" [class.status-warning]="cab.status === 'warning'" [class.status-empty]="cab.status === 'empty'">
-              <div class="cabinet-top">
-                <span class="cabinet-name">{{ cab.name }}</span>
-                <span class="badge" [class.badge-setter]="cab.type === 'setter'" [class.badge-hatcher]="cab.type === 'hatcher'">
-                  {{ cab.type === 'setter' ? 'Инкубационный' : 'Выводной' }}
-                </span>
-              </div>
+        <span class="status-badge" [class.badge-inc]="cab.status === 'incubation'" [class.badge-cand]="cab.status === 'candling'" [class.badge-hatch]="cab.status === 'hatching'" [class.badge-san]="cab.status === 'sanitization'">
+          {{ getStatusLabel(cab.status) }}
+        </span>
+      </div>
 
-              <div class="cabinet-metrics">
-                <div class="metric">
-                  <span class="label">Температура:</span>
-                  <span class="val" [class.text-danger]="cab.temperatureCelsius !== cab.targetTempCelsius">{{ cab.temperatureCelsius }}°C</span>
-                  <span class="target">({{ cab.targetTempCelsius }}°C)</span>
-                </div>
-                <div class="metric">
-                  <span class="label">Влажность:</span>
-                  <span class="val" [class.text-danger]="cab.humidityPercent !== cab.targetHumidityPercent">{{ cab.humidityPercent }}%</span>
-                  <span class="target">({{ cab.targetHumidityPercent }}%)</span>
-                </div>
-                <div class="metric">
-                  <span class="label">Загрузка:</span>
-                  <span class="val">{{ cab.currentEggs | number }} / {{ cab.capacityEggs | number }}</span>
-                </div>
-                <div class="metric">
-                  <span class="label">День цикла:</span>
-                  <span class="val">{{ cab.currentDay > 0 ? cab.currentDay + ' день' : 'Свободен' }}</span>
-                </div>
-              </div>
-            </div>
-          }
+      <!-- Прогресс дней инкубации -->
+      <div class="cycle-progress" *ngIf="cab.eggsCount > 0">
+        <div class="cycle-text">
+          <span>Срок инкубации: <b>День {{ cab.setDay }}</b> из 21</span>
+          <span class="forecast">Вывод: {{ cab.expectedHatchRatePercent }}%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="(cab.setDay / 21) * 100"></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h2>История выводов партий</h2>
+      <!-- Параметры микроклимата шкафа -->
+      <div class="sensors-grid" *ngIf="cab.eggsCount > 0">
+        <div class="sensor-box">
+          <span class="s-label">Температура</span>
+          <span class="s-val text-primary">{{ cab.temperature }}°C</span>
+          <span class="s-norm">норма {{ cab.targetTemperature }}°C</span>
         </div>
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Партия</th>
-                <th>Дата вывода</th>
-                <th>Заложено яиц</th>
-                <th>Выведено цыплят</th>
-                <th>Процент вывода</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of hatchHistory(); track item.id) {
-                <tr>
-                  <td><strong>{{ item.batchNumber }}</strong></td>
-                  <td>{{ item.date }}</td>
-                  <td>{{ item.eggsSet | number }} шт</td>
-                  <td>{{ item.chicksHatched | number }} гол.</td>
-                  <td><span class="badge badge-success">{{ item.hatchRatePercent }}%</span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
+
+        <div class="sensor-box">
+          <span class="s-label">Влажность</span>
+          <span class="s-val text-info">{{ cab.humidityPercent }}%</span>
+          <span class="s-norm">норма {{ cab.targetHumidityPercent }}%</span>
+        </div>
+
+        <div class="sensor-box">
+          <span class="s-label">Поворот лотков</span>
+          <span class="s-val">{{ cab.turnAngleDeg }}°</span>
+          <span class="s-norm">каждые 60 мин</span>
+        </div>
+
+        <div class="sensor-box">
+          <span class="s-label">Закладка яйца</span>
+          <span class="s-val font-bold">{{ cab.eggsCount | number }}</span>
+          <span class="s-norm">шт</span>
         </div>
       </div>
-    </div>
 
-    <div class="side-column">
-      <div class="card">
-        <div class="card-header">
-          <h2>Закладка новой партии</h2>
-        </div>
-        <form (ngSubmit)="onSubmit()" class="form-layout">
-          <div class="form-group">
-            <label>Шкаф назначения:</label>
-            <select [(ngModel)]="newBatchForm.cabinetId" name="cabinetId" class="form-control" required>
-              @for (cab of cabinets(); track cab.id) {
-                <option [value]="cab.id">{{ cab.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Номер партии:</label>
-            <input type="text" [(ngModel)]="newBatchForm.batchNumber" name="batchNumber" class="form-control" required />
-          </div>
-
-          <div class="form-group">
-            <label>Источник яйца (птичник):</label>
-            <input type="text" [(ngModel)]="newBatchForm.eggSourceHouse" name="eggSourceHouse" class="form-control" required />
-          </div>
-
-          <div class="form-group">
-            <label>Количество яиц (шт):</label>
-            <input type="number" [(ngModel)]="newBatchForm.eggsCount" name="eggsCount" step="100" class="form-control" required />
-          </div>
-
-          <button type="submit" class="btn-submit" [disabled]="newBatchForm.eggsCount <= 0">
-            Запустить цикл инкубации
-          </button>
-        </form>
+      <!-- Заглушка для санобработки -->
+      <div class="sanitizing-desc" *ngIf="cab.status === 'sanitization'">
+        🧹 Проводится мойка пенными дезсредствами и аэрозольная газация парами формальдегида перед следующей закладкой партии.
       </div>
     </div>
+  </div>
+
+  <!-- Журнал выведенных партий -->
+  <div class="card table-card">
+    <div class="card-header">
+      <h3 class="card-title">📋 Журнал завершенных выводов цыплят</h3>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>№ Вывода</th>
+          <th>Дата завершения</th>
+          <th>Партия ИЯ</th>
+          <th>Кросс</th>
+          <th>Заложено яиц</th>
+          <th>Выведено цыплят</th>
+          <th>Фактический вывод (%)</th>
+          <th>Корпус назначения</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs()">
+          <td class="font-bold">{{ log.id }}</td>
+          <td>{{ log.date }}</td>
+          <td><span class="batch-pill">{{ log.batchNumber }}</span></td>
+          <td>{{ log.crossType }}</td>
+          <td>{{ log.eggsSet | number }} шт</td>
+          <td class="font-bold text-success">{{ log.chicksHatched | number }} гол.</td>
+          <td class="font-bold">{{ log.actualHatchRate }}%</td>
+          <td><span class="dest-badge">{{ log.destinationHouse }}</span></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
