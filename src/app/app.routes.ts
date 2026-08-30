@@ -14,6 +14,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'elevator',
+    loadComponent: () =>
+      import('./features/elevator/pages/elevator-dashboard/elevator-dashboard.component').then(
+        m => m.ElevatorDashboardComponent
+      )
+  },
+  {
     path: 'egg-warehouse',
     loadComponent: () =>
       import('./features/poultry-management/pages/egg-warehouse/egg-warehouse.component').then(

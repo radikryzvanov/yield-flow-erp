@@ -14,6 +14,15 @@ export class PoultryListComponent {
 
   readonly houses = this.poultryService.houses;
   readonly totalBirds = this.poultryService.totalBirds;
-  readonly averageSurvivalRate = this.poultryService.averageSurvivalRate;
-  readonly activeHousesCount = this.poultryService.activeHousesCount;
+  readonly totalDailyEggs = this.poultryService.totalDailyEggs;
+  readonly totalDailyFeedTons = this.poultryService.totalDailyFeedTons;
+  readonly averageLayingRate = this.poultryService.averageLayingRate;
+
+  getAgeWeeks(days: number): number {
+    return Math.floor(days / 7);
+  }
+
+  isTemperatureNormal(actual: number, target: number): boolean {
+    return Math.abs(actual - target) <= 1.0;
+  }
 }

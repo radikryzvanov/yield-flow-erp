@@ -1,55 +1,92 @@
 <div class="poultry-container">
-  <header class="page-header">
+  <div class="page-header">
     <div>
-      <h1>Птичники</h1>
-      <p class="subtitle">Управление поголовьем, микроклиматом и производственными показателями</p>
+      <h1>Оперативный зоотехнический контроль (Птичники)</h1>
+      <p class="subtitle">Мониторинг поголовья, яйценоскости по кроссам, микроклимата и расхода корма</p>
     </div>
-  </header>
+  </div>
 
-  <section class="kpi-grid">
+  <!-- KPI панель по всей фабрике -->
+  <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-title">Общее поголовье</div>
-      <div class="kpi-value text-primary">{{ totalBirds() | number }} <span class="unit">гол.</span></div>
-      <div class="kpi-note">По всем активным птичникам</div>
+      <div class="kpi-value text-primary">{{ totalBirds() | number }} <span class="unit">голов</span></div>
+      <div class="kpi-note">В 4 корпусах содержания</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Средняя сохранность</div>
-      <div class="kpi-value text-success">{{ averageSurvivalRate() | number:'1.1-1' }}%</div>
-      <div class="kpi-note">От начального стада</div>
+      <div class="kpi-title">Суточный сбор яйца</div>
+      <div class="kpi-value text-success">{{ totalDailyEggs() | number }} <span class="unit">шт / сут</span></div>
+      <div class="kpi-note">Поступает на яйцесклад</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Активных птичников</div>
-      <div class="kpi-value">{{ activeHousesCount() }} <span class="unit">из {{ houses().length }}</span></div>
-      <div class="kpi-note">В рабочем цикле</div>
+      <div class="kpi-title">Средняя яйценоскость</div>
+      <div class="kpi-value text-primary">{{ averageLayingRate() }}%</div>
+      <div class="kpi-note">По промышленному стаду</div>
     </div>
-  </section>
 
+    <div class="kpi-card">
+      <div class="kpi-title">Суточный расход корма</div>
+      <div class="kpi-value text-warning">{{ totalDailyFeedTons() }} <span class="unit">тонн</span></div>
+      <div class="kpi-note">Заказ со склада кормоцеха</div>
+    </div>
+  </div>
+
+  <!-- Список карточек птичников -->
   <div class="houses-grid">
-    @for (house of houses(); track house.id) {
-      <div class="house-card" [class.status-warning]="house.status === 'warning'">
-        <div class="house-header">
+    <div *ngFor="let house of houses()" class="house-card" [class.border-warning]="!isTemperatureNormal(house.temperature, house.targetTemperature) || (house.birdType === 'layer' && house.actualLayingRatePercent < house.targetLayingRatePercent - 2)">
+      <div class="house-header">
+        <div>
           <h3 class="house-title">{{ house.name }}</h3>
-          <span class="badge" [class.badge-active]="house.status === 'active'" [class.badge-warning]="house.status === 'warning'">
-            {{ house.status === 'active' ? 'В норме' : 'Внимание' }}
-          </span>
+          <span class="cross-badge">Кросс: {{ house.crossType }}</span>
         </div>
-        <div class="house-metrics">
-          <div class="metric-row">
-            <span class="label">Поголовье:</span>
-            <span class="val">{{ house.birdCount | number }} гол.</span>
-          </div>
-          <div class="metric-row">
-            <span class="label">Возраст:</span>
-            <span class="val">{{ house.ageDays }} дней</span>
-          </div>
-          <div class="metric-row">
-            <span class="label">Температура:</span>
-            <span class="val" [class.text-danger]="house.temperature !== house.targetTemperature">{{ house.temperature }}°C</span>
-          </div>
+        <span class="status-pill" [class.status-active]="house.status === 'active'">
+          Неделя {{ getAgeWeeks(house.ageDays) }} ({{ house.ageDays }} дн)
+        </span>
+      </div>
+
+      <!-- Поголовье -->
+      <div class="metric-group">
+        <div class="metric-row">
+          <span class="label">Текущее поголовье:</span>
+          <span class="val">{{ house.birdCount | number }} гол.</span>
+        </div>
+        <div class="metric-row">
+          <span class="label">Сохранность стада:</span>
+          <span class="val text-success">{{ (house.birdCount / house.initialBirdCount * 100) | number:'1.1-1' }}%</span>
         </div>
       </div>
-    }
+
+      <!-- Продуктивность (для несушек) -->
+      <div class="metric-group" *ngIf="house.birdType === 'layer'">
+        <div class="metric-row">
+          <span class="label">Яйценоскость (Факт / План):</span>
+          <span class="val" [class.text-danger]="house.actualLayingRatePercent < house.targetLayingRatePercent - 2" [class.text-success]="house.actualLayingRatePercent >= house.targetLayingRatePercent - 2">
+            {{ house.actualLayingRatePercent }}% <span class="norm">/ {{ house.targetLayingRatePercent }}%</span>
+          </span>
+        </div>
+        <div class="metric-row">
+          <span class="label">Суточный сбор яйца:</span>
+          <span class="val">{{ house.dailyEggCount | number }} шт.</span>
+        </div>
+      </div>
+
+      <!-- Кормление и микроклимат -->
+      <div class="metric-group">
+        <div class="metric-row">
+          <span class="label">Расход корма (Факт / Норма):</span>
+          <span class="val" [class.text-danger]="house.feedPerBirdGrams > house.targetFeedGrams + 3">
+            {{ house.feedPerBirdGrams }} г <span class="norm">/ {{ house.targetFeedGrams }} г/гол</span>
+          </span>
+        </div>
+        <div class="metric-row">
+          <span class="label">Температура в зале:</span>
+          <span class="val" [class.text-danger]="!isTemperatureNormal(house.temperature, house.targetTemperature)" [class.text-success]="isTemperatureNormal(house.temperature, house.targetTemperature)">
+            {{ house.temperature }}°C <span class="norm">/ норма {{ house.targetTemperature }}°C</span>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

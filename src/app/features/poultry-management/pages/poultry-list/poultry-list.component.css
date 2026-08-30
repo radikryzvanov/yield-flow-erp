@@ -21,14 +21,16 @@
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-@media (max-width: 860px) {
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: 1fr; }
 }
 
 .kpi-card {
@@ -48,13 +50,13 @@
 }
 
 .kpi-value {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   margin: 8px 0 4px;
 }
 
 .kpi-value .unit {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: #64748b;
 }
@@ -86,7 +88,7 @@
   gap: 16px;
 }
 
-.house-card.status-warning {
+.house-card.border-warning {
   border-color: #fca5a5;
   background-color: #fffafb;
 }
@@ -94,47 +96,66 @@
 .house-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .house-title {
   font-size: 16px;
   font-weight: 600;
   color: #1e293b;
-  margin: 0;
+  margin: 0 0 4px 0;
 }
 
-.badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+.cross-badge {
+  font-size: 12px;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-pill {
+  font-size: 12px;
   font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
 }
 
-.badge-active {
-  background-color: #dcfce7;
-  color: #166534;
+.status-active {
+  background: #e0f2fe;
+  color: #0369a1;
 }
 
-.badge-warning {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.house-metrics {
+.metric-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
   font-size: 13px;
 }
 
-.house-metrics .metric-row {
+.metric-row {
   display: flex;
   justify-content: space-between;
-  color: #475569;
 }
 
-.house-metrics .metric-row .val {
+.metric-row .label {
+  color: #64748b;
+}
+
+.metric-row .val {
   font-weight: 600;
   color: #0f172a;
+}
+
+.metric-row .norm {
+  font-weight: 400;
+  color: #94a3b8;
+  font-size: 12px;
 }
