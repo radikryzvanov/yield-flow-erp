@@ -1,1 +1,45 @@
 /* You can add global styles to this file, and also import other style files */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Адаптивность для мобильных экранов и планшетов */
+@media (max-width: 900px) {
+  /* Если общий макет построен на flex/grid */
+  .layout, .app-layout, .container, .wrapper, main {
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Боковое меню подстраивается под ширину экрана */
+  aside, .sidebar, .nav-menu {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Сетки карточек, дашбордов и показателей перестраиваются в 1 колонку */
+  .grid, .cards-grid, .dashboard-grid, .poultry-grid, .metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Таблицы получают аккуратный горизонтальный скролл */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
