@@ -1,148 +1,139 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { MedicationStock, MortalityLog, VaccineRecord } from '../interfaces/veterinary.interface';
+import { Injectable, signal, computed } from '@angular/core';
+import { VaccineScheduleItem, DrugStockItem, HealthCheckLog } from '../interfaces/veterinary.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VeterinaryService {
-  // 1. График вакцинаций
-  private readonly _vaccinations = signal<VaccineRecord[]>([
+  private readonly _schedule = signal<VaccineScheduleItem[]>([
     {
-      id: 'vac-1',
-      batchNumber: 'ПАРТИЯ-РОСС-308-А',
-      houseId: 'Корпус № 1 (Бройлеры)',
-      birdAgeDays: 1,
-      vaccineName: 'Вакцина против болезни Марека (HVT)',
-      plannedDate: '2026-08-20',
-      completedDate: '2026-08-20',
+      id: 'vac-101',
+      ageDays: 1,
+      targetHouse: 'Инкубаторий (Выводной № 1)',
+      disease: 'Болезнь Марека + ИБК',
+      vaccineName: 'Марек Вакс HVT + Инфекционный бронхит',
+      method: 'spray',
+      plannedDate: 'Сегодня, 08:00',
       status: 'completed',
-      method: 'инкубаторий',
-      veterinarian: 'Семенов А. В.'
+      dosageDoses: 54000
     },
     {
-      id: 'vac-2',
-      batchNumber: 'ПАРТИЯ-РОСС-308-А',
-      houseId: 'Корпус № 1 (Бройлеры)',
-      birdAgeDays: 12,
-      vaccineName: 'Вакцина против болезни Гамборо (штамм 228E)',
-      plannedDate: '2026-08-24',
-      status: 'planned',
-      method: 'выпойка',
-      veterinarian: 'Семенов А. В.'
+      id: 'vac-102',
+      ageDays: 14,
+      targetHouse: 'Птичник № 3 (Молодняк)',
+      disease: 'Болезнь Гамборо (ИББ)',
+      vaccineName: 'Гамборо Вак GM-97',
+      method: 'water',
+      plannedDate: 'Завтра, 09:00',
+      status: 'urgent',
+      dosageDoses: 60000
     },
     {
-      id: 'vac-3',
-      batchNumber: 'ПАРТИЯ-ХАЙСЕКС-Б',
-      houseId: 'Корпус № 3 (Несушки)',
-      birdAgeDays: 28,
-      vaccineName: 'Вакцина против болезни Ньюкасла (Ла-Сота)',
-      plannedDate: '2026-08-25',
-      status: 'planned',
-      method: 'аэрозоль (спрей)',
-      veterinarian: 'Иванова Е. М.'
+      id: 'vac-103',
+      ageDays: 35,
+      targetHouse: 'Птичник № 3 (Молодняк)',
+      disease: 'Болезнь Ньюкасла (НБ)',
+      vaccineName: 'Ньюкасл Клон Ла-Сота',
+      method: 'spray',
+      plannedDate: 'Через 5 дней',
+      status: 'pending',
+      dosageDoses: 60000
+    },
+    {
+      id: 'vac-104',
+      ageDays: 110,
+      targetHouse: 'Птичник № 2 (Несушка Декалб)',
+      disease: 'Синдром снижения яйценоскости (ССЯ-76)',
+      vaccineName: 'ЭДС-Вак инактивированная',
+      method: 'injection',
+      plannedDate: '12.09.2026',
+      status: 'pending',
+      dosageDoses: 62000
     }
   ]);
 
-  // 2. Склад ветпрепаратов
-  private readonly _medications = signal<MedicationStock[]>([
+  private readonly _stock = signal<DrugStockItem[]>([
     {
-      id: 'med-1',
-      name: 'Вакцина Гамборо 228E (10 000 доз)',
-      category: 'вакцина',
-      quantity: 5,
-      unit: 'фл',
-      minThreshold: 8,
-      expiryDate: '2027-02-15'
+      id: 'st-1',
+      name: 'Марек Вакс HVT + Rispens',
+      category: 'Вакцины',
+      batchNumber: 'SER-8842',
+      stockDoses: 120000,
+      unit: 'доз',
+      expiryDate: '11.2027',
+      status: 'ok'
     },
     {
-      id: 'med-2',
-      name: 'Витаминный комплекс Чиктоник',
-      category: 'витаминный комплекс',
-      quantity: 45,
-      unit: 'л',
-      minThreshold: 20,
-      expiryDate: '2026-12-01'
+      id: 'st-2',
+      name: 'Гамборо Вак GM-97',
+      category: 'Вакцины',
+      batchNumber: 'SER-9102',
+      stockDoses: 65000,
+      unit: 'доз',
+      expiryDate: '04.2027',
+      status: 'low'
     },
     {
-      id: 'med-3',
-      name: 'Дезинфектант Экоцид С',
-      category: 'дезинфектант',
-      quantity: 120,
-      unit: 'кг',
-      minThreshold: 50,
-      expiryDate: '2028-05-10'
+      id: 'st-3',
+      name: 'Чиктоник (Комплекс аминокислот и витаминов)',
+      category: 'Витамины/Электролиты',
+      batchNumber: 'VIT-3301',
+      stockDoses: 450,
+      unit: 'литров',
+      expiryDate: '08.2027',
+      status: 'ok'
     },
     {
-      id: 'med-4',
-      name: 'Энрофлоксацин 10% (раствор)',
-      category: 'антибиотик',
-      quantity: 4,
-      unit: 'л',
-      minThreshold: 10,
-      expiryDate: '2026-11-20'
+      id: 'st-4',
+      name: 'Вироцид (Пенный дезинфектант)',
+      category: 'Дезинфектанты',
+      batchNumber: 'DES-4411',
+      stockDoses: 800,
+      unit: 'литров',
+      expiryDate: '01.2028',
+      status: 'ok'
     }
   ]);
 
-  // 3. Журнал падежа и осмотра
-  private readonly _mortalityLogs = signal<MortalityLog[]>([
+  private readonly _logs = signal<HealthCheckLog[]>([
     {
-      id: 'mort-1',
-      date: '2026-08-24',
-      houseId: 'Корпус № 1 (Бройлеры)',
-      batchNumber: 'ПАРТИЯ-РОСС-308-А',
-      count: 12,
-      reason: 'Технологический отход (слабые цыплята)',
-      vetConfirmed: true
+      id: 'VET-LOG-501',
+      date: 'Сегодня, утренний обход',
+      house: 'Птичник № 1 (Несушка Ломанн)',
+      flockAgeWeeks: 34,
+      mortalityCount: 6,
+      mortalityRatePercent: 0.01,
+      clinicalSigns: 'Клиническое состояние стада отличное. Аппетит и поение в норме.',
+      vetDoctor: 'Иванов С. М.',
+      quarantineStatus: 'normal'
     },
     {
-      id: 'mort-2',
-      date: '2026-08-24',
-      houseId: 'Корпус № 2 (Бройлеры)',
-      batchNumber: 'ПАРТИЯ-РОСС-308-Б',
-      count: 8,
-      reason: 'Асцит (водянка)',
-      vetConfirmed: true
+      id: 'VET-LOG-502',
+      date: 'Сегодня, утренний обход',
+      house: 'Птичник № 2 (Несушка Декалб)',
+      flockAgeWeeks: 28,
+      mortalityCount: 14,
+      mortalityRatePercent: 0.02,
+      clinicalSigns: 'Локальный тепловой стресс в секции В. Усилена вентиляция, назначена выпойка витамина C.',
+      vetDoctor: 'Иванов С. М.',
+      quarantineStatus: 'observation'
     }
   ]);
 
-  // Публичные сигналы (Readonly)
-  readonly vaccinations = this._vaccinations.asReadonly();
-  readonly medications = this._medications.asReadonly();
-  readonly mortalityLogs = this._mortalityLogs.asReadonly();
+  readonly schedule = this._schedule.asReadonly();
+  readonly stock = this._stock.asReadonly();
+  readonly logs = this._logs.asReadonly();
 
-  // Вычисляемые метрики
-  readonly plannedVaccinationsCount = computed(() =>
-    this._vaccinations().filter(v => v.status === 'planned').length
+  // Количество запланированных вакцинаций
+  readonly pendingVaccinationsCount = computed(() =>
+    this._schedule().filter(s => s.status !== 'completed').length
   );
 
-  readonly lowStockAlerts = computed(() =>
-    this._medications().filter(m => m.quantity <= m.minThreshold)
+  // Общий суточный падеж
+  readonly totalDailyMortality = computed(() =>
+    this._logs().reduce((sum, l) => sum + l.mortalityCount, 0)
   );
 
-  readonly totalMortalityToday = computed(() =>
-    this._mortalityLogs()
-      .filter(m => m.date === '2026-08-24')
-      .reduce((sum, item) => sum + item.count, 0)
-  );
-
-  // Методы управления
-  completeVaccination(id: string): void {
-    const today = new Date().toISOString().slice(0, 10);
-    this._vaccinations.update(list =>
-      list.map(record =>
-        record.id === id
-          ? { ...record, status: 'completed', completedDate: today }
-          : record
-      )
-    );
-  }
-
-  addMortalityRecord(data: Omit<MortalityLog, 'id' | 'vetConfirmed'>): void {
-    const newRecord: MortalityLog = {
-      ...data,
-      id: `mort-${Date.now()}`,
-      vetConfirmed: true
-    };
-    this._mortalityLogs.update(list => [newRecord, ...list]);
-  }
+  // Средняя сохранность поголовья
+  readonly flockLivabilityPercent = computed(() => 98.6);
 }

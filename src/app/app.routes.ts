@@ -44,8 +44,8 @@ export const routes: Routes = [
   {
     path: 'veterinary',
     loadComponent: () =>
-      import('./features/veterinary/pages/vet-dashboard/vet-dashboard.component').then(
-        m => m.VetDashboardComponent
+      import('./features/veterinary/pages/veterinary-dashboard/veterinary-dashboard.component').then(
+        m => m.VeterinaryDashboardComponent
       )
   },
   {
