@@ -119,4 +119,33 @@ export class PoultryManagementService {
     const totalRate = layerHouses.reduce((sum, h) => sum + h.actualLayingRatePercent, 0);
     return Math.round((totalRate / layerHouses.length) * 10) / 10;
   });
+
+  submitDailyReport(report: {
+    houseId: string;
+    mortalityCount: number;
+    dailyEggCount: number;
+    feedPerBirdGrams: number;
+    temperature: number;
+  }) {
+    this._houses.update(houses =>
+      houses.map(house => {
+        if (house.id !== report.houseId) return house;
+
+        const newBirdCount = Math.max(0, house.birdCount - report.mortalityCount);
+        const calculatedLayingRate = newBirdCount > 0 && house.birdType === 'layer'
+          ? Math.round((report.dailyEggCount / newBirdCount) * 1000) / 10
+          : house.actualLayingRatePercent;
+
+        return {
+          ...house,
+          birdCount: newBirdCount,
+          dailyEggCount: report.dailyEggCount,
+          feedPerBirdGrams: report.feedPerBirdGrams,
+          temperature: report.temperature,
+          actualLayingRatePercent: calculatedLayingRate,
+          ageDays: house.ageDays + 1
+        };
+      })
+    );
+  }
 }

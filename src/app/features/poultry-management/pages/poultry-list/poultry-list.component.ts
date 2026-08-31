@@ -1,11 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PoultryManagementService } from '../../services/poultry-management.service';
+import { FormsModule } from '@angular/forms';
+import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
 
 @Component({
   selector: 'app-poultry-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './poultry-list.component.html',
   styleUrl: './poultry-list.component.css'
 })
@@ -17,6 +18,45 @@ export class PoultryListComponent {
   readonly totalDailyEggs = this.poultryService.totalDailyEggs;
   readonly totalDailyFeedTons = this.poultryService.totalDailyFeedTons;
   readonly averageLayingRate = this.poultryService.averageLayingRate;
+
+  // Состояние модального окна отчета
+  readonly isModalOpen = signal<boolean>(false);
+  readonly selectedHouse = signal<PoultryHouse | null>(null);
+
+  // Поля формы
+  mortalityInput: number = 0;
+  eggsInput: number = 0;
+  feedInput: number = 115;
+  tempInput: number = 20.0;
+
+  openReportModal(house: PoultryHouse) {
+    this.selectedHouse.set(house);
+    this.mortalityInput = 0;
+    this.eggsInput = house.dailyEggCount;
+    this.feedInput = house.feedPerBirdGrams;
+    this.tempInput = house.temperature;
+    this.isModalOpen.set(true);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+    this.selectedHouse.set(null);
+  }
+
+  saveReport() {
+    const house = this.selectedHouse();
+    if (!house) return;
+
+    this.poultryService.submitDailyReport({
+      houseId: house.id,
+      mortalityCount: Number(this.mortalityInput),
+      dailyEggCount: Number(this.eggsInput),
+      feedPerBirdGrams: Number(this.feedInput),
+      temperature: Number(this.tempInput)
+    });
+
+    this.closeModal();
+  }
 
   getAgeWeeks(days: number): number {
     return Math.floor(days / 7);
