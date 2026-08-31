@@ -1,128 +1,117 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { DeliveryOrder, DispatchVehicle } from '../interfaces/logistics.interface';
+import { Injectable, signal, computed } from '@angular/core';
+import { ShipmentOrder, FleetVehicle, LogisticsKpi } from '../interfaces/logistics.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LogisticsService {
-  private readonly _orders = signal<DeliveryOrder[]>([
+  private readonly _shipments = signal<ShipmentOrder[]>([
     {
-      id: 'ord-101',
-      orderNumber: 'ЗАКАЗ-2026-88',
-      customerName: 'Сеть гипермаркетов "Магнит"',
-      productCategory: 'Мясо бройлера (охл.)',
-      weightKg: 8500,
-      requiredTempCelsius: '0...+2 °C',
-      destinationCity: 'Казань',
-      plannedDispatchDate: '2026-08-24',
-      status: 'loading',
-      vehicleNumber: 'А 777 АА 116',
-      driverName: 'Хабибуллин Р. Т.'
+      id: 'SH-2026-881',
+      clientName: 'X5 Retail Group (РЦ Подольск)',
+      destinationCity: 'Москва и МО',
+      productType: 'Яйцо куриное столовое С0 (ГОСТ 31654)',
+      quantityUnits: 720,
+      unit: 'кор. (259 200 шт)',
+      carrierVehicle: 'Scania Р440АК 73',
+      driverName: 'Сергеев В. А.',
+      tempInsideCelsius: 4.2,
+      departureTime: 'Отправлен: 06:30 (Слот РЦ: 16:00)',
+      mercuryDocStatus: 'approved',
+      shippingStatus: 'in_transit'
     },
     {
-      id: 'ord-102',
-      orderNumber: 'ЗАКАЗ-2026-89',
-      customerName: 'Птицеторг Регион',
-      productCategory: 'Яйцо куриное (кат. C0/C1)',
-      weightKg: 12000,
-      requiredTempCelsius: '+4...+8 °C',
+      id: 'SH-2026-882',
+      clientName: 'АО «Тандер» (Магнит РЦ Самара)',
       destinationCity: 'Самара',
-      plannedDispatchDate: '2026-08-24',
-      status: 'pending'
+      productType: 'Яйцо куриное столовое С1 (Брендированное)',
+      quantityUnits: 650,
+      unit: 'кор. (234 000 шт)',
+      carrierVehicle: 'КАМАЗ 5490 М812ТУ 73',
+      driverName: 'Калинин А. Д.',
+      tempInsideCelsius: 3.8,
+      departureTime: 'Погрузка: Ворота № 3 (Выезд: 14:00)',
+      mercuryDocStatus: 'approved',
+      shippingStatus: 'loading'
     },
     {
-      id: 'ord-103',
-      orderNumber: 'ЗАКАЗ-2026-85',
-      customerName: 'Хладокомбинат № 1',
-      productCategory: 'Мясо бройлера (зам.)',
-      weightKg: 18000,
-      requiredTempCelsius: '-18 °C',
-      destinationCity: 'Уфа',
-      plannedDispatchDate: '2026-08-23',
-      status: 'in_transit',
-      vehicleNumber: 'В 543 ЕЕ 102',
-      driverName: 'Петров С. В.'
+      id: 'SH-2026-883',
+      clientName: 'Сеть супермаркетов «ВкусВилл»',
+      destinationCity: 'Нижний Новгород',
+      productType: 'Охлажденная тушка куры 1 сорт (Лотки)',
+      quantityUnits: 8.5,
+      unit: 'тонн',
+      carrierVehicle: 'MAN TGM У332ЕК 73',
+      driverName: 'Михайлов Е. П.',
+      tempInsideCelsius: 2.1,
+      departureTime: 'Отправлен: 08:15 (Слот РЦ: 14:30)',
+      mercuryDocStatus: 'approved',
+      shippingStatus: 'in_transit'
+    },
+    {
+      id: 'SH-2026-884',
+      clientName: 'Оптовый склад Ульяновск (Локальная сеть)',
+      destinationCity: 'Ульяновск',
+      productType: 'Яйцо столовое С2 + Меланж яичный',
+      quantityUnits: 340,
+      unit: 'кор.',
+      carrierVehicle: 'ГАЗон Next К552РН 73',
+      driverName: 'Федоров И. С.',
+      tempInsideCelsius: 5.0,
+      departureTime: 'Доставлен: 10:45 (Разгружен)',
+      mercuryDocStatus: 'approved',
+      shippingStatus: 'delivered'
     }
   ]);
 
-  private readonly _vehicles = signal<DispatchVehicle[]>([
+  private readonly _fleet = signal<FleetVehicle[]>([
     {
-      id: 'veh-1',
-      plateNumber: 'А 777 АА 116',
-      driverName: 'Хабибуллин Р. Т.',
-      capacityTons: 10,
-      hasRefrigerator: true,
+      id: 'FL-01',
+      plateNumber: 'Р 440 АК 73',
+      model: 'Scania R450 ThermoKing',
+      capacityTons: 20,
+      coolingMode: '+2°C .. +4°C (Яйцо)',
+      currentLocation: 'Трасса М-5 (км 712)',
+      telemetryTempC: 4.2,
+      status: 'active'
+    },
+    {
+      id: 'FL-02',
+      plateNumber: 'М 812 ТУ 73',
+      model: 'КАМАЗ 5490 Neo Carrier',
+      capacityTons: 20,
+      coolingMode: '+2°C .. +4°C (Яйцо)',
+      currentLocation: 'На рампе погрузки № 3',
+      telemetryTempC: 3.8,
       status: 'loading'
     },
     {
-      id: 'veh-2',
-      plateNumber: 'В 543 ЕЕ 102',
-      driverName: 'Петров С. В.',
-      capacityTons: 20,
-      hasRefrigerator: true,
-      status: 'on_route'
+      id: 'FL-03',
+      plateNumber: 'У 332 ЕК 73',
+      model: 'MAN TGM Рефрижератор',
+      capacityTons: 10,
+      coolingMode: '0°C .. +2°C (Мясо охл.)',
+      currentLocation: 'Трасса Р-158 (Подъезд к РЦ)',
+      telemetryTempC: 2.1,
+      status: 'active'
     },
     {
-      id: 'veh-3',
-      plateNumber: 'М 901 ТТ 116',
-      driverName: 'Смирнов Д. А.',
-      capacityTons: 15,
-      hasRefrigerator: true,
-      status: 'free'
+      id: 'FL-04',
+      plateNumber: 'К 552 РН 73',
+      model: 'ГАЗон Next Изотерм',
+      capacityTons: 5,
+      coolingMode: '+4°C (Городская развозка)',
+      currentLocation: 'База фабрики (Возврат)',
+      telemetryTempC: 5.0,
+      status: 'active'
     }
   ]);
 
-  readonly orders = this._orders.asReadonly();
-  readonly vehicles = this._vehicles.asReadonly();
+  readonly shipments = this._shipments.asReadonly();
+  readonly fleet = this._fleet.asReadonly();
 
-  readonly totalWeightInTransitKg = computed(() =>
-    this._orders()
-      .filter(o => o.status === 'in_transit')
-      .reduce((sum, o) => sum + o.weightKg, 0)
-  );
-
-  readonly activeOrdersCount = computed(() =>
-    this._orders().filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length
-  );
-
-  readonly availableVehicles = computed(() =>
-    this._vehicles().filter(v => v.status === 'free')
-  );
-
-  dispatchOrder(orderId: string, vehicleId: string): void {
-    const vehicle = this._vehicles().find(v => v.id === vehicleId);
-    if (!vehicle) return;
-
-    this._orders.update(list =>
-      list.map(ord =>
-        ord.id === orderId
-          ? {
-              ...ord,
-              status: 'in_transit',
-              vehicleNumber: vehicle.plateNumber,
-              driverName: vehicle.driverName
-            }
-          : ord
-      )
-    );
-
-    this._vehicles.update(list =>
-      list.map(v => (v.id === vehicleId ? { ...v, status: 'on_route' } : v))
-    );
-  }
-
-  markDelivered(orderId: string): void {
-    const order = this._orders().find(o => o.id === orderId);
-    if (!order) return;
-
-    this._orders.update(list =>
-      list.map(ord => (ord.id === orderId ? { ...ord, status: 'delivered' } : ord))
-    );
-
-    if (order.vehicleNumber) {
-      this._vehicles.update(list =>
-        list.map(v => (v.plateNumber === order.vehicleNumber ? { ...v, status: 'free' } : v))
-      );
-    }
-  }
+  readonly totalDailyShippedTons = computed(() => 64.8);
+  readonly activeVehiclesCount = computed(() => this._fleet().filter(f => f.status === 'active').length);
+  readonly onTimeRatePercent = computed(() => 99.4);
+  readonly approvedMercuryDocsCount = computed(() => this._shipments().filter(s => s.mercuryDocStatus === 'approved').length);
 }

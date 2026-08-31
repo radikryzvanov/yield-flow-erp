@@ -1,25 +1,32 @@
-export type ShipmentStatus = 'pending' | 'loading' | 'in_transit' | 'delivered' | 'cancelled';
-export type ProductCategory = 'Мясо бройлера (охл.)' | 'Мясо бройлера (зам.)' | 'Яйцо куриное (кат. C0/C1)' | 'Субпродукты';
-
-export interface DeliveryOrder {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  productCategory: ProductCategory;
-  weightKg: number;
-  requiredTempCelsius: string;
-  destinationCity: string;
-  plannedDispatchDate: string;
-  status: ShipmentStatus;
-  vehicleNumber?: string;
-  driverName?: string;
+export interface ShipmentOrder {
+  id: string;                      // Номер отгрузки / Заказа
+  clientName: string;              // X5 Retail Group (Пятёрочка), Тандер (Магнит), ВкусВилл
+  destinationCity: string;         // Город назначения (Москва РЦ, Казань РЦ, Самара)
+  productType: string;             // Яйцо СО / С1, Охлажденная тушка ГОСТ
+  quantityUnits: number;           // Количество коробок / паллет / кг
+  unit: string;                    // кор. / паллет / тонн
+  carrierVehicle: string;          // Госномер ТС (КАМАЗ Р620ТВ / Scania О114АК)
+  driverName: string;              // Водитель
+  tempInsideCelsius: number;       // Телеметрия рефрижератора (°C)
+  departureTime: string;           // Время выезда / плановое прибытие
+  mercuryDocStatus: 'approved' | 'in_progress' | 'error'; // Статус ВСД «Меркурий»
+  shippingStatus: 'loading' | 'in_transit' | 'delivered';
 }
 
-export interface DispatchVehicle {
+export interface FleetVehicle {
   id: string;
-  plateNumber: string;
-  driverName: string;
-  capacityTons: number;
-  hasRefrigerator: boolean;
-  status: 'free' | 'loading' | 'on_route';
+  plateNumber: string;             // Госномер
+  model: string;                   // Модель ТС (Scania R450 Ref, КАМАЗ 5490 Neo)
+  capacityTons: number;            // Грузоподъемность (т)
+  coolingMode: string;             // Режим (+2..+4°C / -18°C)
+  currentLocation: string;         // Текущий гео-статус
+  telemetryTempC: number;          // Датчик холода
+  status: 'active' | 'loading' | 'service';
+}
+
+export interface LogisticsKpi {
+  dailyShippedTons: number;        // Отгружено за сутки (т)
+  activeVehiclesOnRoute: number;   // Машин на маршрутах
+  onTimeDeliveryRatePercent: number; // Соблюдение тайм-слотов РЦ (%)
+  mercuryDocsIssuedCount: number;  // Сформировано ВСД
 }

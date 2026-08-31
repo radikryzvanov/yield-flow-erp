@@ -19,19 +19,33 @@
   margin: 0;
 }
 
-/* Карточки KPI */
+/* KPI сетка */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: 1fr; }
 }
 
 .kpi-card {
   background: #ffffff;
-  padding: 18px 20px;
-  border-radius: 10px;
+  padding: 20px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .kpi-title {
@@ -42,14 +56,16 @@
   letter-spacing: 0.5px;
 }
 
+.kpi-icon { font-size: 18px; }
+
 .kpi-value {
   font-size: 28px;
   font-weight: 700;
-  margin: 8px 0 4px;
+  margin: 10px 0 6px;
 }
 
 .kpi-value .unit {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #64748b;
 }
@@ -60,159 +76,178 @@
 }
 
 .text-primary { color: #2563eb; }
-.text-warning { color: #d97706; }
 .text-success { color: #16a34a; }
-.text-info { color: #0284c7; }
-.text-muted { color: #64748b; }
-.small { font-size: 12px; }
+.text-warning { color: #d97706; }
 
-/* Основная сетка страницы */
-.content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-}
-
-@media (max-width: 1024px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.main-column, .side-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* Карточки-контейнеры */
+/* Общие стили карточек и таблиц */
 .card {
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  padding: 24px;
 }
 
 .card-header {
-  padding: 16px 20px;
+  margin-bottom: 16px;
   border-bottom: 1px solid #f1f5f9;
-  background-color: #fafafa;
+  padding-bottom: 12px;
 }
 
-.card-header h2 {
-  font-size: 16px;
+.card-title {
+  font-size: 17px;
+  font-weight: 600;
   color: #1e293b;
-  margin: 0;
+  margin: 0 0 4px 0;
 }
 
-/* Таблицы */
-.table-responsive {
-  overflow-x: auto;
+.card-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th, .data-table td {
+  padding: 12px 14px;
   text-align: left;
-  font-size: 14px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .data-table th {
+  color: #64748b;
+  font-weight: 600;
   background-color: #f8fafc;
-  color: #475569;
-  font-weight: 600;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
 }
 
-.data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-  vertical-align: middle;
-}
+.font-bold { font-weight: 600; }
+.text-code { font-family: monospace; color: #2563eb; }
 
-/* Статусы отгрузок */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-pending { background-color: #f1f5f9; color: #475569; }
-.status-loading { background-color: #fef3c7; color: #92400e; }
-.status-transit { background-color: #e0f2fe; color: #0369a1; }
-.status-delivered { background-color: #dcfce7; color: #166534; }
-
-.badge {
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badge-success { background-color: #dcfce7; color: #166534; }
-.badge-warning { background-color: #fef3c7; color: #92400e; }
-.badge-primary { background-color: #e0f2fe; color: #0369a1; }
-
-/* Кнопки и контролы */
-.btn {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background-color: #2563eb; color: #fff; }
-.btn-success { background-color: #16a34a; color: #fff; }
-
-.form-control-sm {
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  outline: none;
-  background: #fff;
-}
-
-.action-cell {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-/* Список автопарка */
-.vehicle-list {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.vehicle-item {
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.vehicle-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.vehicle-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.vehicle-details {
+.client-cell, .driver-cell {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.dest-city, .driver-sub {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.prod-tag {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.temp-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.temp-ok {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-transit { background-color: #eff6ff; color: #1d4ed8; }
+.badge-loading { background-color: #fef3c7; color: #b45309; }
+.badge-delivered { background-color: #dcfce7; color: #15803d; }
+
+.vsd-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+}
+
+/* Автопарк */
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.fleet-card {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fc-plate {
+  font-size: 15px;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.fc-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.status-act { background-color: #dcfce7; color: #15803d; }
+.status-load { background-color: #fef3c7; color: #b45309; }
+
+.fc-model {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.fc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.fcd-row {
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+}
+
+.fcd-temp {
+  color: #1e293b;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.temp-value {
+  color: #2563eb;
 }

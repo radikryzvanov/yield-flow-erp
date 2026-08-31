@@ -1,141 +1,136 @@
 <div class="logistics-container">
-  <header class="page-header">
+  <div class="page-header">
     <div>
-      <h1>Логистика, мониторинг рейсов и сбыт</h1>
-      <p class="subtitle">Управление отгрузками продукции, авторефрижераторами и температурными цепочками</p>
+      <h1>Логистика, сбыт и мониторинг отгрузок</h1>
+      <p class="subtitle">Управление транспортными партиями в федеральные торговые сети, контроль телеметрии рефрижераторов и интеграция с ФГИС «Меркурий»</p>
     </div>
-  </header>
+  </div>
 
-  <!-- KPI метрики -->
-  <section class="kpi-grid">
+  <!-- KPI панель сбыта и логистики -->
+  <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Продукция в пути</div>
-      <div class="kpi-value text-primary">{{ (totalWeightInTransitKg() / 1000) | number:'1.1-2' }} <span class="unit">т</span></div>
-      <div class="kpi-note">В авторефрижераторах</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Активные заказы</div>
-      <div class="kpi-value text-warning">{{ activeOrdersCount() }} <span class="unit">заяв.</span></div>
-      <div class="kpi-note">В сборке и доставке</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Суточная отгрузка</span>
+        <span class="kpi-icon">🚛</span>
+      </div>
+      <div class="kpi-value text-primary">{{ shippedTons() }} <span class="unit">тонн / сут</span></div>
+      <div class="kpi-note">Яйцо столовое + Мясопереработка</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Свободный транспорт</div>
-      <div class="kpi-value text-success">{{ availableVehicles().length }} <span class="unit">ед.</span></div>
-      <div class="kpi-note">Готовы к погрузке</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Рейсы на маршрутах</span>
+        <span class="kpi-icon">📍</span>
+      </div>
+      <div class="kpi-value text-success">{{ activeVehicles() }} <span class="unit">активных ТС</span></div>
+      <div class="kpi-note">Все рейсы с датчиками холода</div>
     </div>
-  </section>
 
-  <!-- Сетка контента -->
-  <div class="content-grid">
-    <!-- Левая колонка: Заказы и отгрузки -->
-    <div class="main-column">
-      <div class="card">
-        <div class="card-header">
-          <h2>Журнал отгрузок и доставок клиентам</h2>
-        </div>
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Номер / Клиент</th>
-                <th>Продукция / Вес</th>
-                <th>Город / Режим</th>
-                <th>Транспорт</th>
-                <th>Статус</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (order of orders(); track order.id) {
-                <tr>
-                  <td>
-                    <strong>{{ order.orderNumber }}</strong>
-                    <div class="text-muted small">{{ order.customerName }}</div>
-                  </td>
-                  <td>
-                    <strong>{{ order.productCategory }}</strong>
-                    <div class="text-muted small">{{ order.weightKg | number }} кг</div>
-                  </td>
-                  <td>
-                    <strong>{{ order.destinationCity }}</strong>
-                    <div class="text-info small">❄ {{ order.requiredTempCelsius }}</div>
-                  </td>
-                  <td>
-                    @if (order.vehicleNumber) {
-                      <strong>{{ order.vehicleNumber }}</strong>
-                      <div class="text-muted small">{{ order.driverName }}</div>
-                    } @else {
-                      <span class="text-muted small">Не назначен</span>
-                    }
-                  </td>
-                  <td>
-                    <span class="status-badge"
-                      [class.status-pending]="order.status === 'pending'"
-                      [class.status-loading]="order.status === 'loading'"
-                      [class.status-transit]="order.status === 'in_transit'"
-                      [class.status-delivered]="order.status === 'delivered'">
-                      {{
-                        order.status === 'pending' ? 'Ожидает авто' :
-                        order.status === 'loading' ? 'На погрузке' :
-                        order.status === 'in_transit' ? 'В пути' : 'Доставлено'
-                      }}
-                    </span>
-                  </td>
-                  <td>
-                    @if (order.status === 'pending' || order.status === 'loading') {
-                      <div class="action-cell">
-                        <select [(ngModel)]="selectedVehicleId" class="form-control-sm">
-                          <option value="" disabled selected>Выбрать авто</option>
-                          @for (v of availableVehicles(); track v.id) {
-                            <option [value]="v.id">{{ v.plateNumber }} ({{ v.capacityTons }} т)</option>
-                          }
-                        </select>
-                        <button class="btn btn-sm btn-primary" [disabled]="!selectedVehicleId" (click)="dispatch(order.id)">
-                          В рейс
-                        </button>
-                      </div>
-                    } @else if (order.status === 'in_transit') {
-                      <button class="btn btn-sm btn-success" (click)="completeDelivery(order.id)">
-                        Доставлено
-                      </button>
-                    } @else {
-                      <span class="text-success small">✔ Закрыт</span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Соблюдение тайм-слотов РЦ</span>
+        <span class="kpi-icon">⏱️</span>
+      </div>
+      <div class="kpi-value text-success">{{ onTimeRate() }}%</div>
+      <div class="kpi-note">Без штрафов от сетей X5 / Тандер</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">ФГИС «Меркурий»</span>
+        <span class="kpi-icon">🛡️</span>
+      </div>
+      <div class="kpi-value text-success">100% ВСД</div>
+      <div class="kpi-note">Электронные сертификаты подписаны</div>
+    </div>
+  </div>
+
+  <!-- Таблица текущих рейсов и отгрузок в сети -->
+  <div class="card table-card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">📋 График и статус отгрузок в торговые сети</h3>
+        <p class="card-desc">Контроль партий, температурного режима и электронных накладных в режиме реального времени</p>
       </div>
     </div>
 
-    <!-- Правая колонка: Парк автотранспорта -->
-    <div class="side-column">
-      <div class="card">
-        <div class="card-header">
-          <h2>Автопарк птицефабрики</h2>
-        </div>
-        <div class="vehicle-list">
-          @for (v of vehicles(); track v.id) {
-            <div class="vehicle-item">
-              <div class="vehicle-header">
-                <strong>{{ v.plateNumber }}</strong>
-                <span class="badge"
-                  [class.badge-success]="v.status === 'free'"
-                  [class.badge-warning]="v.status === 'loading'"
-                  [class.badge-primary]="v.status === 'on_route'">
-                  {{ v.status === 'free' ? 'Свободен' : v.status === 'loading' ? 'Погрузка' : 'В рейсе' }}
-                </span>
-              </div>
-              <div class="vehicle-details text-muted small">
-                <span>Водитель: {{ v.driverName }}</span>
-                <span>Грузоподъемность: {{ v.capacityTons }} т (Рефрижератор)</span>
-              </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>№ Накладной / Заказ</th>
+          <th>Клиент / РЦ назначения</th>
+          <th>Продукция</th>
+          <th>Объем отгрузки</th>
+          <th>Автомобиль / Водитель</th>
+          <th>Реф (°C)</th>
+          <th>Статус рейса</th>
+          <th>Меркурий ВСД</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of shipments()">
+          <td class="font-bold text-code">{{ s.id }}</td>
+          <td>
+            <div class="client-cell">
+              <span class="client-name font-bold">{{ s.clientName }}</span>
+              <span class="dest-city">{{ s.destinationCity }}</span>
             </div>
-          }
+          </td>
+          <td><span class="prod-tag">{{ s.productType }}</span></td>
+          <td class="font-bold">{{ s.quantityUnits }} {{ s.unit }}</td>
+          <td>
+            <div class="driver-cell">
+              <span>{{ s.carrierVehicle }}</span>
+              <span class="driver-sub">{{ s.driverName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="temp-badge" [class.temp-ok]="s.tempInsideCelsius <= 4.5">
+              ❄️ {{ s.tempInsideCelsius }}°C
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class.badge-transit]="s.shippingStatus === 'in_transit'" [class.badge-loading]="s.shippingStatus === 'loading'" [class.badge-delivered]="s.shippingStatus === 'delivered'">
+              {{ getShipmentStatusBadge(s.shippingStatus) }}
+            </span>
+          </td>
+          <td>
+            <span class="vsd-badge">✅ Оформлен</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Телеметрия автопарка рефрижераторов -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">📡 Собственный рефрижераторный автопарк (IoT Телеметрия)</h3>
+      <p class="card-desc">Контроль холодовой цепи перевозки скоропортящейся продукции</p>
+    </div>
+
+    <div class="fleet-grid">
+      <div *ngFor="let car of fleet()" class="fleet-card">
+        <div class="fc-header">
+          <span class="fc-plate font-bold">{{ car.plateNumber }}</span>
+          <span class="fc-status" [class.status-act]="car.status === 'active'" [class.status-load]="car.status === 'loading'">
+            {{ car.status === 'active' ? '● В рейсе' : '● На рампе' }}
+          </span>
+        </div>
+        <div class="fc-model">{{ car.model }} ({{ car.capacityTons }} т)</div>
+        <div class="fc-details">
+          <div class="fcd-row">
+            <span>Локация:</span>
+            <b>{{ car.currentLocation }}</b>
+          </div>
+          <div class="fcd-row">
+            <span>Режим термоизоляции:</span>
+            <span>{{ car.coolingMode }}</span>
+          </div>
+          <div class="fcd-row fcd-temp">
+            <span>Датчик кузова:</span>
+            <span class="temp-value">❄️ {{ car.telemetryTempC }}°C</span>
+          </div>
         </div>
       </div>
     </div>
