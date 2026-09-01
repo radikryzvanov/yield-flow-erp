@@ -1,103 +1,109 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .logistics-container {
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  background-color: #f8fafc;
-  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.page-header h1 {
-  font-size: 24px;
-  color: #1e293b;
-  margin: 0 0 6px 0;
+.page-header .page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
 }
 
 .subtitle {
   color: #64748b;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
-/* KPI сетка */
+/* Сетка KPI */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-@media (max-width: 1024px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 600px) {
-  .kpi-grid { grid-template-columns: 1fr; }
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .kpi-card {
   background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 16px 20px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .kpi-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
 .kpi-title {
   font-size: 13px;
-  font-weight: 600;
   color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
-.kpi-icon { font-size: 18px; }
+.kpi-icon {
+  font-size: 18px;
+}
 
 .kpi-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 10px 0 6px;
+  color: #0f172a;
 }
 
 .kpi-value .unit {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #64748b;
 }
 
+.text-primary { color: #2563eb; }
+.text-success { color: #16a34a; }
+
 .kpi-note {
   font-size: 12px;
   color: #94a3b8;
+  margin-top: 4px;
 }
 
-.text-primary { color: #2563eb; }
-.text-success { color: #16a34a; }
-.text-warning { color: #d97706; }
-
-/* Общие стили карточек и таблиц */
+/* Основные карточки */
 .card {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 10px;
+  padding: 20px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 12px;
 }
 
 .card-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0 0 4px 0;
 }
 
@@ -107,31 +113,68 @@
   margin: 0;
 }
 
+/* Кнопка экспорта */
+.btn-excel-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #107c41;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-excel-export:hover {
+  background: #0b5a2f;
+}
+
+.btn-excel-export .excel-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Таблица */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  text-align: left;
   font-size: 13px;
 }
 
-.data-table th, .data-table td {
+.data-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
   padding: 12px 14px;
-  text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
-.data-table th {
-  color: #64748b;
-  font-weight: 600;
-  background-color: #f8fafc;
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
 }
 
 .font-bold { font-weight: 600; }
-.text-code { font-family: monospace; color: #2563eb; }
+.text-code { font-family: ui-monospace, monospace; color: #2563eb; }
 
 .client-cell, .driver-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .dest-city, .driver-sub {
@@ -140,8 +183,7 @@
 }
 
 .prod-tag {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -149,105 +191,96 @@
 }
 
 .temp-badge {
-  font-size: 12px;
-  font-weight: 600;
+  background: #eff6ff;
+  color: #2563eb;
   padding: 3px 8px;
   border-radius: 4px;
-  white-space: nowrap;
-}
-
-.temp-ok {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-block;
 }
 
 .status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
+  display: inline-block;
 }
 
-.badge-transit { background-color: #eff6ff; color: #1d4ed8; }
-.badge-loading { background-color: #fef3c7; color: #b45309; }
-.badge-delivered { background-color: #dcfce7; color: #15803d; }
+.badge-transit { background: #fef3c7; color: #d97706; }
+.badge-loading { background: #e0f2fe; color: #0284c7; }
+.badge-delivered { background: #dcfce7; color: #16a34a; }
 
 .vsd-badge {
-  font-size: 12px;
+  color: #16a34a;
   font-weight: 600;
-  color: #15803d;
+  font-size: 12px;
 }
 
 /* Автопарк */
 .fleet-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .fleet-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .fleet-card {
   background: #f8fafc;
-  padding: 16px;
-  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 8px;
+  padding: 14px;
 }
 
 .fc-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 4px;
 }
 
-.fc-plate {
-  font-size: 15px;
-  color: #1e293b;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
+.fc-plate { font-size: 14px; color: #0f172a; }
 
 .fc-status {
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
 }
 
-.status-act { background-color: #dcfce7; color: #15803d; }
-.status-load { background-color: #fef3c7; color: #b45309; }
+.status-act { color: #16a34a; }
+.status-load { color: #0284c7; }
 
 .fc-model {
-  font-size: 13px;
-  font-weight: 500;
-  color: #475569;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 12px;
 }
 
 .fc-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
+  gap: 6px;
   font-size: 12px;
 }
 
 .fcd-row {
   display: flex;
   justify-content: space-between;
-  color: #64748b;
+  color: #475569;
 }
 
 .fcd-temp {
-  color: #1e293b;
-  font-weight: 600;
   margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
 }
 
 .temp-value {
   color: #2563eb;
+  font-weight: 700;
 }

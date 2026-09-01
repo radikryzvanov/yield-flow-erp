@@ -1,12 +1,12 @@
 <div class="logistics-container">
   <div class="page-header">
     <div>
-      <h1>Логистика, сбыт и мониторинг отгрузок</h1>
+      <h1 class="page-title">Логистика, сбыт и мониторинг отгрузок</h1>
       <p class="subtitle">Управление транспортными партиями в федеральные торговые сети, контроль телеметрии рефрижераторов и интеграция с ФГИС «Меркурий»</p>
     </div>
   </div>
 
-  <!-- KPI панель сбыта и логистики -->
+  <!-- KPI панель -->
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-header">
@@ -45,68 +45,82 @@
     </div>
   </div>
 
-  <!-- Таблица текущих рейсов и отгрузок в сети -->
-  <div class="card table-card">
+  <!-- Карточка таблицы -->
+  <div class="card">
     <div class="card-header">
       <div>
         <h3 class="card-title">📋 График и статус отгрузок в торговые сети</h3>
         <p class="card-desc">Контроль партий, температурного режима и электронных накладных в режиме реального времени</p>
       </div>
+      <button class="btn-excel-export" (click)="exportToExcel()" type="button">
+        <svg class="excel-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+          <path d="M8.5 13.5l1.8 2.5-1.8 2.5h1.5l1-1.6 1 1.6h1.5l-1.8-2.5 1.8-2.5h-1.5l-1 1.6-1-1.6z"/>
+        </svg>
+        <span>Экспорт в Excel</span>
+      </button>
     </div>
 
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>№ Накладной / Заказ</th>
-          <th>Клиент / РЦ назначения</th>
-          <th>Продукция</th>
-          <th>Объем отгрузки</th>
-          <th>Автомобиль / Водитель</th>
-          <th>Реф (°C)</th>
-          <th>Статус рейса</th>
-          <th>Меркурий ВСД</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of shipments()">
-          <td class="font-bold text-code">{{ s.id }}</td>
-          <td>
-            <div class="client-cell">
-              <span class="client-name font-bold">{{ s.clientName }}</span>
-              <span class="dest-city">{{ s.destinationCity }}</span>
-            </div>
-          </td>
-          <td><span class="prod-tag">{{ s.productType }}</span></td>
-          <td class="font-bold">{{ s.quantityUnits }} {{ s.unit }}</td>
-          <td>
-            <div class="driver-cell">
-              <span>{{ s.carrierVehicle }}</span>
-              <span class="driver-sub">{{ s.driverName }}</span>
-            </div>
-          </td>
-          <td>
-            <span class="temp-badge" [class.temp-ok]="s.tempInsideCelsius <= 4.5">
-              ❄️ {{ s.tempInsideCelsius }}°C
-            </span>
-          </td>
-          <td>
-            <span class="status-badge" [class.badge-transit]="s.shippingStatus === 'in_transit'" [class.badge-loading]="s.shippingStatus === 'loading'" [class.badge-delivered]="s.shippingStatus === 'delivered'">
-              {{ getShipmentStatusBadge(s.shippingStatus) }}
-            </span>
-          </td>
-          <td>
-            <span class="vsd-badge">✅ Оформлен</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>№ Накладной / Заказ</th>
+            <th>Клиент / РЦ назначения</th>
+            <th>Продукция</th>
+            <th>Объем отгрузки</th>
+            <th>Автомобиль / Водитель</th>
+            <th>Реф (°C)</th>
+            <th>Статус рейса</th>
+            <th>Меркурий ВСД</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of shipments()">
+            <td class="font-bold text-code">{{ s.id }}</td>
+            <td>
+              <div class="client-cell">
+                <span class="client-name font-bold">{{ s.clientName }}</span>
+                <span class="dest-city">{{ s.destinationCity }}</span>
+              </div>
+            </td>
+            <td><span class="prod-tag">{{ s.productType }}</span></td>
+            <td class="font-bold">{{ s.quantityUnits }} {{ s.unit }}</td>
+            <td>
+              <div class="driver-cell">
+                <span>{{ s.carrierVehicle }}</span>
+                <span class="driver-sub">{{ s.driverName }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="temp-badge">
+                ❄️ {{ s.tempInsideCelsius }}°C
+              </span>
+            </td>
+            <td>
+              <span class="status-badge"
+                    [class.badge-transit]="s.shippingStatus === 'in_transit'"
+                    [class.badge-loading]="s.shippingStatus === 'loading'"
+                    [class.badge-delivered]="s.shippingStatus === 'delivered'">
+                {{ getShipmentStatusBadge(s.shippingStatus) }}
+              </span>
+            </td>
+            <td>
+              <span class="vsd-badge">✅ Оформлен</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Телеметрия автопарка рефрижераторов -->
+  <!-- Карточка автопарка -->
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title">📡 Собственный рефрижераторный автопарк (IoT Телеметрия)</h3>
-      <p class="card-desc">Контроль холодовой цепи перевозки скоропортящейся продукции</p>
+      <div>
+        <h3 class="card-title">📡 Собственный рефрижераторный автопарк (IoT Телеметрия)</h3>
+        <p class="card-desc">Контроль холодовой цепи перевозки скоропортящейся продукции</p>
+      </div>
     </div>
 
     <div class="fleet-grid">
