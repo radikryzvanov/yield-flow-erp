@@ -17,6 +17,7 @@
   font-size: 14px;
 }
 
+/* KPI Панель */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -54,22 +55,83 @@
   color: #94a3b8;
 }
 
-.text-primary {
-  color: #2563eb;
+.text-primary { color: #2563eb; }
+.text-success { color: #16a34a; }
+.text-warning { color: #d97706; }
+.text-danger { color: #dc2626; }
+
+/* Панель тулбара */
+.toolbar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.text-success {
-  color: #16a34a;
+.toolbar-title h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.text-warning {
-  color: #d97706;
+.houses-counter {
+  font-size: 12px;
+  color: #64748b;
 }
 
-.text-danger {
-  color: #dc2626;
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
+.input-search, .select-filter {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.input-search:focus, .select-filter:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.input-search {
+  min-width: 220px;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #107c41;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-export:hover {
+  background-color: #0c6133;
+}
+
+/* Сетка карточек птичников */
 .houses-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -178,6 +240,16 @@
 
 .btn-report:hover {
   background: #1d4ed8;
+}
+
+.empty-state-card {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 /* Модальное окно */

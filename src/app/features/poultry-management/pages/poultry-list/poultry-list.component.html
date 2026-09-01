@@ -33,9 +33,39 @@
     </div>
   </div>
 
+  <!-- Панель управления и фильтрации -->
+  <div class="toolbar-card">
+    <div class="toolbar-title">
+      <h3>Производственные корпуса</h3>
+      <span class="houses-counter">Отображено: {{ filteredHouses().length }} из {{ houses().length }}</span>
+    </div>
+
+    <div class="table-toolbar">
+      <input
+        type="text"
+        placeholder="Поиск по корпусу / кроссу..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="input-search" />
+
+      <select
+        [ngModel]="selectedType()"
+        (ngModelChange)="selectedType.set($event)"
+        class="select-filter">
+        <option value="ALL">Все типы стада</option>
+        <option value="layer">Промышленная несушка</option>
+        <option value="pullet">Ремонтный молодняк</option>
+      </select>
+
+      <button type="button" class="btn-export" (click)="exportToExcel()">
+        📥 Экспорт в Excel
+      </button>
+    </div>
+  </div>
+
   <!-- Список карточек птичников -->
   <div class="houses-grid">
-    <div *ngFor="let house of houses()" class="house-card" [class.border-warning]="!isTemperatureNormal(house.temperature, house.targetTemperature) || (house.birdType === 'layer' && house.actualLayingRatePercent < house.targetLayingRatePercent - 2)">
+    <div *ngFor="let house of filteredHouses()" class="house-card" [class.border-warning]="!isTemperatureNormal(house.temperature, house.targetTemperature) || (house.birdType === 'layer' && house.actualLayingRatePercent < house.targetLayingRatePercent - 2)">
       <div class="house-header">
         <div>
           <h3 class="house-title">{{ house.name }}</h3>
@@ -95,6 +125,10 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <div *ngIf="filteredHouses().length === 0" class="empty-state-card">
+    Корпусов по заданным критериям фильтрации не найдено
   </div>
 
   <!-- Модальное окно внесения отчета -->
