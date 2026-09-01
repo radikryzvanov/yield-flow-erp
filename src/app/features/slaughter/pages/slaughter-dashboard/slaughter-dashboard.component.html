@@ -108,18 +108,43 @@
       </div>
     </div>
 
-    <!-- Журнал партий убоя -->
+    <!-- Журнал партий убоя с тулбаром -->
     <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">📋 Журнал завершенных партий убоя</h3>
-        <p class="card-desc">История убоя по птичникам и результатам ветэкспертизы</p>
+      <div class="card-header-flex">
+        <div>
+          <h3 class="card-title">📋 Журнал завершенных партий убоя</h3>
+          <p class="card-desc">История убоя по птичникам и результатам ветэкспертизы</p>
+        </div>
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
+      </div>
+
+      <div class="toolbar-row">
+        <input
+          type="text"
+          placeholder="Поиск по птичнику / номеру партии..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="input-search" />
+
+        <select
+          [ngModel]="selectedVetStatus()"
+          (ngModelChange)="selectedVetStatus.set($event)"
+          class="select-filter">
+          <option value="ALL">Все статусы ветконтроля</option>
+          <option value="passed">ГОСТ пройдена</option>
+          <option value="rejected">Отбраковка</option>
+        </select>
       </div>
 
       <div class="logs-list">
-        <div *ngFor="let log of logs()" class="log-item">
+        <div *ngFor="let log of filteredLogs()" class="log-item">
           <div class="log-top">
             <span class="log-title font-bold">{{ log.sourceHouse }}</span>
-            <span class="vet-badge">Ветэкспертиза: ГОСТ пройдена</span>
+            <span class="vet-badge" [class.badge-passed]="log.vetInspectionStatus === 'passed'">
+              Ветэкспертиза: {{ log.vetInspectionStatus === 'passed' ? 'ГОСТ пройдена' : 'Отклонено' }}
+            </span>
           </div>
           <div class="log-desc">
             Поголовье: <b>{{ log.birdsCount | number }} гол.</b> | Живой вес: <b>{{ log.totalLiveWeightTons }} т</b> | Выход мяса: <b>{{ log.totalMeatYieldTons }} т</b>
@@ -128,6 +153,10 @@
             <span>Партия: {{ log.id }} ({{ log.date }})</span>
             <span>1-й сорт: <b>{{ log.firstGradePercent }}%</b></span>
           </div>
+        </div>
+
+        <div *ngIf="filteredLogs().length === 0" class="empty-state">
+          Записей по заданным фильтрам не найдено
         </div>
       </div>
     </div>
