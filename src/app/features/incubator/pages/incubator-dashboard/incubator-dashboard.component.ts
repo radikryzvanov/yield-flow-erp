@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IncubatorService } from '../../services/incubator.service';
 import { IncubationLog } from '../../interfaces/incubator.interface';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-incubator-dashboard',
@@ -13,6 +14,7 @@ import { IncubationLog } from '../../interfaces/incubator.interface';
 })
 export class IncubatorDashboardComponent {
   protected readonly incubatorService = inject(IncubatorService);
+  private readonly exportService = inject(ExportService);
 
   readonly cabinets = this.incubatorService.cabinets;
   readonly totalEggs = this.incubatorService.totalEggsInIncubation;
@@ -53,7 +55,7 @@ export class IncubatorDashboardComponent {
     }
   }
 
-  // Экспорт журнала вывода в Excel (.csv UTF-8 BOM)
+  // Централизованный экспорт журнала вывода в Excel
   exportToExcel(): void {
     const data = this.filteredLogs();
     if (data.length === 0) return;
@@ -62,7 +64,7 @@ export class IncubatorDashboardComponent {
       '№ Вывода',
       'Дата завершения',
       'Партия ИЯ',
-      'Кросс',
+      'Кросс птицы',
       'Заложено яиц (шт)',
       'Выведено цыплят (гол)',
       'Фактический вывод (%)',
@@ -70,25 +72,16 @@ export class IncubatorDashboardComponent {
     ];
 
     const rows = data.map((log: IncubationLog) => [
-      `"${log.id}"`,
-      `"${log.date}"`,
-      `"${log.batchNumber}"`,
-      `"${log.crossType}"`,
+      log.id,
+      log.date,
+      log.batchNumber,
+      log.crossType,
       log.eggsSet,
       log.chicksHatched,
-      log.actualHatchRate.toString().replace('.', ','),
-      `"${log.destinationHouse}"`
+      log.actualHatchRate,
+      log.destinationHouse
     ]);
 
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Журнал_вывода_цыплят_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.exportService.exportToCsv(headers, rows, 'Журнал_вывода_цыплят');
   }
 }
