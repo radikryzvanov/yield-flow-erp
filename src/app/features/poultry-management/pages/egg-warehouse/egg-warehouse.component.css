@@ -1,41 +1,31 @@
 .warehouse-container {
-  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  background-color: #f8fafc;
-  min-height: 100vh;
 }
 
 .page-header h1 {
+  margin: 0;
   font-size: 24px;
-  color: #1e293b;
-  margin: 0 0 6px 0;
+  color: #0f172a;
+  font-weight: 700;
 }
 
 .subtitle {
+  margin: 4px 0 0 0;
   color: #64748b;
   font-size: 14px;
-  margin: 0;
 }
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
-}
-
-@media (max-width: 1024px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 600px) {
-  .kpi-grid { grid-template-columns: 1fr; }
 }
 
 .kpi-card {
   background: #ffffff;
-  padding: 18px 20px;
+  padding: 16px 20px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -43,21 +33,19 @@
 
 .kpi-title {
   font-size: 13px;
-  font-weight: 600;
   color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 .kpi-value {
   font-size: 26px;
   font-weight: 700;
-  margin: 8px 0 4px;
+  margin: 6px 0;
 }
 
-.kpi-value .unit {
+.unit {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: #64748b;
 }
 
@@ -66,83 +54,124 @@
   color: #94a3b8;
 }
 
-.text-primary { color: #2563eb; }
-.text-success { color: #16a34a; }
-.text-warning { color: #d97706; }
-.text-muted { color: #64748b; }
+.text-primary {
+  color: #2563eb;
+}
 
-.table-card {
+.text-warning {
+  color: #d97706;
+}
+
+.text-muted {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.section-card {
   background: #ffffff;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.card-header {
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-size: 16px;
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 17px;
   font-weight: 600;
   color: #1e293b;
-  margin: 0;
+}
+
+.table-responsive {
+  overflow-x: auto;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
-}
-
-.data-table th, .data-table td {
-  padding: 12px 14px;
   text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
 }
 
 .data-table th {
-  color: #64748b;
+  background: #f8fafc;
+  color: #475569;
   font-weight: 600;
-  background-color: #f8fafc;
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.font-bold { font-weight: 600; }
-
-.category-pill {
-  display: inline-block;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-right: 8px;
-}
-
-.pill-cb { background-color: #ede9fe; color: #6d28d9; }
-.pill-c0 { background-color: #dbeafe; color: #1d4ed8; }
-.pill-c1 { background-color: #dcfce7; color: #15803d; }
-.pill-c2 { background-color: #fef3c7; color: #b45309; }
-.pill-waste { background-color: #fee2e2; color: #b91c1c; }
-
-.category-sub {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.category-badge {
-  font-weight: 600;
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
 }
 
 .badge {
-  padding: 4px 10px;
-  border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
-.badge-active { background-color: #fef3c7; color: #b45309; }
-.badge-process { background-color: #dbeafe; color: #1d4ed8; }
-.badge-done { background-color: #f1f5f9; color: #475569; }
+.badge-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-sorted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.btn-sort {
+  padding: 6px 12px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-sort:hover {
+  background: #1d4ed8;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stock-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.category-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.cat-badge {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cat-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.cat-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: #16a34a;
+}

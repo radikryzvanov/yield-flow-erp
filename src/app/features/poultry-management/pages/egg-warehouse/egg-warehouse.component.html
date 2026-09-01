@@ -1,108 +1,77 @@
 <div class="warehouse-container">
   <div class="page-header">
     <div>
-      <h1>Склад готовой продукции и сортировка яйца</h1>
-      <p class="subtitle">Учёт категорий (ГОСТ), фасовка под торговые сети и резервирование партий</p>
+      <h1>Склад готовой продукции и сортировочный цех</h1>
+      <p class="subtitle">Приёмка валового яйца с транспортеров птичников, калибровка по категориям и учет остатков</p>
     </div>
   </div>
 
-  <!-- KPI панель склада -->
+  <!-- KPI показатели склада -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Всего яйца на складе</div>
-      <div class="kpi-value text-primary">{{ totalStockPieces() | number }} <span class="unit">шт</span></div>
-      <div class="kpi-note">Включая упаковку и нефасованное</div>
+      <div class="kpi-title">Товарный запас на складе</div>
+      <div class="kpi-value text-primary">{{ totalStockEggs() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">Готово к упаковке и отгрузке</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">В резерве под сети</div>
-      <div class="kpi-value text-warning">{{ totalReservedPieces() | number }} <span class="unit">шт</span></div>
-      <div class="kpi-note">Магнит, X5, К&Б</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Свободный остаток</div>
-      <div class="kpi-value text-success">{{ totalFreePieces() | number }} <span class="unit">шт</span></div>
-      <div class="kpi-note">Доступно к новым заказам</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Товарность яйца</div>
-      <div class="kpi-value text-primary">{{ commercialEggRate() }}%</div>
-      <div class="kpi-note">Сортировочный комплекс MOBA</div>
+      <div class="kpi-title">Ожидает сортировки</div>
+      <div class="kpi-value text-warning">{{ totalPendingRawEggs() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">Валовое яйцо в приёмном бункере</div>
     </div>
   </div>
 
-  <!-- Таблица остатков по категориям -->
-  <div class="table-card">
-    <div class="card-header">
-      <h3 class="card-title">Остатки по категориям и видам упаковки (ГОСТ 31654-2012)</h3>
+  <!-- Блок 1: Поступления с птичников -->
+  <div class="section-card">
+    <h2 class="section-title">Входящие партии с птичников (Валовый сбор)</h2>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Источник (Птичник)</th>
+            <th>Количество (шт)</th>
+            <th>Статус</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batch of incomingBatches()">
+            <td>{{ batch.date }}</td>
+            <td><strong>{{ batch.houseName }}</strong></td>
+            <td>{{ batch.rawEggCount | number }} шт.</td>
+            <td>
+              <span class="badge" [class.badge-pending]="batch.status === 'pending'" [class.badge-sorted]="batch.status === 'sorted'">
+                {{ batch.status === 'pending' ? 'Ожидает калибровки' : 'Рассортировано' }}
+              </span>
+            </td>
+            <td>
+              <button
+                *ngIf="batch.status === 'pending'"
+                type="button"
+                class="btn-sort"
+                (click)="sortBatch(batch.id)">
+                Рассортировать на машине
+              </button>
+              <span *ngIf="batch.status === 'sorted'" class="text-muted">Оприходовано</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Категория</th>
-          <th>Весовая группа</th>
-          <th>Всего (шт)</th>
-          <th>Бокс 10 шт</th>
-          <th>Лоток 30 шт</th>
-          <th>В россыпи (бункер)</th>
-          <th>Резерв под ритейл</th>
-          <th>Свободно</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of stock()">
-          <td>
-            <span class="category-pill" [class.pill-c0]="item.category === 'С0'" [class.pill-c1]="item.category === 'С1'" [class.pill-c2]="item.category === 'С2'" [class.pill-cb]="item.category === 'СВ'" [class.pill-waste]="item.category === 'Грязь/Насечка'">
-              {{ item.category }}
-            </span>
-            <span class="category-sub">{{ item.fullName }}</span>
-          </td>
-          <td class="text-muted">{{ item.weightRange }}</td>
-          <td class="font-bold">{{ item.totalPieces | number }}</td>
-          <td>{{ item.boxed10Pieces | number }}</td>
-          <td>{{ item.boxed30Pieces | number }}</td>
-          <td class="text-muted">{{ item.inBulkPieces | number }}</td>
-          <td class="text-warning font-bold">{{ item.reservedPieces | number }}</td>
-          <td class="text-success font-bold">{{ (item.totalPieces - item.reservedPieces) | number }}</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 
-  <!-- Заказы ритейлеров и отгрузка -->
-  <div class="table-card">
-    <div class="card-header">
-      <h3 class="card-title">План отгрузок и резервы федеральных торговых сетей</h3>
+  <!-- Блок 2: Категории и запасы -->
+  <div class="section-card">
+    <h2 class="section-title">Остатки готовой продукции по категориям (ГОСТ)</h2>
+    <div class="stock-grid">
+      <div *ngFor="let item of stocks()" class="stock-card">
+        <div class="category-header">
+          <span class="cat-badge">{{ item.category }}</span>
+          <span class="cat-desc">{{ item.description }}</span>
+        </div>
+        <div class="cat-count">{{ item.count | number }} <span class="unit">шт</span></div>
+      </div>
     </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>№ Заказа</th>
-          <th>Покупатель / Сеть</th>
-          <th>Время подачи машины</th>
-          <th>Категория</th>
-          <th>Фасовка</th>
-          <th>Объём (шт)</th>
-          <th>Статус комплектации</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let ord of orders()">
-          <td class="font-bold">{{ ord.id }}</td>
-          <td>{{ ord.retailer }}</td>
-          <td>{{ ord.orderDate }}</td>
-          <td><span class="category-badge">{{ ord.category }}</span></td>
-          <td>{{ ord.packageType }}</td>
-          <td class="font-bold">{{ ord.orderedPieces | number }}</td>
-          <td>
-            <span class="badge" [class.badge-active]="ord.status === 'Зарезервировано'" [class.badge-process]="ord.status === 'В сборке'" [class.badge-done]="ord.status === 'Отгружено'">
-              {{ ord.status }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </div>

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
+import { EggWarehouseService } from '../../services/egg-warehouse.service';
 
 @Component({
   selector: 'app-poultry-list',
@@ -12,6 +13,7 @@ import { PoultryManagementService, PoultryHouse } from '../../services/poultry-m
 })
 export class PoultryListComponent {
   protected readonly poultryService = inject(PoultryManagementService);
+  protected readonly eggWarehouseService = inject(EggWarehouseService);
 
   readonly houses = this.poultryService.houses;
   readonly totalBirds = this.poultryService.totalBirds;
@@ -19,7 +21,7 @@ export class PoultryListComponent {
   readonly totalDailyFeedTons = this.poultryService.totalDailyFeedTons;
   readonly averageLayingRate = this.poultryService.averageLayingRate;
 
-  // Состояние модального окна отчета
+  // Состояние модального окна отчёта
   readonly isModalOpen = signal<boolean>(false);
   readonly selectedHouse = signal<PoultryHouse | null>(null);
 
@@ -47,13 +49,21 @@ export class PoultryListComponent {
     const house = this.selectedHouse();
     if (!house) return;
 
+    const eggCount = Number(this.eggsInput);
+
+    // 1. Обновляем показатели в птичнике
     this.poultryService.submitDailyReport({
       houseId: house.id,
       mortalityCount: Number(this.mortalityInput),
-      dailyEggCount: Number(this.eggsInput),
+      dailyEggCount: eggCount,
       feedPerBirdGrams: Number(this.feedInput),
       temperature: Number(this.tempInput)
     });
+
+    // 2. Если птичник сдал яйца, отправляем партию на склад яйца
+    if (house.birdType === 'layer' && eggCount > 0) {
+      this.eggWarehouseService.registerIncomingEggs(house.name, eggCount);
+    }
 
     this.closeModal();
   }

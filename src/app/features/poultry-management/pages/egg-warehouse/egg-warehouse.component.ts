@@ -12,10 +12,12 @@ import { EggWarehouseService } from '../../services/egg-warehouse.service';
 export class EggWarehouseComponent {
   protected readonly warehouseService = inject(EggWarehouseService);
 
-  readonly stock = this.warehouseService.stock;
-  readonly orders = this.warehouseService.orders;
-  readonly totalStockPieces = this.warehouseService.totalStockPieces;
-  readonly totalReservedPieces = this.warehouseService.totalReservedPieces;
-  readonly totalFreePieces = this.warehouseService.totalFreePieces;
-  readonly commercialEggRate = this.warehouseService.commercialEggRate;
+  readonly incomingBatches = this.warehouseService.incomingBatches;
+  readonly stocks = this.warehouseService.stocks;
+  readonly totalStockEggs = this.warehouseService.totalStockEggs;
+  readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
+
+  sortBatch(batchId: string) {
+    this.warehouseService.sortBatch(batchId);
+  }
 }
