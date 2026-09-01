@@ -1,149 +1,119 @@
 <div class="feed-container">
   <div class="page-header">
     <div>
-      <h1>Комбикормовый цех (Кормопроизводство)</h1>
-      <p class="subtitle">Управление технологическими рецептурами рационов, автосписание зерна с элеватора и журнал замесов</p>
+      <h1>Склад комбикормов и силосный парк</h1>
+      <p class="subtitle">Оперативный запас полнорационных комбикормов, отгрузка по корпусам и баланс сырья</p>
     </div>
   </div>
 
-  <!-- KPI панель кормоцеха -->
+  <!-- KPI панель -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Выработано за смену</div>
-      <div class="kpi-value text-primary">{{ totalProducedTodayTons() | number:'1.1-1' }} <span class="unit">тонн</span></div>
-      <div class="kpi-note">По графику раздачи в птичники</div>
+      <div class="kpi-title">Общий запас комбикорма</div>
+      <div class="kpi-value text-primary">{{ totalFeedTons() }} <span class="unit">тонн</span></div>
+      <div class="kpi-note">В 4 оперативных силосах</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Активных рецептур</div>
-      <div class="kpi-value text-success">{{ recipes().length }} <span class="unit">рецепта</span></div>
-      <div class="kpi-note">Для несушек, молодняка и племстада</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Связанных силосов</div>
-      <div class="kpi-value text-warning">{{ silos().length }} <span class="unit">силоса</span></div>
-      <div class="kpi-note">Прямая линия подачи зерна</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Средняя себестоимость корма</div>
-      <div class="kpi-value text-primary">23.20 <span class="unit">руб / кг</span></div>
-      <div class="kpi-note">С учётом премиксов и шрота</div>
+      <div class="kpi-title">Стоимость запаса кормов</div>
+      <div class="kpi-value text-success">{{ totalFeedValueRub() | number }} <span class="unit">₽</span></div>
+      <div class="kpi-note">По средней себестоимости выработки</div>
     </div>
   </div>
 
-  <!-- Уведомление об успешном производстве -->
-  <div class="alert-success" *ngIf="successMessage()">
-    ✅ {{ successMessage() }}
-  </div>
-
-  <!-- Сетка: Форма запуска производства и Сырьевая база элеватора -->
-  <div class="operations-grid">
-    <!-- Форма запуска замеса -->
-    <div class="card form-card">
-      <h3 class="card-title">⚙️ Изготовление партии комбикорма</h3>
-      <p class="card-desc">При запуске сырьё автоматически спишется из остатков соответствующих силосов элеватора</p>
-
-      <div class="form-group">
-        <label>Выберите рецептуру рациона:</label>
-        <select [(ngModel)]="selectedRecipeCode" class="form-control">
-          <option *ngFor="let r of recipes()" [value]="r.code">
-            {{ r.code }} — {{ r.name }} ({{ r.costPerKgRub }} ₽/кг)
-          </option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Объём партии (тонн):</label>
-          <input type="number" step="0.5" [(ngModel)]="productionTons" class="form-control" />
+  <!-- Силосный парк -->
+  <div class="section-card">
+    <h2 class="section-title">Состояние силосов оперативного хранения</h2>
+    <div class="silos-grid">
+      <div *ngFor="let silo of silos()" class="silo-card" [class.silo-low]="getFillPercent(silo.currentTons, silo.capacityTons) < 25">
+        <div class="silo-header">
+          <div>
+            <h3 class="silo-name">{{ silo.name }}</h3>
+            <span class="recipe-badge">{{ silo.recipeCode }}</span>
+          </div>
+          <span class="percent-badge" [class.badge-warning]="getFillPercent(silo.currentTons, silo.capacityTons) < 25">
+            {{ getFillPercent(silo.currentTons, silo.capacityTons) }}%
+          </span>
         </div>
-        <div class="form-group">
-          <label>Целевой птичник назначения:</label>
-          <select [(ngModel)]="targetHouse" class="form-control">
-            <option value="Птичник № 1">Птичник № 1 (Несушка Ломанн)</option>
-            <option value="Птичник № 2">Птичник № 2 (Несушка Декалб)</option>
-            <option value="Птичник № 3">Птичник № 3 (Молодняк)</option>
-            <option value="Птичник № 4">Птичник № 4 (Племстадо)</option>
+
+        <p class="target-bird">{{ silo.targetBird }}</p>
+
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="getFillPercent(silo.currentTons, silo.capacityTons)"></div>
+        </div>
+
+        <div class="silo-metrics">
+          <div class="metric-row">
+            <span class="label">Остаток:</span>
+            <span class="val">{{ silo.currentTons }} т / {{ silo.capacityTons }} т</span>
+          </div>
+          <div class="metric-row">
+            <span class="label">Себестоимость:</span>
+            <span class="val">{{ silo.costPerTonRub | number }} ₽/т</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Журнал расхода с Enterprise тулбаром -->
+  <div class="section-card">
+    <div class="section-header-flex">
+      <h2 class="section-title">Журнал суточного расхода кормов</h2>
+
+      <!-- Тулбар фильтрации и экспорта -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="Поиск по птичнику..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            class="input-search" />
+        </div>
+
+        <div class="filter-box">
+          <select
+            [ngModel]="selectedRecipe()"
+            (ngModelChange)="selectedRecipe.set($event)"
+            class="select-filter">
+            <option value="ALL">Все рецепты</option>
+            <option value="ПК-1-1">ПК-1-1</option>
+            <option value="ПК-1-2">ПК-1-2</option>
+            <option value="ПК-3">ПК-3</option>
+            <option value="ПК-1-П">ПК-1-П</option>
           </select>
         </div>
-      </div>
 
-      <button class="btn-primary" (click)="startProduction()">
-        ⚡ Запустить замес и списать сырьё
-      </button>
-    </div>
-
-    <!-- Быстрый статус силосов элеватора -->
-    <div class="card silos-mini-card">
-      <h3 class="card-title">🌾 Остатки сырья в силосах (Элеватор)</h3>
-      <div class="silos-list">
-        <div *ngFor="let silo of silos()" class="silo-item">
-          <div class="silo-header">
-            <span class="silo-name">{{ silo.name }}</span>
-            <span class="silo-weight">{{ silo.currentTons | number }} / {{ silo.capacityTons }} т</span>
-          </div>
-          <div class="silo-culture">{{ silo.culture }}</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" [style.width.%]="(silo.currentTons / silo.capacityTons) * 100"></div>
-          </div>
-        </div>
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
       </div>
     </div>
-  </div>
 
-  <!-- Таблица технологических рецептов -->
-  <div class="card table-card">
-    <h3 class="card-title">📜 Технологические карты и структура рационов</h3>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Код</th>
-          <th>Наименование рациона</th>
-          <th>Назначение</th>
-          <th>Состав сырья (%)</th>
-          <th>Себестоимость</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let r of recipes()">
-          <td><span class="recipe-code">{{ r.code }}</span></td>
-          <td class="font-bold">{{ r.name }}</td>
-          <td class="text-muted">{{ r.targetGroup }}</td>
-          <td>
-            <span *ngFor="let c of r.composition" class="comp-tag">
-              {{ c.culture }}: <b>{{ c.percentage }}%</b>
-            </span>
-          </td>
-          <td class="font-bold text-success">{{ r.costPerKgRub }} ₽ / кг</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Журнал выработанных замесов -->
-  <div class="card table-card">
-    <h3 class="card-title">📋 Журнал производства кормов за смену</h3>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>№ Партии</th>
-          <th>Время изготовления</th>
-          <th>Рецептура</th>
-          <th>Объём (тонн)</th>
-          <th>Птичник доставки</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let b of batchLogs()">
-          <td class="font-bold">{{ b.id }}</td>
-          <td>{{ b.timestamp }}</td>
-          <td><b>{{ b.recipeCode }}</b> — {{ b.recipeName }}</td>
-          <td class="font-bold text-primary">{{ b.producedTons }} т</td>
-          <td><span class="target-badge">{{ b.targetHouse }}</span></td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Таблица записей -->
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Пункт назначения (Птичник)</th>
+            <th>Рецепт</th>
+            <th>Списано корма</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of filteredFeedLogs()">
+            <td>{{ log.date }}</td>
+            <td><strong>{{ log.houseName }}</strong></td>
+            <td><span class="recipe-badge">{{ log.recipeCode }}</span></td>
+            <td><strong class="text-warning">-{{ log.tonsDeducted }} т</strong></td>
+          </tr>
+          <tr *ngIf="filteredFeedLogs().length === 0">
+            <td colspan="4" class="empty-state">Записей по заданным фильтрам не найдено</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
+import { FeedWarehouseService } from '../../../feed-warehouse/services/feed-warehouse.service';
 
 @Component({
   selector: 'app-poultry-list',
@@ -14,6 +15,7 @@ import { EggWarehouseService } from '../../services/egg-warehouse.service';
 export class PoultryListComponent {
   protected readonly poultryService = inject(PoultryManagementService);
   protected readonly eggWarehouseService = inject(EggWarehouseService);
+  protected readonly feedWarehouseService = inject(FeedWarehouseService);
 
   readonly houses = this.poultryService.houses;
   readonly totalBirds = this.poultryService.totalBirds;
@@ -21,7 +23,7 @@ export class PoultryListComponent {
   readonly totalDailyFeedTons = this.poultryService.totalDailyFeedTons;
   readonly averageLayingRate = this.poultryService.averageLayingRate;
 
-  // Состояние модального окна отчёта
+  // Состояние модального окна отчета
   readonly isModalOpen = signal<boolean>(false);
   readonly selectedHouse = signal<PoultryHouse | null>(null);
 
@@ -50,19 +52,28 @@ export class PoultryListComponent {
     if (!house) return;
 
     const eggCount = Number(this.eggsInput);
+    const feedGrams = Number(this.feedInput);
+    const mortality = Number(this.mortalityInput);
+    const currentBirds = Math.max(0, house.birdCount - mortality);
 
     // 1. Обновляем показатели в птичнике
     this.poultryService.submitDailyReport({
       houseId: house.id,
-      mortalityCount: Number(this.mortalityInput),
+      mortalityCount: mortality,
       dailyEggCount: eggCount,
-      feedPerBirdGrams: Number(this.feedInput),
+      feedPerBirdGrams: feedGrams,
       temperature: Number(this.tempInput)
     });
 
-    // 2. Если птичник сдал яйца, отправляем партию на склад яйца
+    // 2. Отправляем партию на склад яйца
     if (house.birdType === 'layer' && eggCount > 0) {
       this.eggWarehouseService.registerIncomingEggs(house.name, eggCount);
+    }
+
+    // 3. Списываем съеденный комбикорм со склада кормов
+    const totalFeedTons = Math.round(((currentBirds * feedGrams) / 1_000_000) * 100) / 100;
+    if (totalFeedTons > 0) {
+      this.feedWarehouseService.deductFeedForHouse(house.name, house.birdType, house.ageDays, totalFeedTons);
     }
 
     this.closeModal();

@@ -1,138 +1,113 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { ElevatorService } from '../../elevator/services/elevator.service';
-
-export interface FeedRecipe {
-  id: string;
-  code: string;            // ПК-1-1 (Несушка пик), ПК-2 (Старт молодняк), ПК-5 (Бройлер)
-  name: string;
-  targetGroup: string;
-  costPerKgRub: number;
-  composition: {
-    culture: string;
-    targetSiloId: string;  // Из какого силоса элеватора брать
-    percentage: number;
-  }[];
-}
-
-export interface FeedBatchLog {
-  id: string;
-  timestamp: string;
-  recipeCode: string;
-  recipeName: string;
-  producedTons: number;
-  targetHouse: string;
-}
+import { Injectable, signal, computed } from '@angular/core';
+import { FeedSilo, FeedLog } from '../interfaces/feed-warehouse.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FeedWarehouseService {
-  private readonly elevatorService = inject(ElevatorService);
-
-  private readonly _recipes = signal<FeedRecipe[]>([
+  // Силосы оперативного запаса кормоцеха
+  private readonly _silos = signal<FeedSilo[]>([
     {
-      id: 'rec-1',
-      code: 'ПК-1-1',
-      name: 'Рацион несушки (Период 20–45 нед)',
-      targetGroup: 'Промышленное стадо (Птичники № 1, 2)',
-      costPerKgRub: 21.80,
-      composition: [
-        { culture: 'Пшеница фуражная (5 класс)', targetSiloId: 'silo-1', percentage: 55 },
-        { culture: 'Кукуруза кормовая', targetSiloId: 'silo-2', percentage: 15 },
-        { culture: 'Шрот подсолнечный', targetSiloId: 'silo-3', percentage: 18 },
-        { culture: 'Известняковая мука (ракушка)', targetSiloId: 'silo-4', percentage: 9 },
-        { culture: 'Премикс / витамины 1%', targetSiloId: '', percentage: 3 }
-      ]
-    },
-    {
-      id: 'rec-2',
-      code: 'ПК-2',
-      name: 'Стартовый рацион для молодняка (1–8 нед)',
-      targetGroup: 'Ремонтный молодняк (Птичник № 3)',
-      costPerKgRub: 26.50,
-      composition: [
-        { culture: 'Пшеница фуражная (5 класс)', targetSiloId: 'silo-1', percentage: 48 },
-        { culture: 'Кукуруза кормовая', targetSiloId: 'silo-2', percentage: 22 },
-        { culture: 'Шрот подсолнечный', targetSiloId: 'silo-3', percentage: 24 },
-        { culture: 'Известняковая мука (ракушка)', targetSiloId: 'silo-4', percentage: 2 },
-        { culture: 'Премикс / аминокислоты', targetSiloId: '', percentage: 4 }
-      ]
-    },
-    {
-      id: 'rec-3',
-      code: 'ПК-1-2',
-      name: 'Рацион родительского стада',
-      targetGroup: 'Племстадо / инкубационное яйцо (Птичник № 4)',
-      costPerKgRub: 24.30,
-      composition: [
-        { culture: 'Пшеница фуражная (5 класс)', targetSiloId: 'silo-1', percentage: 50 },
-        { culture: 'Кукуруза кормовая', targetSiloId: 'silo-2', percentage: 20 },
-        { culture: 'Шрот подсолнечный', targetSiloId: 'silo-3', percentage: 18 },
-        { culture: 'Известняковая мука (ракушка)', targetSiloId: 'silo-4', percentage: 8 },
-        { culture: 'Премикс репродуктивный', targetSiloId: '', percentage: 4 }
-      ]
-    }
-  ]);
-
-  private readonly _batchLogs = signal<FeedBatchLog[]>([
-    {
-      id: 'batch-101',
-      timestamp: 'Сегодня, 06:00',
+      id: 'silo-1',
+      name: 'Силос № 1',
       recipeCode: 'ПК-1-1',
-      recipeName: 'Рацион несушки (Период 20–45 нед)',
-      producedTons: 12.0,
-      targetHouse: 'Птичник № 1'
+      targetBird: 'Промышленная несушка (фаза 1, пик)',
+      currentTons: 42.5,
+      capacityTons: 60.0,
+      costPerTonRub: 24500
     },
     {
-      id: 'batch-102',
-      timestamp: 'Сегодня, 09:30',
-      recipeCode: 'ПК-2',
-      recipeName: 'Стартовый рацион для молодняка',
-      producedTons: 4.5,
-      targetHouse: 'Птичник № 3'
+      id: 'silo-2',
+      name: 'Силос № 2',
+      recipeCode: 'ПК-1-2',
+      targetBird: 'Промышленная несушка (фаза 2, спад)',
+      currentTons: 35.8,
+      capacityTons: 60.0,
+      costPerTonRub: 23200
+    },
+    {
+      id: 'silo-3',
+      name: 'Силос № 3',
+      recipeCode: 'ПК-3',
+      targetBird: 'Ремонтный молодняк (ростовой)',
+      currentTons: 18.2,
+      capacityTons: 30.0,
+      costPerTonRub: 26800
+    },
+    {
+      id: 'silo-4',
+      name: 'Силос № 4',
+      recipeCode: 'ПК-1-П',
+      targetBird: 'Родительское стадо (племенной)',
+      currentTons: 22.0,
+      capacityTons: 40.0,
+      costPerTonRub: 27500
     }
   ]);
 
-  readonly recipes = this._recipes.asReadonly();
-  readonly batchLogs = this._batchLogs.asReadonly();
+  // Журнал суточных списаний на кормление
+  private readonly _feedLogs = signal<FeedLog[]>([
+    {
+      id: 'log-1',
+      date: 'Сегодня, 07:00',
+      houseName: 'Птичник № 1 (Промышленная несушка)',
+      recipeCode: 'ПК-1-1',
+      tonsDeducted: 6.0
+    },
+    {
+      id: 'log-2',
+      date: 'Сегодня, 07:30',
+      houseName: 'Птичник № 2 (Промышленная несушка)',
+      recipeCode: 'ПК-1-2',
+      tonsDeducted: 6.1
+    }
+  ]);
 
-  readonly totalProducedTodayTons = computed(() =>
-    this._batchLogs().reduce((sum, b) => sum + b.producedTons, 0)
-  );
+  readonly silos = this._silos.asReadonly();
+  readonly feedLogs = this._feedLogs.asReadonly();
 
-  readonly availableSilos = computed(() => this.elevatorService.silos());
+  // Общий остаток комбикорма на складе (в тоннах)
+  readonly totalFeedTons = computed(() => {
+    const total = this._silos().reduce((sum, s) => sum + s.currentTons, 0);
+    return Math.round(total * 10) / 10;
+  });
 
-  produceFeedBatch(recipeCode: string, tons: number, targetHouse: string): boolean {
-    const recipe = this._recipes().find(r => r.code === recipeCode);
-    if (!recipe || tons <= 0) return false;
+  // Общая стоимость кормов на балансе предприятия
+  readonly totalFeedValueRub = computed(() => {
+    return this._silos().reduce((sum, s) => sum + (s.currentTons * s.costPerTonRub), 0);
+  });
 
-    // Списание сырья из элеватора
-    recipe.composition.forEach(comp => {
-      if (comp.targetSiloId) {
-        const consumedTons = (tons * comp.percentage) / 100;
-        this.elevatorService.receiveGrain({
-          truckNumber: `Списание в кормоцех (${recipeCode})`,
-          culture: comp.culture,
-          weightTons: -consumedTons, // списываем вес со знаком минус
-          moisturePercent: 12.0,
-          targetSiloId: comp.targetSiloId
-        });
-      }
-    });
+  // Автоматическое списание корма по суточному отчёту птичника
+  deductFeedForHouse(houseName: string, birdType: 'layer' | 'broiler' | 'rearing', ageDays: number, totalTons: number) {
+    if (totalTons <= 0) return;
 
-    // Добавляем запись в журнал замесов
-    this._batchLogs.update(logs => [
-      {
-        id: `batch-${Date.now()}`,
-        timestamp: 'Только что',
-        recipeCode: recipe.code,
-        recipeName: recipe.name,
-        producedTons: tons,
-        targetHouse
-      },
-      ...logs
-    ]);
+    let targetRecipe = 'ПК-1-1';
+    if (birdType === 'rearing') {
+      targetRecipe = 'ПК-3';
+    } else if (houseName.includes('Родительское')) {
+      targetRecipe = 'ПК-1-П';
+    } else if (birdType === 'layer' && ageDays > 350) {
+      targetRecipe = 'ПК-1-2';
+    }
 
-    return true;
+    this._silos.update(silos =>
+      silos.map(s => {
+        if (s.recipeCode === targetRecipe) {
+          const updatedTons = Math.max(0, Math.round((s.currentTons - totalTons) * 100) / 100);
+          return { ...s, currentTons: updatedTons };
+        }
+        return s;
+      })
+    );
+
+    const newLog: FeedLog = {
+      id: 'log-' + Date.now(),
+      date: 'Только что',
+      houseName: houseName,
+      recipeCode: targetRecipe,
+      tonsDeducted: totalTons
+    };
+
+    this._feedLogs.update(logs => [newLog, ...logs]);
   }
 }

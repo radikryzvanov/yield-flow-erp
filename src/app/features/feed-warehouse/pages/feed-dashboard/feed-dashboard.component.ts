@@ -1,7 +1,8 @@
-﻿import { Component, inject, signal } from '@angular/core';
+﻿import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedWarehouseService } from '../../services/feed-warehouse.service';
+import { FeedLog } from '../../interfaces/feed-warehouse.interface';
 
 @Component({
   selector: 'app-feed-dashboard',
@@ -13,32 +14,58 @@ import { FeedWarehouseService } from '../../services/feed-warehouse.service';
 export class FeedDashboardComponent {
   protected readonly feedService = inject(FeedWarehouseService);
 
-  readonly recipes = this.feedService.recipes;
-  readonly batchLogs = this.feedService.batchLogs;
-  readonly totalProducedTodayTons = this.feedService.totalProducedTodayTons;
-  readonly silos = this.feedService.availableSilos;
+  readonly silos = this.feedService.silos;
+  readonly totalFeedTons = this.feedService.totalFeedTons;
+  readonly totalFeedValueRub = this.feedService.totalFeedValueRub;
 
-  // Поля формы производства замеса
-  selectedRecipeCode = 'ПК-1-1';
-  productionTons = 6.0;
-  targetHouse = 'Птичник № 1';
+  // Сигналы фильтрации таблицы
+  readonly searchQuery = signal<string>('');
+  readonly selectedRecipe = signal<string>('ALL');
 
-  successMessage = signal<string | null>(null);
+  // Отфильтрованный журнал списаний (computed)
+  readonly filteredFeedLogs = computed(() => {
+    const logs = this.feedService.feedLogs();
+    const query = this.searchQuery().trim().toLowerCase();
+    const recipe = this.selectedRecipe();
 
-  startProduction(): void {
-    if (this.productionTons <= 0) return;
+    return logs.filter((log: FeedLog) => {
+      const matchesSearch =
+        query === '' ||
+        log.houseName.toLowerCase().includes(query) ||
+        log.date.toLowerCase().includes(query);
 
-    const ok = this.feedService.produceFeedBatch(
-      this.selectedRecipeCode,
-      this.productionTons,
-      this.targetHouse
-    );
+      const matchesRecipe = recipe === 'ALL' || log.recipeCode === recipe;
 
-    if (ok) {
-      this.successMessage.set(
-        `Замес ${this.productionTons} т комбикорма (${this.selectedRecipeCode}) успешно изготовлен! Сырьё списано с элеватора.`
-      );
-      setTimeout(() => this.successMessage.set(null), 5000);
-    }
+      return matchesSearch && matchesRecipe;
+    });
+  });
+
+  getFillPercent(current: number, capacity: number): number {
+    return Math.round((current / capacity) * 100);
+  }
+
+  // Экспорт текущей таблицы в Excel (.csv с поддержкой кириллицы UTF-8 BOM)
+  exportToExcel(): void {
+    const data = this.filteredFeedLogs();
+    if (data.length === 0) return;
+
+    const headers = ['Время/Дата', 'Пункт назначения (Птичник)', 'Рецепт корма', 'Списано (тонн)'];
+    const rows = data.map((log: FeedLog) => [
+      `"${log.date}"`,
+      `"${log.houseName}"`,
+      `"${log.recipeCode}"`,
+      log.tonsDeducted.toString().replace('.', ',') // Формат запятой для русского Excel
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Отчет_расхода_кормов_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
