@@ -105,36 +105,65 @@
     </div>
   </div>
 
-  <!-- Журнал выведенных партий -->
+  <!-- Журнал завершенных выводов с Enterprise тулбаром -->
   <div class="card table-card">
-    <div class="card-header">
+    <div class="card-header-flex">
       <h3 class="card-title">📋 Журнал завершенных выводов цыплят</h3>
+
+      <div class="table-toolbar">
+        <input
+          type="text"
+          placeholder="Поиск по партии / птичнику..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="input-search" />
+
+        <select
+          [ngModel]="selectedCross()"
+          (ngModelChange)="selectedCross.set($event)"
+          class="select-filter">
+          <option value="ALL">Все кроссы птицы</option>
+          <option value="Ломанн ЛСЛ Классик">Ломанн ЛСЛ Классик</option>
+          <option value="Хайсекс Браун">Хайсекс Браун</option>
+          <option value="Декалб Белый">Декалб Белый</option>
+        </select>
+
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
+      </div>
     </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>№ Вывода</th>
-          <th>Дата завершения</th>
-          <th>Партия ИЯ</th>
-          <th>Кросс</th>
-          <th>Заложено яиц</th>
-          <th>Выведено цыплят</th>
-          <th>Фактический вывод (%)</th>
-          <th>Корпус назначения</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let log of logs()">
-          <td class="font-bold">{{ log.id }}</td>
-          <td>{{ log.date }}</td>
-          <td><span class="batch-pill">{{ log.batchNumber }}</span></td>
-          <td>{{ log.crossType }}</td>
-          <td>{{ log.eggsSet | number }} шт</td>
-          <td class="font-bold text-success">{{ log.chicksHatched | number }} гол.</td>
-          <td class="font-bold">{{ log.actualHatchRate }}%</td>
-          <td><span class="dest-badge">{{ log.destinationHouse }}</span></td>
-        </tr>
-      </tbody>
-    </table>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>№ Вывода</th>
+            <th>Дата завершения</th>
+            <th>Партия ИЯ</th>
+            <th>Кросс</th>
+            <th>Заложено яиц</th>
+            <th>Выведено цыплят</th>
+            <th>Фактический вывод (%)</th>
+            <th>Корпус назначения</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of filteredLogs()">
+            <td class="font-bold">{{ log.id }}</td>
+            <td>{{ log.date }}</td>
+            <td><span class="batch-pill">{{ log.batchNumber }}</span></td>
+            <td>{{ log.crossType }}</td>
+            <td>{{ log.eggsSet | number }} шт</td>
+            <td class="font-bold text-success">{{ log.chicksHatched | number }} гол.</td>
+            <td class="font-bold">{{ log.actualHatchRate }}%</td>
+            <td><span class="dest-badge">{{ log.destinationHouse }}</span></td>
+          </tr>
+          <tr *ngIf="filteredLogs().length === 0">
+            <td colspan="8" class="empty-state">Записей по заданным фильтрам не найдено</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
