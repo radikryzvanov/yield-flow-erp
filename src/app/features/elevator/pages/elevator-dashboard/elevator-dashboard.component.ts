@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElevatorService } from '../../services/elevator.service';
 import { GrainIntakeLog } from '../../interfaces/elevator.interface';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-elevator-dashboard',
@@ -13,6 +14,7 @@ import { GrainIntakeLog } from '../../interfaces/elevator.interface';
 })
 export class ElevatorDashboardComponent {
   protected readonly elevatorService = inject(ElevatorService);
+  private readonly exportService = inject(ExportService);
 
   readonly silos = this.elevatorService.silos;
   readonly totalStoredTons = this.elevatorService.totalStoredTons;
@@ -63,33 +65,32 @@ export class ElevatorDashboardComponent {
     this.moisturePercent.set(null);
   }
 
-  // Экспорт весового журнала зерна в Excel (.csv UTF-8 BOM)
+  // Централизованный экспорт весового журнала в Excel
   exportToExcel(): void {
     const data = this.filteredLogs();
     if (data.length === 0) return;
 
-    const headers = ['Время/Дата', 'Гос. номер машины', 'Культура / Сырьё', 'Вес нетто (тонн)', 'Влажность (%)', 'Целевой силос'];
+    const headers = [
+      'Время / Дата приёмки',
+      'Гос. номер автотранспорта',
+      'Культура / Сырьё',
+      'Вес нетто (тонн)',
+      'Влажность (%)',
+      'Целевой силос / Бункер'
+    ];
+
     const rows = data.map((l: GrainIntakeLog) => {
       const siloName = this.silos().find(s => s.id === l.targetSiloId)?.name || l.targetSiloId;
       return [
-        `"${l.date}"`,
-        `"${l.truckNumber}"`,
-        `"${l.culture}"`,
-        l.weightTons.toString().replace('.', ','),
-        l.moisturePercent.toString().replace('.', ','),
-        `"${siloName}"`
+        l.date,
+        l.truckNumber,
+        l.culture,
+        l.weightTons,
+        l.moisturePercent,
+        siloName
       ];
     });
 
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Весовой_журнал_элеватора_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.exportService.exportToCsv(headers, rows, 'Весовой_журнал_элеватора');
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
 import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-egg-warehouse',
@@ -13,6 +14,7 @@ import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
 })
 export class EggWarehouseComponent {
   protected readonly warehouseService = inject(EggWarehouseService);
+  private readonly exportService = inject(ExportService);
 
   readonly stocks = this.warehouseService.stocks;
   readonly totalStockEggs = this.warehouseService.totalStockEggs;
@@ -44,28 +46,25 @@ export class EggWarehouseComponent {
     this.warehouseService.sortBatch(batchId);
   }
 
-  // Экспорт реестра валовых партий в Excel (.csv UTF-8 BOM)
+  // Централизованный экспорт реестра валовых партий в Excel
   exportToExcel(): void {
     const data = this.filteredBatches();
     if (data.length === 0) return;
 
-    const headers = ['Время/Дата', 'Источник (Птичник)', 'Количество валового яйца (шт)', 'Статус обработки'];
+    const headers = [
+      'Время / Дата поступления',
+      'Источник (Птичник)',
+      'Количество валового яйца (шт)',
+      'Статус обработки'
+    ];
+
     const rows = data.map((b: IncomingEggBatch) => [
-      `"${b.date}"`,
-      `"${b.houseName}"`,
+      b.date,
+      b.houseName,
       b.rawEggCount,
-      b.status === 'pending' ? '"Ожидает калибровки"' : '"Рассортировано"'
+      b.status === 'pending' ? 'Ожидает калибровки' : 'Рассортировано'
     ]);
 
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Отчет_приемки_валового_яйца_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.exportService.exportToCsv(headers, rows, 'Отчет_приемки_валового_яйца');
   }
 }
