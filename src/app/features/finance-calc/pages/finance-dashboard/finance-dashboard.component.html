@@ -1,9 +1,16 @@
 <div class="finance-container">
   <div class="page-header">
     <div>
-      <h1>Финансово-экономический мониторинг (Директорат)</h1>
+      <h1 class="page-title">Финансово-экономический мониторинг (Директорат)</h1>
       <p class="subtitle">Сводный анализ производственной себестоимости, выручки, расходов на корма и операционной прибыли</p>
     </div>
+    <button class="btn-excel-export" (click)="exportToExcel()" type="button">
+      <svg class="excel-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+        <path d="M8.5 13.5l1.8 2.5-1.8 2.5h1.5l1-1.6 1 1.6h1.5l-1.8-2.5 1.8-2.5h-1.5l-1 1.6-1-1.6z"/>
+      </svg>
+      <span>Экспорт в Excel</span>
+    </button>
   </div>
 
   <!-- Главные KPI показатели -->
