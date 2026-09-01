@@ -1,16 +1,20 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { VeterinaryService } from '../../services/veterinary.service';
+import { VaccineScheduleItem } from '../../interfaces/veterinary.interface';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-veterinary-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './veterinary-dashboard.component.html',
-  styleUrls: ['./veterinary-dashboard.component.css']
+  styleUrl: './veterinary-dashboard.component.css'
 })
 export class VeterinaryDashboardComponent {
   protected readonly vetService = inject(VeterinaryService);
+  private readonly exportService = inject(ExportService);
 
   readonly schedule = this.vetService.schedule;
   readonly stock = this.vetService.stock;
@@ -18,6 +22,27 @@ export class VeterinaryDashboardComponent {
   readonly pendingVaccinations = this.vetService.pendingVaccinationsCount;
   readonly totalMortality = this.vetService.totalDailyMortality;
   readonly livability = this.vetService.flockLivabilityPercent;
+
+  readonly searchQuery = signal<string>('');
+  readonly selectedStatus = signal<string>('ALL');
+
+  readonly filteredSchedule = computed(() => {
+    const list = this.schedule();
+    const query = this.searchQuery().trim().toLowerCase();
+    const status = this.selectedStatus();
+
+    return list.filter((item: VaccineScheduleItem) => {
+      const matchesSearch =
+        query === '' ||
+        item.targetHouse.toLowerCase().includes(query) ||
+        item.vaccineName.toLowerCase().includes(query) ||
+        item.disease.toLowerCase().includes(query);
+
+      const matchesStatus = status === 'ALL' || item.status === status;
+
+      return matchesSearch && matchesStatus;
+    });
+  });
 
   getMethodBadge(method: string): string {
     switch (method) {
@@ -36,5 +61,36 @@ export class VeterinaryDashboardComponent {
       case 'pending': return 'Запланировано';
       default: return status;
     }
+  }
+
+  exportToExcel(): void {
+    const data = this.filteredSchedule();
+    if (data.length === 0) return;
+
+    const headers = [
+      'ID записи',
+      'Возраст (дней)',
+      'Корпус / Объект',
+      'Заболевание',
+      'Препарат (Вакцина)',
+      'Метод введения',
+      'Дата обработки',
+      'Дозировка (доз)',
+      'Статус'
+    ];
+
+    const rows = data.map((s: VaccineScheduleItem) => [
+      s.id,
+      s.ageDays,
+      s.targetHouse,
+      s.disease,
+      s.vaccineName,
+      this.getMethodBadge(s.method),
+      s.plannedDate,
+      s.dosageDoses,
+      this.getStatusBadge(s.status)
+    ]);
+
+    this.exportService.exportToCsv(headers, rows, 'График_вакцинаций');
   }
 }

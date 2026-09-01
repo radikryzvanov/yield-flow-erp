@@ -1,134 +1,168 @@
 <div class="vet-container">
   <div class="page-header">
     <div>
-      <h1>Ветеринарный контроль и биобезопасность (Ветблок)</h1>
-      <p class="subtitle">Управление эпизоотическим благополучием, графиком иммунизации стада и запасами ветпрепаратов</p>
+      <h1>Ветеринарный контроль и биобезопасность</h1>
+      <p class="subtitle">Управление планом вакцинаций, аптечным складом биопрепаратов и эпизоотическим состоянием птицефабрики</p>
     </div>
   </div>
 
-  <!-- KPI панель ветблока -->
+  <!-- KPI панель ветслужбы -->
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-header">
-        <span class="kpi-title">Сохранность поголовья</span>
-        <span class="kpi-icon">🛡️</span>
-      </div>
-      <div class="kpi-value text-success">{{ livability() }}%</div>
-      <div class="kpi-note">Норматив сохранности: ≥ 96.5%</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Суточный отход (падёж)</span>
-        <span class="kpi-icon">📉</span>
-      </div>
-      <div class="kpi-value text-primary">{{ totalMortality() }} <span class="unit">гол. / сут</span></div>
-      <div class="kpi-note">В пределах естественной нормы</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">План вакцинаций</span>
+        <span class="kpi-title">Запланировано вакцинаций</span>
         <span class="kpi-icon">💉</span>
       </div>
-      <div class="kpi-value text-warning">{{ pendingVaccinations() }} <span class="unit">процедуры</span></div>
-      <div class="kpi-note">На ближайшие 7 дней</div>
+      <div class="kpi-value text-warning">{{ pendingVaccinations() }} <span class="unit">процедур</span></div>
+      <div class="kpi-note">Включая 1 срочную обработку</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Суточный отход стада</span>
+        <span class="kpi-icon">📉</span>
+      </div>
+      <div class="kpi-value text-primary">{{ totalMortality() }} <span class="unit">голов</span></div>
+      <div class="kpi-note">В пределах технологической нормы</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Сохранность поголовья</span>
+        <span class="kpi-icon">📊</span>
+      </div>
+      <div class="kpi-value text-success">{{ livability() }}%</div>
+      <div class="kpi-note">Норматив промышленного кросса</div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-header">
         <span class="kpi-title">Эпизоотический статус</span>
-        <span class="kpi-icon">✅</span>
+        <span class="kpi-icon">🛡️</span>
       </div>
       <div class="kpi-value text-success">Благополучно</div>
-      <div class="kpi-note">Карантины и ограничения отсутствуют</div>
+      <div class="kpi-note">Санпропускники и дезбарьеры активны</div>
     </div>
   </div>
 
-  <!-- График вакцинаций -->
-  <div class="card table-card">
-    <div class="card-header">
+  <!-- План вакцинаций с Enterprise тулбаром -->
+  <div class="card">
+    <div class="card-header-flex">
       <div>
-        <h3 class="card-title">📅 План-график иммунизации и вакцинации поголовья</h3>
-        <p class="card-desc">Контроль схем специфической профилактики по возрастам и корпусам</p>
+        <h3 class="card-title">📅 График иммунизации и профилактических выпоек</h3>
+        <p class="card-desc">Контроль схем вакцинации по возрастам и корпусам содержания</p>
+      </div>
+
+      <div class="table-toolbar">
+        <input
+          type="text"
+          placeholder="Поиск по вакцине / заболеванию / корпусу..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="input-search" />
+
+        <select
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+          class="select-filter">
+          <option value="ALL">Все статусы плана</option>
+          <option value="urgent">Требует внимания</option>
+          <option value="pending">Запланировано</option>
+          <option value="completed">Выполнено</option>
+        </select>
+
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
       </div>
     </div>
 
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Возраст птицы</th>
-          <th>Корпус назначения</th>
-          <th>Заболевание</th>
-          <th>Препарат / Вакцина</th>
-          <th>Метод введения</th>
-          <th>Плановая дата</th>
-          <th>Дозировка</th>
-          <th>Статус</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of schedule()">
-          <td class="font-bold"><span class="age-pill">{{ item.ageDays }} дн.</span></td>
-          <td class="font-bold">{{ item.targetHouse }}</td>
-          <td>{{ item.disease }}</td>
-          <td><span class="drug-name">{{ item.vaccineName }}</span></td>
-          <td><span class="method-tag">{{ getMethodBadge(item.method) }}</span></td>
-          <td>{{ item.plannedDate }}</td>
-          <td>{{ item.dosageDoses | number }} доз</td>
-          <td>
-            <span class="status-badge" [class.badge-completed]="item.status === 'completed'" [class.badge-urgent]="item.status === 'urgent'" [class.badge-pending]="item.status === 'pending'">
-              {{ getStatusBadge(item.status) }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Возраст</th>
+            <th>Корпус / Объект</th>
+            <th>Целевое заболевание</th>
+            <th>Препарат (Вакцина)</th>
+            <th>Метод применения</th>
+            <th>Срок</th>
+            <th>Дозировка</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredSchedule()">
+            <td class="font-bold">{{ item.ageDays }} дн.</td>
+            <td>{{ item.targetHouse }}</td>
+            <td class="font-bold">{{ item.disease }}</td>
+            <td><span class="vaccine-pill">{{ item.vaccineName }}</span></td>
+            <td><span class="method-tag">{{ getMethodBadge(item.method) }}</span></td>
+            <td>{{ item.plannedDate }}</td>
+            <td>{{ item.dosageDoses | number }} доз</td>
+            <td>
+              <span class="status-badge" [class.badge-completed]="item.status === 'completed'" [class.badge-urgent]="item.status === 'urgent'" [class.badge-pending]="item.status === 'pending'">
+                {{ getStatusBadge(item.status) }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="filteredSchedule().length === 0">
+            <td colspan="8" class="empty-state">Записей по заданным фильтрам не найдено</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Двухколоночная сетка: Склад биопрепаратов и Журнал осмотра -->
+  <!-- Двухколоночный блок: Ветсклад и Клинические осмотры -->
   <div class="bottom-grid">
-    <!-- Склад ветпрепаратов -->
+    <!-- Склад вакцин и ветпрепаратов -->
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">💊 Склад биопрепаратов и вакцин</h3>
-        <p class="card-desc">Текущие неснижаемые остатки в аптеке ветблока</p>
+        <p class="card-desc">Холодовая цепь +2°...+8°C и неснижаемый запас</p>
       </div>
 
       <div class="stock-list">
-        <div *ngFor="let s of stock()" class="stock-item">
-          <div class="stock-header">
-            <span class="stock-name">{{ s.name }}</span>
-            <span class="stock-val font-bold">{{ s.stockDoses | number }} {{ s.unit }}</span>
+        <div *ngFor="let item of stock()" class="stock-item">
+          <div class="stock-top">
+            <div>
+              <span class="st-name font-bold">{{ item.name }}</span>
+              <span class="st-cat">{{ item.category }} (Сер. {{ item.batchNumber }})</span>
+            </div>
+            <span class="st-badge" [class.st-ok]="item.status === 'ok'" [class.st-low]="item.status === 'low'">
+              {{ item.status === 'ok' ? 'Запас в норме' : 'Малый запас' }}
+            </span>
           </div>
-          <div class="stock-meta">
-            <span>Категория: <b>{{ s.category }}</b></span>
-            <span>Серия: {{ s.batchNumber }}</span>
-            <span>Срок: {{ s.expiryDate }}</span>
+          <div class="stock-bottom">
+            <span>Остаток: <b>{{ item.stockDoses | number }} {{ item.unit }}</b></span>
+            <span>Годен до: <b>{{ item.expiryDate }}</b></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Журнал клинического осмотра -->
+    <!-- Журнал обходов и клинического состояния -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">📋 Журнал ежедневного клинического осмотра</h3>
-        <p class="card-desc">Фиксация состояния поголовья ветеринарными врачами</p>
+        <h3 class="card-title">🩺 Журнал ежедневных обходов ветврача</h3>
+        <p class="card-desc">Фиксация клинических признаков и статуса наблюдения</p>
       </div>
 
       <div class="logs-list">
         <div *ngFor="let log of logs()" class="log-item">
-          <div class="log-header">
+          <div class="log-top">
             <span class="log-house font-bold">{{ log.house }} ({{ log.flockAgeWeeks }} нед.)</span>
-            <span class="log-status" [class.status-ok]="log.quarantineStatus === 'normal'" [class.status-obs]="log.quarantineStatus === 'observation'">
-              {{ log.quarantineStatus === 'normal' ? 'Норма' : 'Наблюдение' }}
+            <span class="quarantine-badge" [class.q-normal]="log.quarantineStatus === 'normal'" [class.q-obs]="log.quarantineStatus === 'observation'">
+              {{ log.quarantineStatus === 'normal' ? 'Статус: Норма' : 'Под наблюдением' }}
             </span>
           </div>
-          <div class="log-signs">{{ log.clinicalSigns }}</div>
-          <div class="log-footer">
-            <span>Отход: <b>{{ log.mortalityCount }} гол.</b> ({{ log.mortalityRatePercent }}%)</span>
-            <span>Врач: {{ log.vetDoctor }}</span>
+          <div class="log-signs">
+            {{ log.clinicalSigns }}
+          </div>
+          <div class="log-meta">
+            <span>Отход: <b>{{ log.mortalityCount }} гол. ({{ log.mortalityRatePercent }}%)</b></span>
+            <span>Врач: <b>{{ log.vetDoctor }}</b> ({{ log.date }})</span>
           </div>
         </div>
       </div>

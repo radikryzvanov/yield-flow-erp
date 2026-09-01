@@ -13,7 +13,7 @@ export class VeterinaryService {
       disease: 'Болезнь Марека + ИБК',
       vaccineName: 'Марек Вакс HVT + Инфекционный бронхит',
       method: 'spray',
-      plannedDate: 'Сегодня, 08:00',
+      plannedDate: '01.09.2026',
       status: 'completed',
       dosageDoses: 54000
     },
@@ -24,7 +24,7 @@ export class VeterinaryService {
       disease: 'Болезнь Гамборо (ИББ)',
       vaccineName: 'Гамборо Вак GM-97',
       method: 'water',
-      plannedDate: 'Завтра, 09:00',
+      plannedDate: '02.09.2026',
       status: 'urgent',
       dosageDoses: 60000
     },
@@ -35,7 +35,7 @@ export class VeterinaryService {
       disease: 'Болезнь Ньюкасла (НБ)',
       vaccineName: 'Ньюкасл Клон Ла-Сота',
       method: 'spray',
-      plannedDate: 'Через 5 дней',
+      plannedDate: '06.09.2026',
       status: 'pending',
       dosageDoses: 60000
     },
@@ -98,7 +98,7 @@ export class VeterinaryService {
   private readonly _logs = signal<HealthCheckLog[]>([
     {
       id: 'VET-LOG-501',
-      date: 'Сегодня, утренний обход',
+      date: '01.09.2026',
       house: 'Птичник № 1 (Несушка Ломанн)',
       flockAgeWeeks: 34,
       mortalityCount: 6,
@@ -109,7 +109,7 @@ export class VeterinaryService {
     },
     {
       id: 'VET-LOG-502',
-      date: 'Сегодня, утренний обход',
+      date: '01.09.2026',
       house: 'Птичник № 2 (Несушка Декалб)',
       flockAgeWeeks: 28,
       mortalityCount: 14,
@@ -124,16 +124,13 @@ export class VeterinaryService {
   readonly stock = this._stock.asReadonly();
   readonly logs = this._logs.asReadonly();
 
-  // Количество запланированных вакцинаций
   readonly pendingVaccinationsCount = computed(() =>
     this._schedule().filter(s => s.status !== 'completed').length
   );
 
-  // Общий суточный падеж
   readonly totalDailyMortality = computed(() =>
     this._logs().reduce((sum, l) => sum + l.mortalityCount, 0)
   );
 
-  // Средняя сохранность поголовья
   readonly flockLivabilityPercent = computed(() => 98.6);
 }

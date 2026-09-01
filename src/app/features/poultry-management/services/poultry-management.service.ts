@@ -3,8 +3,8 @@ import { Injectable, signal, computed } from '@angular/core';
 export interface PoultryHouse {
   id: string;
   name: string;
-  crossType: string;             // Кросс: например, Ломанн ЛСЛ, Хайсекс Браун, Кобб-500
-  birdType: 'layer' | 'broiler' | 'rearing'; // Несушка, Бройлер, Молодняк
+  crossType: string;             // Кросс: Ломанн ЛСЛ, Хайсекс Браун, Декалб, Кобб-500
+  birdType: 'layer' | 'broiler' | 'rearing'; // Несушка, Бройлер, Ремонтный молодняк
   birdCount: number;
   initialBirdCount: number;
   ageDays: number;
@@ -50,10 +50,10 @@ export class PoultryManagementService {
       birdCount: 49800,
       initialBirdCount: 51000,
       ageDays: 441, // 63 недели - плановый спад
-      temperature: 23.8, // Перегрев
+      temperature: 23.8,
       targetTemperature: 20.0,
       targetLayingRatePercent: 88.0,
-      actualLayingRatePercent: 82.4, // Просадка из-за микроклимата
+      actualLayingRatePercent: 82.4,
       dailyEggCount: 41035,
       feedPerBirdGrams: 122,
       targetFeedGrams: 116,
@@ -91,6 +91,40 @@ export class PoultryManagementService {
       dailyEggCount: 25984,
       feedPerBirdGrams: 118,
       targetFeedGrams: 118,
+      status: 'active'
+    },
+    {
+      id: 'house-5',
+      name: 'Птичник № 5 (Промышленная несушка)',
+      crossType: 'Ломанн ЛСЛ Классик',
+      birdType: 'layer',
+      birdCount: 51200,
+      initialBirdCount: 52000,
+      ageDays: 315, // 45 недель
+      temperature: 20.1,
+      targetTemperature: 20.0,
+      targetLayingRatePercent: 94.0,
+      actualLayingRatePercent: 93.6,
+      dailyEggCount: 47923,
+      feedPerBirdGrams: 116,
+      targetFeedGrams: 115,
+      status: 'active'
+    },
+    {
+      id: 'house-6',
+      name: 'Птичник № 6 (Бройлеры откорма)',
+      crossType: 'Росс-308',
+      birdType: 'broiler',
+      birdCount: 42000,
+      initialBirdCount: 43000,
+      ageDays: 35, // 5 недель - предубойный период
+      temperature: 19.5,
+      targetTemperature: 19.0,
+      targetLayingRatePercent: 0,
+      actualLayingRatePercent: 0,
+      dailyEggCount: 0,
+      feedPerBirdGrams: 165,
+      targetFeedGrams: 160,
       status: 'active'
     }
   ]);

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
 import { FeedWarehouseService } from '../../../feed-warehouse/services/feed-warehouse.service';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-poultry-list',
@@ -16,6 +17,7 @@ export class PoultryListComponent {
   protected readonly poultryService = inject(PoultryManagementService);
   protected readonly eggWarehouseService = inject(EggWarehouseService);
   protected readonly feedWarehouseService = inject(FeedWarehouseService);
+  private readonly exportService = inject(ExportService);
 
   readonly houses = this.poultryService.houses;
   readonly totalBirds = this.poultryService.totalBirds;
@@ -109,19 +111,28 @@ export class PoultryListComponent {
     return Math.abs(actual - target) <= 1.0;
   }
 
-  // Экспорт технологической карты птичников в Excel (.csv UTF-8 BOM)
+  getBirdTypeLabel(type: string): string {
+    switch (type) {
+      case 'layer': return 'Промышленная несушка';
+      case 'broiler': return 'Бройлеры откорма';
+      case 'rearing': return 'Ремонтный молодняк';
+      default: return type;
+    }
+  }
+
+  // Централизованный экспорт технологической карты птичников
   exportToExcel(): void {
     const data = this.filteredHouses();
     if (data.length === 0) return;
 
     const headers = [
       'Корпус',
-      'Кросс',
-      'Тип стада',
+      'Кросс птицы',
+      'Направление стада',
       'Возраст (дней)',
       'Возраст (недель)',
-      'Поголовье (голов)',
-      'Сохранность (%)',
+      'Текущее поголовье (гол)',
+      'Сохранность поголовья (%)',
       'Яйценоскость факт (%)',
       'Яйценоскость план (%)',
       'Сбор яйца за сутки (шт)',
@@ -132,34 +143,25 @@ export class PoultryListComponent {
     ];
 
     const rows = data.map((h: PoultryHouse) => {
-      const safetyPercent = (h.birdCount / h.initialBirdCount * 100).toFixed(1).replace('.', ',');
+      const safetyPercent = Math.round((h.birdCount / h.initialBirdCount) * 1000) / 10;
       return [
-        `"${h.name}"`,
-        `"${h.crossType}"`,
-        h.birdType === 'layer' ? '"Промышленная несушка"' : '"Ремонтный молодняк"',
+        h.name,
+        h.crossType,
+        this.getBirdTypeLabel(h.birdType),
         h.ageDays,
         this.getAgeWeeks(h.ageDays),
         h.birdCount,
         safetyPercent,
-        h.birdType === 'layer' ? h.actualLayingRatePercent.toString().replace('.', ',') : '"—"',
-        h.birdType === 'layer' ? h.targetLayingRatePercent.toString().replace('.', ',') : '"—"',
+        h.birdType === 'layer' ? h.actualLayingRatePercent : null,
+        h.birdType === 'layer' ? h.targetLayingRatePercent : null,
         h.birdType === 'layer' ? h.dailyEggCount : 0,
         h.feedPerBirdGrams,
         h.targetFeedGrams,
-        h.temperature.toString().replace('.', ','),
-        h.targetTemperature.toString().replace('.', ',')
+        h.temperature,
+        h.targetTemperature
       ];
     });
 
-    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Технологическая_карта_птичников_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.exportService.exportToCsv(headers, rows, 'Технологическая_карта_птичников');
   }
 }
