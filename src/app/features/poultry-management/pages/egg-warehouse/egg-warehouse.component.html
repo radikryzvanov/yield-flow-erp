@@ -21,9 +21,34 @@
     </div>
   </div>
 
-  <!-- Блок 1: Поступления с птичников -->
+  <!-- Блок 1: Поступления с птичников с Enterprise тулбаром -->
   <div class="section-card">
-    <h2 class="section-title">Входящие партии с птичников (Валовый сбор)</h2>
+    <div class="section-header-flex">
+      <h2 class="section-title">Входящие партии с птичников (Валовый сбор)</h2>
+
+      <div class="table-toolbar">
+        <input
+          type="text"
+          placeholder="Поиск по птичнику..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="input-search" />
+
+        <select
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+          class="select-filter">
+          <option value="ALL">Все статусы</option>
+          <option value="pending">Ожидает калибровки</option>
+          <option value="sorted">Рассортировано</option>
+        </select>
+
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
+      </div>
+    </div>
+
     <div class="table-responsive">
       <table class="data-table">
         <thead>
@@ -36,7 +61,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let batch of incomingBatches()">
+          <tr *ngFor="let batch of filteredBatches()">
             <td>{{ batch.date }}</td>
             <td><strong>{{ batch.houseName }}</strong></td>
             <td>{{ batch.rawEggCount | number }} шт.</td>
@@ -55,6 +80,9 @@
               </button>
               <span *ngIf="batch.status === 'sorted'" class="text-muted">Оприходовано</span>
             </td>
+          </tr>
+          <tr *ngIf="filteredBatches().length === 0">
+            <td colspan="5" class="empty-state">Партий по заданным условиям не найдено</td>
           </tr>
         </tbody>
       </table>

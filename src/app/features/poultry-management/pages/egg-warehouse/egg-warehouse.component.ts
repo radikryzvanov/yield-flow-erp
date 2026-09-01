@@ -1,23 +1,71 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
+import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
 
 @Component({
   selector: 'app-egg-warehouse',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './egg-warehouse.component.html',
   styleUrl: './egg-warehouse.component.css'
 })
 export class EggWarehouseComponent {
   protected readonly warehouseService = inject(EggWarehouseService);
 
-  readonly incomingBatches = this.warehouseService.incomingBatches;
   readonly stocks = this.warehouseService.stocks;
   readonly totalStockEggs = this.warehouseService.totalStockEggs;
   readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
 
+  // Сигналы фильтрации
+  readonly searchQuery = signal<string>('');
+  readonly statusFilter = signal<string>('ALL');
+
+  // Отфильтрованные входящие партии
+  readonly filteredBatches = computed(() => {
+    const list = this.warehouseService.incomingBatches();
+    const query = this.searchQuery().trim().toLowerCase();
+    const status = this.statusFilter();
+
+    return list.filter((batch: IncomingEggBatch) => {
+      const matchesSearch =
+        query === '' ||
+        batch.houseName.toLowerCase().includes(query) ||
+        batch.date.toLowerCase().includes(query);
+
+      const matchesStatus = status === 'ALL' || batch.status === status;
+
+      return matchesSearch && matchesStatus;
+    });
+  });
+
   sortBatch(batchId: string) {
     this.warehouseService.sortBatch(batchId);
+  }
+
+  // Экспорт реестра валовых партий в Excel (.csv UTF-8 BOM)
+  exportToExcel(): void {
+    const data = this.filteredBatches();
+    if (data.length === 0) return;
+
+    const headers = ['Время/Дата', 'Источник (Птичник)', 'Количество валового яйца (шт)', 'Статус обработки'];
+    const rows = data.map((b: IncomingEggBatch) => [
+      `"${b.date}"`,
+      `"${b.houseName}"`,
+      b.rawEggCount,
+      b.status === 'pending' ? '"Ожидает калибровки"' : '"Рассортировано"'
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Отчет_приемки_валового_яйца_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }

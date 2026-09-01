@@ -54,18 +54,8 @@
   color: #94a3b8;
 }
 
-.text-primary {
-  color: #2563eb;
-}
-
-.text-warning {
-  color: #d97706;
-}
-
-.text-muted {
-  color: #94a3b8;
-  font-size: 13px;
-}
+.text-primary { color: #2563eb; }
+.text-warning { color: #d97706; }
 
 .section-card {
   background: #ffffff;
@@ -75,11 +65,66 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .section-title {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 17px;
   font-weight: 600;
   color: #1e293b;
+}
+
+/* Тулбар */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input-search, .select-filter {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.input-search:focus, .select-filter:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.input-search {
+  min-width: 220px;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #107c41;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-export:hover {
+  background-color: #0c6133;
 }
 
 .table-responsive {
@@ -108,27 +153,28 @@
 }
 
 .badge {
-  font-size: 12px;
+  display: inline-block;
   padding: 4px 8px;
   border-radius: 6px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .badge-pending {
-  background: #fef3c7;
-  color: #b45309;
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .badge-sorted {
-  background: #dcfce7;
-  color: #15803d;
+  background-color: #ecfdf5;
+  color: #065f46;
 }
 
 .btn-sort {
-  padding: 6px 12px;
-  background: #2563eb;
+  background-color: #2563eb;
   color: #ffffff;
   border: none;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
@@ -136,7 +182,12 @@
 }
 
 .btn-sort:hover {
-  background: #1d4ed8;
+  background-color: #1d4ed8;
+}
+
+.text-muted {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .stock-grid {
@@ -148,7 +199,7 @@
 .stock-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -160,9 +211,9 @@
 }
 
 .cat-badge {
-  font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  font-size: 16px;
+  color: #1e293b;
 }
 
 .cat-desc {
@@ -173,5 +224,12 @@
 .cat-count {
   font-size: 22px;
   font-weight: 700;
-  color: #16a34a;
+  color: #0f172a;
+}
+
+.empty-state {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px !important;
+  font-style: italic;
 }

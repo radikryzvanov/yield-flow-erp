@@ -1,19 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-
-export interface IncomingEggBatch {
-  id: string;
-  houseName: string;
-  rawEggCount: number;
-  date: string;
-  status: 'pending' | 'sorted';
-}
-
-export interface EggStock {
-  category: 'СВ' | 'СО' | 'С1' | 'С2' | 'Бой/Насечка';
-  description: string;
-  count: number;
-  unit: string;
-}
+import { IncomingEggBatch, EggStock } from '../interfaces/egg-warehouse.interface';
 
 @Injectable({
   providedIn: 'root'
