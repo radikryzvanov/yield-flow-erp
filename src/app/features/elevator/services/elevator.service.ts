@@ -1,25 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-
-export interface GrainSilo {
-  id: string;
-  name: string;
-  culture: string;
-  capacityTons: number;
-  currentTons: number;
-  moisturePercent: number;
-  temperatureC: number;
-  status: 'normal' | 'drying_required' | 'warning';
-}
-
-export interface GrainIntakeLog {
-  id: string;
-  date: string;
-  truckNumber: string;
-  culture: string;
-  weightTons: number;
-  moisturePercent: number;
-  targetSiloId: string;
-}
+import { GrainSilo, GrainIntakeLog } from '../interfaces/elevator.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -73,7 +53,7 @@ export class ElevatorService {
       id: 'log-1',
       date: 'Сегодня, 08:30',
       truckNumber: 'Е 741 КХ 73',
-      culture: 'Пшеница фуражная',
+      culture: 'Пшеница фуражная (5 класс)',
       weightTons: 32.5,
       moisturePercent: 13.0,
       targetSiloId: 'silo-1'

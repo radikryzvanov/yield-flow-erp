@@ -61,6 +61,7 @@
   </div>
 
   <div class="operations-grid">
+    <!-- Форма весовой приёмки -->
     <div class="form-card">
       <h3 class="card-title">Приёмка зерновоза (Лабораторный контроль)</h3>
       <div class="form-group">
@@ -101,32 +102,64 @@
       </button>
     </div>
 
+    <!-- Таблица журнала с Enterprise тулбаром -->
     <div class="table-card">
-      <h3 class="card-title">Журнал последних поступлений</h3>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Время</th>
-            <th>Машина</th>
-            <th>Сырьё</th>
-            <th>Вес</th>
-            <th>Влажность</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let log of intakeLogs()">
-            <td>{{ log.date }}</td>
-            <td class="font-bold">{{ log.truckNumber }}</td>
-            <td>{{ log.culture }}</td>
-            <td>{{ log.weightTons }} т</td>
-            <td>
-              <span class="badge" [class.badge-active]="log.moisturePercent <= 14.5" [class.badge-warning]="log.moisturePercent > 14.5">
-                {{ log.moisturePercent }}%
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-header-flex">
+        <h3 class="card-title">Журнал поступлений</h3>
+        <button type="button" class="btn-export" (click)="exportToExcel()">
+          📥 Экспорт в Excel
+        </button>
+      </div>
+
+      <div class="toolbar-row">
+        <input
+          type="text"
+          placeholder="Поиск по номеру машины..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="input-search" />
+
+        <select
+          [ngModel]="selectedCulture()"
+          (ngModelChange)="selectedCulture.set($event)"
+          class="select-filter">
+          <option value="ALL">Все культуры</option>
+          <option value="Пшеница фуражная (5 класс)">Пшеница фуражная</option>
+          <option value="Кукуруза кормовая">Кукуруза кормовая</option>
+          <option value="Шрот подсолнечный">Шрот подсолнечный</option>
+          <option value="Известняковая мука (ракушка)">Известняковая мука</option>
+        </select>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Машина</th>
+              <th>Сырьё</th>
+              <th>Вес</th>
+              <th>Влажность</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of filteredLogs()">
+              <td>{{ log.date }}</td>
+              <td class="font-bold">{{ log.truckNumber }}</td>
+              <td>{{ log.culture }}</td>
+              <td>{{ log.weightTons }} т</td>
+              <td>
+                <span class="badge" [class.badge-active]="log.moisturePercent <= 14.5" [class.badge-warning]="log.moisturePercent > 14.5">
+                  {{ log.moisturePercent }}%
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="filteredLogs().length === 0">
+              <td colspan="5" class="empty-state">Записей не найдено</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
