@@ -1,184 +1,171 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 
 export interface PoultryHouse {
   id: string;
   name: string;
-  crossType: string;             // Кросс: Ломанн ЛСЛ, Хайсекс Браун, Декалб, Кобб-500
-  birdType: 'layer' | 'broiler' | 'rearing'; // Несушка, Бройлер, Ремонтный молодняк
+  birdType: 'layer' | 'broiler' | 'rearing';
+  crossType: string;
+  ageDays: number;
+  status: 'active' | 'quarantine' | 'cleaning';
   birdCount: number;
   initialBirdCount: number;
-  ageDays: number;
+  dailyEggCount: number;
+  actualLayingRatePercent: number;
+  targetLayingRatePercent: number;
+  feedPerBirdGrams: number;
+  targetFeedGrams: number;
   temperature: number;
   targetTemperature: number;
+  humidityPercent: number;
+  [key: string]: any;
+}
 
-  // Зоотехнические нормативы и факт
-  targetLayingRatePercent: number; // Нормативный % яйценоскости кросса
-  actualLayingRatePercent: number; // Фактический % яйценоскости
-  dailyEggCount: number;           // Сбор яиц за сутки (шт.)
-  feedPerBirdGrams: number;        // Расход корма (грамм на голову в сутки)
-  targetFeedGrams: number;         // Норма корма на голову
-  status: 'active' | 'quarantine' | 'empty';
+export interface DailyReportInput {
+  houseId: string;
+  dailyEggCount?: number;
+  eggCount?: number;
+  mortalityCount?: number;
+  mortality?: number;
+  feedPerBirdGrams?: number;
+  feedKg?: number;
+  temperature?: number;
+  targetTemperature?: number;
+  humidityPercent?: number;
+  [key: string]: any;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PoultryManagementService {
-  private readonly _houses = signal<PoultryHouse[]>([
+  private readonly _houses = persistedSignal<PoultryHouse[]>('yieldflow_poultry_houses', [
     {
       id: 'house-1',
       name: 'Птичник № 1 (Промышленная несушка)',
-      crossType: 'Ломанн ЛСЛ Классик',
       birdType: 'layer',
-      birdCount: 52400,
-      initialBirdCount: 53000,
-      ageDays: 238, // 34 недели - пик продуктивности
-      temperature: 20.5,
-      targetTemperature: 20.0,
-      targetLayingRatePercent: 96.2,
-      actualLayingRatePercent: 95.8,
+      crossType: 'Ломанн Браун',
+      ageDays: 196,
+      status: 'active',
+      birdCount: 52000,
+      initialBirdCount: 53500,
       dailyEggCount: 50199,
-      feedPerBirdGrams: 115,
-      targetFeedGrams: 114,
-      status: 'active'
+      actualLayingRatePercent: 96.5,
+      targetLayingRatePercent: 95.0,
+      feedPerBirdGrams: 118,
+      targetFeedGrams: 115,
+      temperature: 21.4,
+      targetTemperature: 21.0,
+      humidityPercent: 62
     },
     {
       id: 'house-2',
       name: 'Птичник № 2 (Промышленная несушка)',
-      crossType: 'Декалб Белый',
       birdType: 'layer',
-      birdCount: 49800,
-      initialBirdCount: 51000,
-      ageDays: 441, // 63 недели - плановый спад
-      temperature: 23.8,
-      targetTemperature: 20.0,
-      targetLayingRatePercent: 88.0,
-      actualLayingRatePercent: 82.4,
+      crossType: 'Декалб Белый',
+      ageDays: 238,
+      status: 'active',
+      birdCount: 43200,
+      initialBirdCount: 44000,
       dailyEggCount: 41035,
-      feedPerBirdGrams: 122,
-      targetFeedGrams: 116,
-      status: 'active'
+      actualLayingRatePercent: 95.0,
+      targetLayingRatePercent: 94.0,
+      feedPerBirdGrams: 116,
+      targetFeedGrams: 115,
+      temperature: 20.8,
+      targetTemperature: 21.0,
+      humidityPercent: 65
     },
     {
       id: 'house-3',
       name: 'Птичник № 3 (Ремонтный молодняк)',
-      crossType: 'Ломанн ЛСЛ Классик',
       birdType: 'rearing',
-      birdCount: 35000,
-      initialBirdCount: 35500,
-      ageDays: 70, // 10 недель (период активного роста скелета)
-      temperature: 22.0,
-      targetTemperature: 22.0,
-      targetLayingRatePercent: 0,
-      actualLayingRatePercent: 0,
+      crossType: 'Ломанн Браун',
+      ageDays: 84,
+      status: 'active',
+      birdCount: 38000,
+      initialBirdCount: 38500,
       dailyEggCount: 0,
-      feedPerBirdGrams: 68,
-      targetFeedGrams: 68,
-      status: 'active'
+      actualLayingRatePercent: 0,
+      targetLayingRatePercent: 0,
+      feedPerBirdGrams: 75,
+      targetFeedGrams: 75,
+      temperature: 22.5,
+      targetTemperature: 22.0,
+      humidityPercent: 58
     },
     {
       id: 'house-4',
-      name: 'Птичник № 4 (Родительское стадо)',
-      crossType: 'Хайсекс Браун',
-      birdType: 'layer',
-      birdCount: 28000,
-      initialBirdCount: 28500,
-      ageDays: 196, // 28 недель (инкубационное яйцо)
-      temperature: 20.2,
-      targetTemperature: 20.0,
-      targetLayingRatePercent: 92.5,
-      actualLayingRatePercent: 92.8,
-      dailyEggCount: 25984,
-      feedPerBirdGrams: 118,
-      targetFeedGrams: 118,
-      status: 'active'
-    },
-    {
-      id: 'house-5',
-      name: 'Птичник № 5 (Промышленная несушка)',
-      crossType: 'Ломанн ЛСЛ Классик',
-      birdType: 'layer',
-      birdCount: 51200,
-      initialBirdCount: 52000,
-      ageDays: 315, // 45 недель
-      temperature: 20.1,
-      targetTemperature: 20.0,
-      targetLayingRatePercent: 94.0,
-      actualLayingRatePercent: 93.6,
-      dailyEggCount: 47923,
-      feedPerBirdGrams: 116,
-      targetFeedGrams: 115,
-      status: 'active'
-    },
-    {
-      id: 'house-6',
-      name: 'Птичник № 6 (Бройлеры откорма)',
-      crossType: 'Росс-308',
+      name: 'Птичник № 4 (Мясной бройлер)',
       birdType: 'broiler',
-      birdCount: 42000,
-      initialBirdCount: 43000,
-      ageDays: 35, // 5 недель - предубойный период
-      temperature: 19.5,
-      targetTemperature: 19.0,
-      targetLayingRatePercent: 0,
-      actualLayingRatePercent: 0,
+      crossType: 'Росс 308',
+      ageDays: 35,
+      status: 'active',
+      birdCount: 22000,
+      initialBirdCount: 22400,
       dailyEggCount: 0,
-      feedPerBirdGrams: 165,
-      targetFeedGrams: 160,
-      status: 'active'
+      actualLayingRatePercent: 0,
+      targetLayingRatePercent: 0,
+      feedPerBirdGrams: 155,
+      targetFeedGrams: 155,
+      temperature: 21.0,
+      targetTemperature: 21.0,
+      humidityPercent: 60
     }
   ]);
 
   readonly houses = this._houses.asReadonly();
 
+  // Сигналы, которые требует PoultryListComponent
   readonly totalBirds = computed(() =>
     this._houses().reduce((sum, h) => sum + h.birdCount, 0)
   );
 
+  // Сигналы, которые требуют PoultryListComponent и FinanceService
   readonly totalDailyEggs = computed(() =>
     this._houses().reduce((sum, h) => sum + h.dailyEggCount, 0)
   );
 
   readonly totalDailyFeedTons = computed(() => {
-    const totalGrams = this._houses().reduce(
-      (sum, h) => sum + (h.birdCount * h.feedPerBirdGrams),
+    const totalKg = this._houses().reduce(
+      (sum, h) => sum + (h.birdCount * h.feedPerBirdGrams) / 1000,
       0
     );
-    return Math.round((totalGrams / 1_000_000) * 10) / 10;
+    return +(totalKg / 1000).toFixed(1);
   });
 
   readonly averageLayingRate = computed(() => {
-    const layerHouses = this._houses().filter(h => h.birdType === 'layer' && h.status === 'active');
-    if (layerHouses.length === 0) return 0;
-    const totalRate = layerHouses.reduce((sum, h) => sum + h.actualLayingRatePercent, 0);
-    return Math.round((totalRate / layerHouses.length) * 10) / 10;
+    const layers = this._houses().filter(h => h.birdType === 'layer');
+    if (layers.length === 0) return 0;
+    const avg = layers.reduce((sum, h) => sum + h.actualLayingRatePercent, 0) / layers.length;
+    return +avg.toFixed(1);
   });
 
-  submitDailyReport(report: {
-    houseId: string;
-    mortalityCount: number;
-    dailyEggCount: number;
-    feedPerBirdGrams: number;
-    temperature: number;
-  }) {
+  // Метод внесения сменного отчета из формы poultry-list
+  submitDailyReport(report: DailyReportInput): void {
+    const eggs = report.dailyEggCount ?? report.eggCount ?? 0;
+    const mortality = report.mortalityCount ?? report.mortality ?? 0;
+
     this._houses.update(houses =>
-      houses.map(house => {
-        if (house.id !== report.houseId) return house;
+      houses.map(h => {
+        if (h.id === report.houseId) {
+          const newBirdCount = Math.max(0, h.birdCount - mortality);
+          const newRate =
+            newBirdCount > 0 && h.birdType === 'layer'
+              ? +((eggs / newBirdCount) * 100).toFixed(1)
+              : h.actualLayingRatePercent;
 
-        const newBirdCount = Math.max(0, house.birdCount - report.mortalityCount);
-        const calculatedLayingRate = newBirdCount > 0 && house.birdType === 'layer'
-          ? Math.round((report.dailyEggCount / newBirdCount) * 1000) / 10
-          : house.actualLayingRatePercent;
-
-        return {
-          ...house,
-          birdCount: newBirdCount,
-          dailyEggCount: report.dailyEggCount,
-          feedPerBirdGrams: report.feedPerBirdGrams,
-          temperature: report.temperature,
-          actualLayingRatePercent: calculatedLayingRate,
-          ageDays: house.ageDays + 1
-        };
+          return {
+            ...h,
+            ...report,
+            birdCount: newBirdCount,
+            dailyEggCount: eggs,
+            actualLayingRatePercent: newRate,
+            feedPerBirdGrams: report.feedPerBirdGrams ?? h.feedPerBirdGrams,
+            temperature: report.temperature ?? h.temperature
+          };
+        }
+        return h;
       })
     );
   }
