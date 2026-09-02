@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, model, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElevatorService } from '../../services/elevator.service';
@@ -21,16 +21,16 @@ export class ElevatorDashboardComponent {
   readonly totalCapacityTons = this.elevatorService.totalCapacityTons;
   readonly silosRequiringAttention = this.elevatorService.silosRequiringAttention;
 
-  // Форма приемки
-  truckNumber = signal('');
-  culture = signal('Пшеница фуражная (5 класс)');
-  weightTons = signal<number | null>(null);
-  moisturePercent = signal<number | null>(null);
-  selectedSiloId = signal('silo-1');
+  // Поля формы приёмки (через model() для корректной работы [(ngModel)])
+  truckNumber = model('');
+  culture = model('Кукуруза кормовая');
+  weightTons = model<number | null>(null);
+  moisturePercent = model<number | null>(null);
+  selectedSiloId = model('silo-2');
 
   // Сигналы фильтрации весового журнала
-  readonly searchQuery = signal<string>('');
-  readonly selectedCulture = signal<string>('ALL');
+  readonly searchQuery = model<string>('');
+  readonly selectedCulture = model<string>('ALL');
 
   readonly filteredLogs = computed(() => {
     const list = this.elevatorService.intakeLogs();
@@ -50,16 +50,25 @@ export class ElevatorDashboardComponent {
   });
 
   submitIntake(): void {
-    if (!this.truckNumber() || !this.weightTons() || !this.moisturePercent()) return;
+    const truck = this.truckNumber();
+    const weight = Number(this.weightTons());
+    const moisture = Number(this.moisturePercent());
+    const siloId = this.selectedSiloId();
+
+    if (!truck || !weight || isNaN(weight) || isNaN(moisture)) {
+      console.warn('Заполните все обязательные поля приёмки');
+      return;
+    }
 
     this.elevatorService.receiveGrain({
-      truckNumber: this.truckNumber(),
+      truckNumber: truck,
       culture: this.culture(),
-      weightTons: this.weightTons()!,
-      moisturePercent: this.moisturePercent()!,
-      targetSiloId: this.selectedSiloId()
+      weightTons: weight,
+      moisturePercent: moisture,
+      targetSiloId: siloId
     });
 
+    // Очистка формы после успешной записи
     this.truckNumber.set('');
     this.weightTons.set(null);
     this.moisturePercent.set(null);

@@ -1,11 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { GrainSilo, GrainIntakeLog } from '../interfaces/elevator.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ElevatorService {
-  private readonly _silos = signal<GrainSilo[]>([
+  private readonly _silos = persistedSignal<GrainSilo[]>('yieldflow_elevator_silos', [
     {
       id: 'silo-1',
       name: 'Силос № 1 (Север)',
@@ -48,7 +49,7 @@ export class ElevatorService {
     }
   ]);
 
-  private readonly _intakeLogs = signal<GrainIntakeLog[]>([
+  private readonly _intakeLogs = persistedSignal<GrainIntakeLog[]>('yieldflow_elevator_intake_logs', [
     {
       id: 'log-1',
       date: 'Сегодня, 08:30',
@@ -84,7 +85,13 @@ export class ElevatorService {
     this._silos().filter(s => s.status !== 'normal').length
   );
 
-  receiveGrain(data: { truckNumber: string; culture: string; weightTons: number; moisturePercent: number; targetSiloId: string }): void {
+  receiveGrain(data: {
+    truckNumber: string;
+    culture: string;
+    weightTons: number;
+    moisturePercent: number;
+    targetSiloId: string;
+  }): void {
     const weight = Number(data.weightTons) || 0;
     const moisture = Number(data.moisturePercent) || 0;
 
