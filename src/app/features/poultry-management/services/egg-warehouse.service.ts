@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { IncomingEggBatch, EggStock } from '../interfaces/egg-warehouse.interface';
 
 @Injectable({
@@ -6,7 +7,7 @@ import { IncomingEggBatch, EggStock } from '../interfaces/egg-warehouse.interfac
 })
 export class EggWarehouseService {
   // Входящие партии валового яйца из птичников
-  private readonly _incomingBatches = signal<IncomingEggBatch[]>([
+  private readonly _incomingBatches = persistedSignal<IncomingEggBatch[]>('yieldflow_egg_batches', [
     {
       id: 'batch-101',
       houseName: 'Птичник № 1 (Промышленная несушка)',
@@ -24,7 +25,7 @@ export class EggWarehouseService {
   ]);
 
   // Остатки рассортированного яйца на складе готовой продукции
-  private readonly _stocks = signal<EggStock[]>([
+  private readonly _stocks = persistedSignal<EggStock[]>('yieldflow_egg_stocks', [
     { category: 'СВ', description: 'Высшая категория (>75г)', count: 18400, unit: 'шт' },
     { category: 'СО', description: 'Отборное яйцо (65-74.9г)', count: 142000, unit: 'шт' },
     { category: 'С1', description: 'Первая категория (55-64.9г)', count: 215000, unit: 'шт' },
@@ -48,7 +49,7 @@ export class EggWarehouseService {
   );
 
   // Регистрация поступления валового яйца из птичника
-  registerIncomingEggs(houseName: string, eggCount: number) {
+  registerIncomingEggs(houseName: string, eggCount: number): void {
     if (eggCount <= 0) return;
 
     const newBatch: IncomingEggBatch = {
@@ -63,7 +64,7 @@ export class EggWarehouseService {
   }
 
   // Сортировка партии на яйцесортировочной машине
-  sortBatch(batchId: string) {
+  sortBatch(batchId: string): void {
     const batch = this._incomingBatches().find(b => b.id === batchId);
     if (!batch || batch.status === 'sorted') return;
 

@@ -20,6 +20,10 @@ export class EggWarehouseComponent {
   readonly totalStockEggs = this.warehouseService.totalStockEggs;
   readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
 
+  // Форма ручной приёмки партии валового сбора
+  newBatchHouse = 'Птичник № 1 (Промышленная несушка)';
+  newBatchCount: number | null = null;
+
   // Сигналы фильтрации
   readonly searchQuery = signal<string>('');
   readonly statusFilter = signal<string>('ALL');
@@ -42,11 +46,18 @@ export class EggWarehouseComponent {
     });
   });
 
-  sortBatch(batchId: string) {
+  submitNewBatch(): void {
+    const count = Number(this.newBatchCount);
+    if (!count || count <= 0) return;
+
+    this.warehouseService.registerIncomingEggs(this.newBatchHouse, count);
+    this.newBatchCount = null;
+  }
+
+  sortBatch(batchId: string): void {
     this.warehouseService.sortBatch(batchId);
   }
 
-  // Централизованный экспорт реестра валовых партий в Excel
   exportToExcel(): void {
     const data = this.filteredBatches();
     if (data.length === 0) return;

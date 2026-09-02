@@ -17,11 +17,44 @@
     <div class="kpi-card">
       <div class="kpi-title">Ожидает сортировки</div>
       <div class="kpi-value text-warning">{{ totalPendingRawEggs() | number }} <span class="unit">шт</span></div>
-      <div class="kpi-note">Валовое яйцо в приёмном бункере</div>
+      <div class="kpi-note">Ожидает калибровки</div>
     </div>
   </div>
 
-  <!-- Блок 1: Поступления с птичников с Enterprise тулбаром -->
+  <!-- Панель быстрой приёмки валового яйца -->
+  <div class="section-card quick-intake-card">
+    <h2 class="section-title">Приёмка валового сбора с транспортера</h2>
+    <div class="quick-intake-form">
+      <div class="form-group flex-2">
+        <label>Источник поступления (Птичник / Бригада)</label>
+        <select [(ngModel)]="newBatchHouse" class="input-field">
+          <option value="Птичник № 1 (Промышленная несушка)">Птичник № 1 (Промышленная несушка)</option>
+          <option value="Птичник № 2 (Промышленная несушка)">Птичник № 2 (Промышленная несушка)</option>
+          <option value="Птичник № 3 (Молодняк)">Птичник № 3 (Молодняк)</option>
+        </select>
+      </div>
+
+      <div class="form-group flex-1">
+        <label>Количество вала (шт)</label>
+        <input
+          type="number"
+          [(ngModel)]="newBatchCount"
+          placeholder="Например: 45000"
+          class="input-field"
+          min="1" />
+      </div>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="submitNewBatch()"
+        [disabled]="!newBatchCount || newBatchCount <= 0">
+        Принять с линии
+      </button>
+    </div>
+  </div>
+
+  <!-- Блок 1: Поступления с птичников с тулбаром -->
   <div class="section-card">
     <div class="section-header-flex">
       <h2 class="section-title">Входящие партии с птичников (Валовый сбор)</h2>
