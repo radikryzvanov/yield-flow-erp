@@ -33,32 +33,30 @@
     </div>
   </div>
 
-  <!-- Панель управления и фильтрации -->
-  <div class="toolbar-card">
-    <div class="toolbar-title">
-      <h3>Производственные корпуса</h3>
-      <span class="houses-counter">Отображено: {{ filteredHouses().length }} из {{ houses().length }}</span>
+  <!-- Единая панель управления и фильтрации -->
+  <div class="table-toolbar-header">
+    <div class="toolbar-title-group">
+      <h3 class="table-title">Производственные корпуса</h3>
+      <span class="houses-counter">Показано: {{ filteredHouses().length }} из {{ houses().length }}</span>
     </div>
 
-    <div class="table-toolbar">
+    <div class="table-toolbar-actions">
       <input
         type="text"
         placeholder="Поиск по корпусу / кроссу..."
         [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
-        class="input-search" />
+        (ngModelChange)="searchQuery.set($event)" />
 
       <select
         [ngModel]="selectedType()"
-        (ngModelChange)="selectedType.set($event)"
-        class="select-filter">
+        (ngModelChange)="selectedType.set($event)">
         <option value="ALL">Все типы стада</option>
         <option value="layer">Промышленная несушка</option>
         <option value="pullet">Ремонтный молодняк</option>
       </select>
 
-      <button type="button" class="btn-export" (click)="exportToExcel()">
-        📥 Экспорт в Excel
+      <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+        <span>📥</span> Экспорт в Excel
       </button>
     </div>
   </div>

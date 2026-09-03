@@ -139,19 +139,19 @@
     </div>
   </div>
 
-  <!-- Журнал списаний -->
+  <!-- Журнал списаний с Enterprise тулбаром -->
   <div class="section-card">
-    <div class="section-header-flex">
-      <h3 class="section-title">Журнал выдачи комбикормов</h3>
-      <div class="toolbar-row">
+    <div class="table-toolbar-header">
+      <h3 class="table-title">Журнал выдачи комбикормов</h3>
+
+      <div class="table-toolbar-actions">
         <input
           type="text"
           placeholder="Поиск по птичнику или рецепту..."
-          [(ngModel)]="searchQuery"
-          class="input-search" />
+          [(ngModel)]="searchQuery" />
 
-        <button type="button" class="btn-export" (click)="exportToExcel()">
-          📥 Экспорт в Excel
+        <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+          <span>📥</span> Экспорт в Excel
         </button>
       </div>
     </div>

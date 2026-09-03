@@ -104,31 +104,30 @@
 
     <!-- Таблица журнала с Enterprise тулбаром -->
     <div class="table-card">
-      <div class="table-header-flex">
-        <h3 class="card-title">Журнал поступлений</h3>
-        <button type="button" class="btn-export" (click)="exportToExcel()">
-          📥 Экспорт в Excel
-        </button>
-      </div>
+      <div class="table-toolbar-header">
+        <h3 class="table-title">Журнал поступлений</h3>
 
-      <div class="toolbar-row">
-        <input
-          type="text"
-          placeholder="Поиск по номеру машины..."
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          class="input-search" />
+        <div class="table-toolbar-actions">
+          <input
+            type="text"
+            placeholder="Поиск по номеру машины..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)" />
 
-        <select
-          [ngModel]="selectedCulture()"
-          (ngModelChange)="selectedCulture.set($event)"
-          class="select-filter">
-          <option value="ALL">Все культуры</option>
-          <option value="Пшеница фуражная (5 класс)">Пшеница фуражная</option>
-          <option value="Кукуруза кормовая">Кукуруза кормовая</option>
-          <option value="Шрот подсолнечный">Шрот подсолнечный</option>
-          <option value="Известняковая мука (ракушка)">Известняковая мука</option>
-        </select>
+          <select
+            [ngModel]="selectedCulture()"
+            (ngModelChange)="selectedCulture.set($event)">
+            <option value="ALL">Все культуры</option>
+            <option value="Пшеница фуражная (5 класс)">Пшеница фуражная</option>
+            <option value="Кукуруза кормовая">Кукуруза кормовая</option>
+            <option value="Шрот подсолнечный">Шрот подсолнечный</option>
+            <option value="Известняковая мука (ракушка)">Известняковая мука</option>
+          </select>
+
+          <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+            <span>📥</span> Экспорт в Excel
+          </button>
+        </div>
       </div>
 
       <div class="table-responsive">

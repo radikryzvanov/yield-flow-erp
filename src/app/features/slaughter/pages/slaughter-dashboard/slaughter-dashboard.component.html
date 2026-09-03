@@ -117,13 +117,16 @@
     </div>
   </div>
 
-  <!-- Журнал убоя -->
+  <!-- Журнал убоя с Enterprise тулбаром -->
   <div class="section-card">
-    <div class="section-header-flex">
-      <h3 class="section-title">Журнал партий и ветсанэкспертизы</h3>
-      <button type="button" class="btn-export" (click)="exportToExcel()">
-        📥 Экспорт в Excel
-      </button>
+    <div class="table-toolbar-header">
+      <h3 class="table-title">Журнал партий и ветсанэкспертизы</h3>
+
+      <div class="table-toolbar-actions">
+        <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+          <span>📥</span> Экспорт в Excel
+        </button>
+      </div>
     </div>
 
     <div class="table-responsive">

@@ -107,29 +107,27 @@
 
   <!-- Журнал завершенных выводов с Enterprise тулбаром -->
   <div class="card table-card">
-    <div class="card-header-flex">
-      <h3 class="card-title">📋 Журнал завершенных выводов цыплят</h3>
+    <div class="table-toolbar-header">
+      <h3 class="table-title">📋 Журнал завершенных выводов цыплят</h3>
 
-      <div class="table-toolbar">
+      <div class="table-toolbar-actions">
         <input
           type="text"
           placeholder="Поиск по партии / птичнику..."
           [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          class="input-search" />
+          (ngModelChange)="searchQuery.set($event)" />
 
         <select
           [ngModel]="selectedCross()"
-          (ngModelChange)="selectedCross.set($event)"
-          class="select-filter">
+          (ngModelChange)="selectedCross.set($event)">
           <option value="ALL">Все кроссы птицы</option>
           <option value="Ломанн ЛСЛ Классик">Ломанн ЛСЛ Классик</option>
           <option value="Хайсекс Браун">Хайсекс Браун</option>
           <option value="Декалб Белый">Декалб Белый</option>
         </select>
 
-        <button type="button" class="btn-export" (click)="exportToExcel()">
-          📥 Экспорт в Excel
+        <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+          <span>📥</span> Экспорт в Excel
         </button>
       </div>
     </div>

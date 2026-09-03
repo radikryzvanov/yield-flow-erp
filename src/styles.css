@@ -11,11 +11,91 @@ html, body {
   min-height: 100vh;
   overflow-x: hidden;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
-/* Адаптивность для мобильных экранов и планшетов */
+/* ==========================================================================
+   ЕДИНЫЙ СТАНДАРТ ШАПОК ТАБЛИЦ И ПАНЕЛЕЙ ДЕЙСТВИЙ (YIELDFLOW TOOLBAR)
+   ========================================================================== */
+
+/* Общий контейнер: заголовок слева, блок действий справа */
+.table-toolbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.table-toolbar-header .table-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Правая группа: фильтры, поиск и кнопка экспорта в одну линию */
+.table-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Единая кнопка выгрузки в Excel по всей системе */
+.btn-export-excel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  background-color: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: background-color 0.2s, transform 0.05s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-export-excel:hover {
+  background-color: #047857;
+}
+
+.btn-export-excel:active {
+  transform: translateY(1px);
+}
+
+/* Поля поиска и фильтры в тулбаре — строго единая высота 38px */
+.table-toolbar-actions input,
+.table-toolbar-actions select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  background: #ffffff;
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.table-toolbar-actions input:focus,
+.table-toolbar-actions select:focus {
+  border-color: #2563eb;
+}
+
+/* ==========================================================================
+   АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ И МОБИЛЬНЫХ ЭКРАНОВ
+   ========================================================================== */
 @media (max-width: 900px) {
-  /* Если общий макет построен на flex/grid */
   .layout, .app-layout, .container, .wrapper, main {
     flex-direction: column !important;
     width: 100% !important;
@@ -23,23 +103,37 @@ html, body {
     min-width: 0 !important;
   }
 
-  /* Боковое меню подстраивается под ширину экрана */
   aside, .sidebar, .nav-menu {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
   }
 
-  /* Сетки карточек, дашбордов и показателей перестраиваются в 1 колонку */
   .grid, .cards-grid, .dashboard-grid, .poultry-grid, .metrics-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Таблицы получают аккуратный горизонтальный скролл */
   table {
     display: block;
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* На мобильных тулбар аккуратно встает в столбик на всю ширину */
+  .table-toolbar-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-toolbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-export-excel,
+  .table-toolbar-actions input,
+  .table-toolbar-actions select {
+    width: 100%;
   }
 }

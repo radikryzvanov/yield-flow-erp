@@ -29,13 +29,13 @@
     </div>
   </div>
 
-  <!-- График вакцинаций -->
+  <!-- График вакцинаций с Enterprise тулбаром -->
   <div class="section-card">
-    <div class="section-header-flex">
-      <h3 class="section-title">План-график иммунопрофилактики</h3>
+    <div class="table-toolbar-header">
+      <h3 class="table-title">План-график иммунопрофилактики</h3>
 
-      <div class="toolbar-row">
-        <select [(ngModel)]="scheduleFilter" class="select-filter">
+      <div class="table-toolbar-actions">
+        <select [(ngModel)]="scheduleFilter">
           <option value="ALL">Все статусы</option>
           <option value="urgent">Срочно к обработке</option>
           <option value="pending">Запланировано</option>
@@ -179,13 +179,16 @@
     </div>
   </div>
 
-  <!-- Журнал осмотров -->
+  <!-- Журнал осмотров с Enterprise тулбаром -->
   <div class="section-card">
-    <div class="section-header-flex">
-      <h3 class="section-title">Журнал клинических осмотров и эпизоотологии</h3>
-      <button type="button" class="btn-export" (click)="exportLogsToExcel()">
-        📥 Экспорт в Excel
-      </button>
+    <div class="table-toolbar-header">
+      <h3 class="table-title">Журнал клинических осмотров и эпизоотологии</h3>
+
+      <div class="table-toolbar-actions">
+        <button type="button" class="btn-export-excel" (click)="exportLogsToExcel()">
+          <span>📥</span> Экспорт в Excel
+        </button>
+      </div>
     </div>
 
     <div class="table-responsive">
