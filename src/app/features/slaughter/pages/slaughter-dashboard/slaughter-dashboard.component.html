@@ -1,164 +1,158 @@
 <div class="slaughter-container">
   <div class="page-header">
     <div>
-      <h1>Цех убоя и глубокой переработки птицы (Убойный цех)</h1>
-      <p class="subtitle">Управление линиями убоя Marel, сортировкой тушки по ГОСТ 31962, выходом субпродуктов и утилизацией пера</p>
+      <h1>Убойный цех и глубокая переработка</h1>
+      <p class="subtitle">Поточное взвешивание, автоматическое потрошение, калибровка тушек и ветеринарно-санитарная экспертиза</p>
     </div>
   </div>
 
-  <!-- KPI показатели цеха убоя -->
+  <!-- KPI блок -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Переработано птицы</span>
-        <span class="kpi-icon">🍗</span>
-      </div>
-      <div class="kpi-value text-primary">{{ lines()[0].birdsProcessedToday | number }} <span class="unit">гол.</span></div>
-      <div class="kpi-note">Живой вес: {{ totalLiveWeight() }} тонн</div>
+      <div class="kpi-title">Выработано мяса за смену</div>
+      <div class="kpi-value text-primary">{{ (totalMeatYieldKg() / 1000) | number:'1.2-2' }} <span class="unit">т</span></div>
+      <div class="kpi-note">Средний убойный выход: 68.4%</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Выход готового мяса</span>
-        <span class="kpi-icon">⚖️</span>
-      </div>
-      <div class="kpi-value text-success">{{ totalMeatYield() | number }} <span class="unit">кг</span></div>
-      <div class="kpi-note">Убойный выход: <b>{{ avgYieldPercent() }}%</b></div>
+      <div class="kpi-title">Стоимость готовой продукции</div>
+      <div class="kpi-value text-success">{{ (totalSlaughterRevenueRub() / 1000000) | number:'1.2-2' }} <span class="unit">млн ₽</span></div>
+      <div class="kpi-note">В ценах оптовой реализации</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Суточная выручка цеха</span>
-        <span class="kpi-icon">💰</span>
-      </div>
-      <div class="kpi-value text-warning">{{ slaughterRevenue() | number }} <span class="unit">₽ / сут</span></div>
-      <div class="kpi-note">Тушка + Субпродукты + Мука</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Ветеринарно-санитарная экспертиза</span>
-        <span class="kpi-icon">🛡️</span>
-      </div>
-      <div class="kpi-value text-success">100% ГОСТ</div>
-      <div class="kpi-note">Ветэкспертиза пройдена без замечаний</div>
+      <div class="kpi-title">Ветеринарный контроль</div>
+      <div class="kpi-value text-success">100% <span class="unit">чисто</span></div>
+      <div class="kpi-note">Автоматический сброс брака активен</div>
     </div>
   </div>
 
-  <!-- Линии убоя и переработки -->
+  <!-- Терминал зоны навески (SCADA / MES) -->
+  <div class="dock-card">
+    <div class="dock-header">
+      <div class="dock-tag">Участок приёмки и подвески живой птицы</div>
+      <span class="dock-status" [class.status-wait]="pendingDelivery()" [class.status-empty]="!pendingDelivery()">
+        {{ pendingDelivery() ? 'Партия в накопителе' : 'Очередь чиста' }}
+      </span>
+    </div>
+
+    <div *ngIf="pendingDelivery() as d; else noDeliveryBlock" class="dock-body">
+      <div class="dock-info">
+        <h3>{{ d.sourceHouse }}</h3>
+        <div class="dock-sub">{{ d.deliveryTime }}</div>
+        <div class="dock-metrics">
+          <div class="metric-pill">
+            <span>Объём:</span> <strong>{{ d.birdsCount | number }} гол.</strong>
+          </div>
+          <div class="metric-pill">
+            <span>Средний вес:</span> <strong>{{ d.averageWeightKg }} кг</strong>
+          </div>
+          <div class="metric-pill">
+            <span>Брутто партии:</span> <strong>{{ (d.birdsCount * d.averageWeightKg / 1000) | number:'1.1-1' }} т</strong>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-launch" (click)="startBatch(d.id)">
+        ▶ Запустить навеску и убой
+      </button>
+    </div>
+
+    <ng-template #noDeliveryBlock>
+      <div class="dock-empty">
+        Все доставленные партии обработаны. Ожидается прибытие транспорта из цеха промышленного стада.
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Статус технологических линий -->
+  <div class="section-title">Состояние технологических линий (Marel / Meyn)</div>
   <div class="lines-grid">
-    <div *ngFor="let line of lines()" class="line-card">
+    <div *ngFor="let l of lines()" class="line-card">
       <div class="line-header">
         <div>
-          <h3 class="line-name">{{ line.name }}</h3>
-          <span class="line-batch">{{ line.currentBatch }}</span>
+          <h4>{{ l.name }}</h4>
+          <span class="batch-indicator">{{ l.currentBatch }}</span>
         </div>
-        <span class="status-badge" [class.badge-running]="line.status === 'running'">
-          ● В работе ({{ line.speedBirdsPerHour }} гол/час)
+        <span class="badge"
+              [class.badge-running]="l.status === 'running'"
+              [class.badge-paused]="l.status === 'paused'"
+              [class.badge-clean]="l.status === 'sanitization'">
+          {{ l.status === 'running' ? 'В работе' : l.status === 'paused' ? 'Остановлен' : 'Санобработка' }}
         </span>
       </div>
 
-      <div class="line-progress">
-        <div class="progress-info">
-          <span>Выполнение плана смены: <b>{{ line.birdsProcessedToday | number }}</b> из {{ line.targetBirdsToday | number }} гол.</span>
-          <span class="progress-pct">{{ ((line.birdsProcessedToday / line.targetBirdsToday) * 100) | number:'1.0-0' }}%</span>
+      <div class="line-stats">
+        <div class="stat-col">
+          <label>Скорость линии</label>
+          <strong>{{ l.speedBirdsPerHour }} гол/час</strong>
         </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" [style.width.%]="(line.birdsProcessedToday / line.targetBirdsToday) * 100"></div>
+        <div class="stat-col">
+          <label>Обработано за смену</label>
+          <strong>{{ l.birdsProcessedToday | number }} из {{ l.targetBirdsToday | number }}</strong>
         </div>
       </div>
 
-      <div class="line-metrics">
-        <div class="metric-pill">
-          <span class="mp-label">Средний живой вес</span>
-          <span class="mp-val">{{ line.averageLiveWeightKg }} кг</span>
-        </div>
-        <div class="metric-pill">
-          <span class="mp-label">Убойный выход</span>
-          <span class="mp-val text-success">{{ line.meatYieldPercent }}%</span>
-        </div>
-        <div class="metric-pill">
-          <span class="mp-label">Скорость линии</span>
-          <span class="mp-val text-primary">{{ line.speedBirdsPerHour }} гол/ч</span>
-        </div>
+      <div class="line-actions">
+        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'running')">Пуск</button>
+        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'paused')">Пауза</button>
+        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'sanitization')">Мойка</button>
       </div>
     </div>
   </div>
 
-  <!-- Сетка: Выход продукции по категориям ГОСТ и Журнал убоя -->
-  <div class="bottom-grid">
-    <!-- Выход продукции -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">📦 Выход готовой продукции и субпродуктов</h3>
-        <p class="card-desc">Фактическая сортировка мяса по сортам ГОСТ за смену</p>
-      </div>
-
-      <div class="products-list">
-        <div *ngFor="let prod of products()" class="product-item">
-          <div class="product-top">
-            <span class="p-name font-bold">{{ prod.category }}</span>
-            <span class="p-weight">{{ prod.yieldKg | number }} кг <span class="p-share">({{ prod.sharePercent }}%)</span></span>
-          </div>
-          <div class="product-bottom">
-            <span>Цена: <b>{{ prod.pricePerKgRub }} ₽/кг</b> (Выручка: {{ (prod.yieldKg * prod.pricePerKgRub) | number }} ₽)</span>
-            <span class="dest-tag">{{ prod.destination }}</span>
-          </div>
+  <!-- Склад мясной продукции -->
+  <div class="section-card">
+    <h3 class="section-title">Склад готовой продукции (Фракции разделки)</h3>
+    <div class="products-grid">
+      <div *ngFor="let p of products()" class="product-card">
+        <div class="prod-top">
+          <span class="prod-dest">{{ p.destination }}</span>
+          <span class="prod-share">{{ p.sharePercent }}% выхода</span>
         </div>
+        <h4 class="prod-title">{{ p.category }}</h4>
+        <div class="prod-weight">{{ p.yieldKg | number }} <span class="unit">кг</span></div>
+        <div class="prod-price">{{ p.pricePerKgRub }} ₽/кг</div>
       </div>
     </div>
+  </div>
 
-    <!-- Журнал партий убоя с тулбаром -->
-    <div class="card">
-      <div class="card-header-flex">
-        <div>
-          <h3 class="card-title">📋 Журнал завершенных партий убоя</h3>
-          <p class="card-desc">История убоя по птичникам и результатам ветэкспертизы</p>
-        </div>
-        <button type="button" class="btn-export" (click)="exportToExcel()">
-          📥 Экспорт в Excel
-        </button>
-      </div>
+  <!-- Журнал убоя -->
+  <div class="section-card">
+    <div class="section-header-flex">
+      <h3 class="section-title">Журнал партий и ветсанэкспертизы</h3>
+      <button type="button" class="btn-export" (click)="exportToExcel()">
+        📥 Экспорт в Excel
+      </button>
+    </div>
 
-      <div class="toolbar-row">
-        <input
-          type="text"
-          placeholder="Поиск по птичнику / номеру партии..."
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          class="input-search" />
-
-        <select
-          [ngModel]="selectedVetStatus()"
-          (ngModelChange)="selectedVetStatus.set($event)"
-          class="select-filter">
-          <option value="ALL">Все статусы ветконтроля</option>
-          <option value="passed">ГОСТ пройдена</option>
-          <option value="rejected">Отбраковка</option>
-        </select>
-      </div>
-
-      <div class="logs-list">
-        <div *ngFor="let log of filteredLogs()" class="log-item">
-          <div class="log-top">
-            <span class="log-title font-bold">{{ log.sourceHouse }}</span>
-            <span class="vet-badge" [class.badge-passed]="log.vetInspectionStatus === 'passed'">
-              Ветэкспертиза: {{ log.vetInspectionStatus === 'passed' ? 'ГОСТ пройдена' : 'Отклонено' }}
-            </span>
-          </div>
-          <div class="log-desc">
-            Поголовье: <b>{{ log.birdsCount | number }} гол.</b> | Живой вес: <b>{{ log.totalLiveWeightTons }} т</b> | Выход мяса: <b>{{ log.totalMeatYieldTons }} т</b>
-          </div>
-          <div class="log-meta">
-            <span>Партия: {{ log.id }} ({{ log.date }})</span>
-            <span>1-й сорт: <b>{{ log.firstGradePercent }}%</b></span>
-          </div>
-        </div>
-
-        <div *ngIf="filteredLogs().length === 0" class="empty-state">
-          Записей по заданным фильтрам не найдено
-        </div>
-      </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Дата / Смена</th>
+            <th>Источник партии</th>
+            <th>Птица (гол)</th>
+            <th>Живой вес (т)</th>
+            <th>Выход мяса (т)</th>
+            <th>1-й сорт (%)</th>
+            <th>Ветэкспертиза</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logs()">
+            <td>{{ log.date }}</td>
+            <td class="font-bold">{{ log.sourceHouse }}</td>
+            <td>{{ log.birdsCount | number }}</td>
+            <td>{{ log.totalLiveWeightTons }} т</td>
+            <td class="font-bold text-primary">{{ log.totalMeatYieldTons }} т</td>
+            <td>{{ log.firstGradePercent }}%</td>
+            <td>
+              <span class="badge badge-passed">Годно к реализации</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
