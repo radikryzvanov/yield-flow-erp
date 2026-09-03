@@ -1,11 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { IncubatorCabinet, IncubationLog } from '../interfaces/incubator.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IncubatorService {
-  private readonly _cabinets = signal<IncubatorCabinet[]>([
+  private readonly _cabinets = persistedSignal<IncubatorCabinet[]>('yieldflow_incubator_cabinets', [
     {
       id: 'inc-1',
       name: 'Шкаф инкубационный № 1 (Petersime AirStream)',
@@ -72,7 +73,7 @@ export class IncubatorService {
     }
   ]);
 
-  private readonly _logs = signal<IncubationLog[]>([
+  private readonly _logs = persistedSignal<IncubationLog[]>('yieldflow_incubator_logs', [
     {
       id: 'HATCH-901',
       date: 'Вчера, 16:00',
@@ -122,4 +123,102 @@ export class IncubatorService {
       this._cabinets().reduce((sum, c) => sum + (c.eggsCount * c.expectedHatchRatePercent / 100), 0)
     );
   });
+
+  // Закладка новой партии инкубационного яйца в шкаф
+  setBatch(data: {
+    cabinetId: string;
+    batchNumber: string;
+    crossType: string;
+    eggsCount: number;
+    expectedHatchRatePercent: number;
+  }): boolean {
+    const count = Number(data.eggsCount);
+    if (!count || count <= 0) return false;
+
+    let updated = false;
+
+    this._cabinets.update(cabinets =>
+      cabinets.map(cabinet => {
+        if (cabinet.id === data.cabinetId) {
+          updated = true;
+          return {
+            ...cabinet,
+            batchNumber: data.batchNumber.trim(),
+            crossType: data.crossType,
+            eggsCount: count,
+            setDay: 1,
+            temperature: 37.8,
+            targetTemperature: 37.8,
+            humidityPercent: 55,
+            targetHumidityPercent: 55,
+            turnAngleDeg: 45,
+            status: 'incubation',
+            expectedHatchRatePercent: Number(data.expectedHatchRatePercent) || 88.0
+          };
+        }
+        return cabinet;
+      })
+    );
+
+    return updated;
+  }
+
+  // Фиксация вывода молодняка и перевод шкафа на дезинфекцию
+  completeHatch(data: {
+    cabinetId: string;
+    chicksHatched: number;
+    destinationHouse: string;
+  }): boolean {
+    const cabinet = this._cabinets().find(c => c.id === data.cabinetId);
+    if (!cabinet || cabinet.eggsCount <= 0) return false;
+
+    const hatched = Number(data.chicksHatched);
+    if (isNaN(hatched) || hatched <= 0) return false;
+
+    const hatchRate = Math.round((hatched / cabinet.eggsCount) * 1000) / 10;
+
+    const timeFormatted = new Intl.DateTimeFormat('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date());
+
+    // 1. Добавляем запись в журнал вывода
+    const log: IncubationLog = {
+      id: `HATCH-${Date.now().toString().slice(-4)}`,
+      date: `Сегодня, ${timeFormatted}`,
+      batchNumber: cabinet.batchNumber,
+      crossType: cabinet.crossType,
+      eggsSet: cabinet.eggsCount,
+      chicksHatched: hatched,
+      actualHatchRate: hatchRate,
+      destinationHouse: data.destinationHouse
+    };
+
+    this._logs.update(logs => [log, ...logs]);
+
+    // 2. Освобождаем шкаф и отправляем на мойку/дезинфекцию
+    this._cabinets.update(cabinets =>
+      cabinets.map(c => {
+        if (c.id === data.cabinetId) {
+          return {
+            ...c,
+            batchNumber: '—',
+            crossType: '—',
+            eggsCount: 0,
+            setDay: 0,
+            temperature: 20.0,
+            targetTemperature: 20.0,
+            humidityPercent: 40,
+            targetHumidityPercent: 40,
+            turnAngleDeg: 0,
+            status: 'sanitization',
+            expectedHatchRatePercent: 0
+          };
+        }
+        return c;
+      })
+    );
+
+    return true;
+  }
 }
