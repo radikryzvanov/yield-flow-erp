@@ -1,11 +1,13 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { VaccineScheduleItem, DrugStockItem, HealthCheckLog } from '../interfaces/veterinary.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VeterinaryService {
-  private readonly _schedule = signal<VaccineScheduleItem[]>([
+  // План-график вакцинаций и обработок
+  private readonly _schedule = persistedSignal<VaccineScheduleItem[]>('yieldflow_vet_schedule', [
     {
       id: 'vac-101',
       ageDays: 1,
@@ -52,7 +54,8 @@ export class VeterinaryService {
     }
   ]);
 
-  private readonly _stock = signal<DrugStockItem[]>([
+  // Склад ветеринарной аптеки и биопрепаратов
+  private readonly _stock = persistedSignal<DrugStockItem[]>('yieldflow_vet_stock', [
     {
       id: 'st-1',
       name: 'Марек Вакс HVT + Rispens',
@@ -95,7 +98,8 @@ export class VeterinaryService {
     }
   ]);
 
-  private readonly _logs = signal<HealthCheckLog[]>([
+  // Журнал ежедневного клинического осмотра и эпизоотического статуса
+  private readonly _logs = persistedSignal<HealthCheckLog[]>('yieldflow_vet_logs', [
     {
       id: 'VET-LOG-501',
       date: '01.09.2026',
@@ -133,4 +137,75 @@ export class VeterinaryService {
   );
 
   readonly flockLivabilityPercent = computed(() => 98.6);
+
+  // Выполнение вакцинации и списание доз из аптеки
+  completeVaccination(scheduleId: string): boolean {
+    const item = this._schedule().find(s => s.id === scheduleId);
+    if (!item || item.status === 'completed') return false;
+
+    // 1. Помечаем вакцинацию как выполненную
+    this._schedule.update(list =>
+      list.map(s => (s.id === scheduleId ? { ...s, status: 'completed' } : s))
+    );
+
+    // 2. Списываем дозы соответствующего препарата из аптеки
+    this._stock.update(stocks =>
+      stocks.map(drug => {
+        const matchesName = drug.name.toLowerCase().includes(item.vaccineName.slice(0, 7).toLowerCase());
+        if (matchesName && drug.stockDoses > 0) {
+          const newDoses = Math.max(0, drug.stockDoses - item.dosageDoses);
+          return {
+            ...drug,
+            stockDoses: newDoses,
+            status: newDoses < 15000 ? 'low' : drug.status
+          };
+        }
+        return drug;
+      })
+    );
+
+    return true;
+  }
+
+  // Добавление записи клинического осмотра
+  addHealthCheckLog(log: Omit<HealthCheckLog, 'id' | 'date'>): void {
+    const now = new Intl.DateTimeFormat('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date());
+
+    const newEntry: HealthCheckLog = {
+      ...log,
+      id: `VET-LOG-${Date.now().toString().slice(-4)}`,
+      date: now
+    };
+
+    this._logs.update(logs => [newEntry, ...logs]);
+  }
+
+  // Пополнение запаса препарата в аптеке
+  replenishDrugStock(drugId: string, amount: number): boolean {
+    const doses = Number(amount);
+    if (isNaN(doses) || doses <= 0) return false;
+
+    let updated = false;
+
+    this._stock.update(stocks =>
+      stocks.map(drug => {
+        if (drug.id === drugId) {
+          updated = true;
+          const newTotal = drug.stockDoses + doses;
+          return {
+            ...drug,
+            stockDoses: newTotal,
+            status: newTotal > 20000 ? 'ok' : drug.status
+          };
+        }
+        return drug;
+      })
+    );
+
+    return updated;
+  }
 }
