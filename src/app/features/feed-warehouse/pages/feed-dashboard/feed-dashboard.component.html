@@ -1,89 +1,154 @@
 <div class="feed-container">
   <div class="page-header">
     <div>
-      <h1>Склад комбикормов и силосный парк</h1>
-      <p class="subtitle">Оперативный запас полнорационных комбикормов, отгрузка по корпусам и баланс сырья</p>
+      <h1>Кормоцех и склад комбикормов</h1>
+      <p class="subtitle">Управление силосами оперативного запаса, выработка рецептур и распределение по корпусам</p>
     </div>
   </div>
 
-  <!-- KPI панель -->
+  <!-- KPI блок -->
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-title">Общий запас комбикорма</div>
-      <div class="kpi-value text-primary">{{ totalFeedTons() }} <span class="unit">тонн</span></div>
-      <div class="kpi-note">В 4 оперативных силосах</div>
+      <div class="kpi-value text-primary">{{ totalFeedTons() }} <span class="unit">/ {{ totalCapacityTons() }} т</span></div>
+      <div class="kpi-note">Загрузка силосов: {{ (totalFeedTons() / totalCapacityTons() * 100) | number:'1.0-0' }}%</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Стоимость запаса кормов</div>
-      <div class="kpi-value text-success">{{ totalFeedValueRub() | number }} <span class="unit">₽</span></div>
-      <div class="kpi-note">По средней себестоимости выработки</div>
+      <div class="kpi-title">Стоимость кормов на балансе</div>
+      <div class="kpi-value text-success">{{ (totalFeedValueRub() / 1000000) | number:'1.2-2' }} <span class="unit">млн ₽</span></div>
+      <div class="kpi-note">Себестоимость готовой смеси</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Силосов в работе</div>
+      <div class="kpi-value">{{ silos().length }} <span class="unit">банки</span></div>
+      <div class="kpi-note">Автоматический весовой дозатор</div>
     </div>
   </div>
 
-  <!-- Силосный парк -->
-  <div class="section-card">
-    <h2 class="section-title">Состояние силосов оперативного хранения</h2>
-    <div class="silos-grid">
-      <div *ngFor="let silo of silos()" class="silo-card" [class.silo-low]="getFillPercent(silo.currentTons, silo.capacityTons) < 25">
-        <div class="silo-header">
-          <div>
-            <h3 class="silo-name">{{ silo.name }}</h3>
-            <span class="recipe-badge">{{ silo.recipeCode }}</span>
-          </div>
-          <span class="percent-badge" [class.badge-warning]="getFillPercent(silo.currentTons, silo.capacityTons) < 25">
-            {{ getFillPercent(silo.currentTons, silo.capacityTons) }}%
-          </span>
+  <!-- Карточки силосов -->
+  <div class="section-title">Силосы готовой продукции</div>
+  <div class="silos-grid">
+    <div *ngFor="let s of silos()" class="silo-card">
+      <div class="silo-header">
+        <div>
+          <h3 class="silo-title">{{ s.name }}</h3>
+          <span class="recipe-badge">{{ s.recipeCode }}</span>
         </div>
+        <span class="price-tag">{{ s.costPerTonRub | number }} ₽/т</span>
+      </div>
 
-        <p class="target-bird">{{ silo.targetBird }}</p>
+      <p class="target-bird">{{ s.targetBird }}</p>
 
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" [style.width.%]="getFillPercent(silo.currentTons, silo.capacityTons)"></div>
-        </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
+      </div>
 
-        <div class="silo-metrics">
-          <div class="metric-row">
-            <span class="label">Остаток:</span>
-            <span class="val">{{ silo.currentTons }} т / {{ silo.capacityTons }} т</span>
-          </div>
-          <div class="metric-row">
-            <span class="label">Себестоимость:</span>
-            <span class="val">{{ silo.costPerTonRub | number }} ₽/т</span>
-          </div>
-        </div>
+      <div class="silo-metric-row">
+        <span>Остаток:</span>
+        <strong>{{ s.currentTons }} т из {{ s.capacityTons }} т</strong>
       </div>
     </div>
   </div>
 
-  <!-- Журнал расхода с Enterprise тулбаром -->
-  <div class="section-card">
-    <div class="section-header-flex">
-      <h2 class="section-title">Журнал суточного расхода кормов</h2>
+  <!-- Формы операций: Пополнение и Списание -->
+  <div class="operations-grid">
+    <!-- Пополнение силоса -->
+    <div class="form-card">
+      <h3 class="card-title">Производство / Приёмка партии</h3>
+      <div class="form-group">
+        <label>Целевой силос</label>
+        <select [(ngModel)]="replenishSiloId" class="input-field">
+          <option *ngFor="let s of silos()" [value]="s.id">
+            {{ s.name }} — {{ s.recipeCode }} (свободно: {{ (s.capacityTons - s.currentTons) | number:'1.1-1' }} т)
+          </option>
+        </select>
+      </div>
 
-      <!-- Тулбар фильтрации и экспорта -->
-      <div class="table-toolbar">
-        <div class="search-box">
-          <input
-            type="text"
-            placeholder="Поиск по птичнику..."
-            [ngModel]="searchQuery()"
-            (ngModelChange)="searchQuery.set($event)"
-            class="input-search" />
-        </div>
+      <div class="form-group">
+        <label>Выработано комбикорма (тонн)</label>
+        <input
+          type="number"
+          [(ngModel)]="replenishTons"
+          placeholder="Например: 10.5"
+          class="input-field"
+          min="0.1"
+          step="0.1" />
+      </div>
 
-        <div class="filter-box">
-          <select
-            [ngModel]="selectedRecipe()"
-            (ngModelChange)="selectedRecipe.set($event)"
-            class="select-filter">
-            <option value="ALL">Все рецепты</option>
-            <option value="ПК-1-1">ПК-1-1</option>
-            <option value="ПК-1-2">ПК-1-2</option>
-            <option value="ПК-3">ПК-3</option>
-            <option value="ПК-1-П">ПК-1-П</option>
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="submitReplenish()"
+        [disabled]="!replenishTons || replenishTons <= 0">
+        Закачать в силос
+      </button>
+    </div>
+
+    <!-- Списание на птичник -->
+    <div class="form-card">
+      <h3 class="card-title">Списание корма в птичник</h3>
+      <div class="form-group">
+        <label>Птичник-получатель</label>
+        <input
+          type="text"
+          [(ngModel)]="deductHouseName"
+          placeholder="Птичник № 1 (Промышленная несушка)"
+          class="input-field" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label>Тип птицы</label>
+          <select [(ngModel)]="deductBirdType" class="input-field">
+            <option value="layer">Несушка</option>
+            <option value="rearing">Молодняк</option>
+            <option value="broiler">Бройлер</option>
           </select>
         </div>
+
+        <div class="form-group flex-1">
+          <label>Возраст (дней)</label>
+          <input
+            type="number"
+            [(ngModel)]="deductAgeDays"
+            class="input-field"
+            min="1" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Объём списания (тонн)</label>
+        <input
+          type="number"
+          [(ngModel)]="deductTons"
+          placeholder="Например: 6.0"
+          class="input-field"
+          min="0.1"
+          step="0.1" />
+      </div>
+
+      <button
+        type="button"
+        class="btn-danger"
+        (click)="submitDeduct()"
+        [disabled]="!deductTons || deductTons <= 0">
+        Списать по рациону
+      </button>
+    </div>
+  </div>
+
+  <!-- Журнал списаний -->
+  <div class="section-card">
+    <div class="section-header-flex">
+      <h3 class="section-title">Журнал выдачи комбикормов</h3>
+      <div class="toolbar-row">
+        <input
+          type="text"
+          placeholder="Поиск по птичнику или рецепту..."
+          [(ngModel)]="searchQuery"
+          class="input-search" />
 
         <button type="button" class="btn-export" (click)="exportToExcel()">
           📥 Экспорт в Excel
@@ -91,26 +156,25 @@
       </div>
     </div>
 
-    <!-- Таблица записей -->
     <div class="table-responsive">
       <table class="data-table">
         <thead>
           <tr>
             <th>Время</th>
-            <th>Пункт назначения (Птичник)</th>
-            <th>Рецепт</th>
-            <th>Списано корма</th>
+            <th>Птичник</th>
+            <th>Рецептура</th>
+            <th>Списано</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of filteredFeedLogs()">
+          <tr *ngFor="let log of filteredLogs()">
             <td>{{ log.date }}</td>
-            <td><strong>{{ log.houseName }}</strong></td>
+            <td class="font-bold">{{ log.houseName }}</td>
             <td><span class="recipe-badge">{{ log.recipeCode }}</span></td>
-            <td><strong class="text-warning">-{{ log.tonsDeducted }} т</strong></td>
+            <td><strong>{{ log.tonsDeducted }} т</strong></td>
           </tr>
-          <tr *ngIf="filteredFeedLogs().length === 0">
-            <td colspan="4" class="empty-state">Записей по заданным фильтрам не найдено</td>
+          <tr *ngIf="filteredLogs().length === 0">
+            <td colspan="4" class="empty-state">Записей расхода не найдено</td>
           </tr>
         </tbody>
       </table>
