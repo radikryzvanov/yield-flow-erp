@@ -25,10 +25,10 @@ export class FinanceService {
   // Себестоимость комбикорма за 1 кг
   readonly feedCostPerKg = persistedSignal<number>('yieldflow_finance_feed_cost_kg', 22.50);
 
-  // Суточные постоянные накладные расходы (ФОТ, энергетика, амортизация, ветеринария)
-  readonly dailyOverheadCostsRub = persistedSignal<number>('yieldflow_finance_overhead_rub', 450_000);
+  // Суточные постоянные накладные расходы (ФОТ, энергетика, амортизация, ветеринария: 110k + 50k + 35k + 25k = 220k)
+  readonly dailyOverheadCostsRub = persistedSignal<number>('yieldflow_finance_overhead_rub', 220_000);
 
-  // Сбор оперативных данных напрямую из птичников (реактивная сквозная связка)
+  // Сбор оперативных данных напрямую из птичников
   readonly totalDailyEggs = computed(() => this.poultryService.totalDailyEggs());
   readonly dailyFeedTons = computed(() => this.poultryService.totalDailyFeedTons());
 
@@ -79,10 +79,10 @@ export class FinanceService {
   // Структура операционных затрат предприятия
   readonly costBreakdown = computed<CostBreakdownItem[]>(() => {
     const feed = this.dailyFeedCostRub();
-    const fot = 210_000;
-    const energy = 120_000;
-    const vet = 70_000;
-    const other = 50_000;
+    const fot = 110_000;
+    const energy = 50_000;
+    const vet = 35_000;
+    const other = 25_000;
     const total = feed + fot + energy + vet + other;
 
     if (total === 0) return [];
@@ -96,7 +96,6 @@ export class FinanceService {
     ];
   });
 
-  // Обновление цены на категорию яйца в прейскуранте
   updateEggPrice(category: string, pricePerTenRub: number): void {
     const price = Number(pricePerTenRub);
     if (isNaN(price) || price <= 0) return;
@@ -107,14 +106,12 @@ export class FinanceService {
     }));
   }
 
-  // Корректировка себестоимости корма
   updateFeedCostPerKg(costRub: number): void {
     const cost = Number(costRub);
     if (isNaN(cost) || cost <= 0) return;
     this.feedCostPerKg.set(cost);
   }
 
-  // Корректировка накладных расходов
   updateOverheadCosts(overheadRub: number): void {
     const overhead = Number(overheadRub);
     if (isNaN(overhead) || overhead < 0) return;

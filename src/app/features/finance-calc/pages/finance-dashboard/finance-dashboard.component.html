@@ -22,8 +22,10 @@
         <span class="kpi-title">Чистая прибыль</span>
         <span class="kpi-icon">📈</span>
       </div>
-      <div class="kpi-value text-success">+{{ dailyProfit() | number }} <span class="unit">₽ / сут</span></div>
-      <div class="kpi-note">Маржинальность <b>{{ profitability() }}%</b></div>
+      <div class="kpi-value text-success">
+        {{ dailyProfit() > 0 ? '+' : '' }}{{ dailyProfit() | number }} <span class="unit">₽ / сут</span>
+      </div>
+      <div class="kpi-note">Маржинальность <b>{{ profitability() > 0 ? '+' : '' }}{{ profitability() }}%</b></div>
     </div>
 
     <div class="kpi-card">
@@ -32,7 +34,7 @@
         <span class="kpi-icon">🥚</span>
       </div>
       <div class="kpi-value text-dark">{{ costPerEgg() | number:'1.2-2' }} <span class="unit">₽ / шт</span></div>
-      <div class="kpi-note">Корма (68%) + Накладные (32%)</div>
+      <div class="kpi-note">Корма (64%) + Накладные (36%)</div>
     </div>
 
     <div class="kpi-card">
@@ -109,7 +111,9 @@
         </div>
         <div class="metric-row ebitda-row">
           <span class="label">Прогноз месячной прибыли (EBITDA):</span>
-          <span class="val text-success font-bold">+{{ (dailyProfit() * 30.5) | number:'1.0-0' }} ₽</span>
+          <span class="val text-success font-bold">
+            {{ dailyProfit() > 0 ? '+' : '' }}{{ (dailyProfit() * 30.5) | number:'1.0-0' }} ₽
+          </span>
         </div>
       </div>
     </div>
