@@ -10,4 +10,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class AppComponent {
   title = 'yield-flow-erp';
+
+  resetDemoData(): void {
+    const confirmed = confirm('Сбросить все показатели фабрики к эталонным демо-данным?');
+    if (confirmed) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  }
 }
