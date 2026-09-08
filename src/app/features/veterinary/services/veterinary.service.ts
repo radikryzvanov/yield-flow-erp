@@ -1,146 +1,157 @@
-import { Injectable, computed } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { VaccineScheduleItem, DrugStockItem, HealthCheckLog } from '../interfaces/veterinary.interface';
+import { PoultryManagementService } from '../../poultry-management/services/poultry-management.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VeterinaryService {
-  // План-график вакцинаций и обработок
+  private readonly poultryService = inject(PoultryManagementService);
+
   private readonly _schedule = persistedSignal<VaccineScheduleItem[]>('yieldflow_vet_schedule', [
     {
-      id: 'vac-101',
-      ageDays: 1,
-      targetHouse: 'Инкубаторий (Выводной № 1)',
-      disease: 'Болезнь Марека + ИБК',
-      vaccineName: 'Марек Вакс HVT + Инфекционный бронхит',
-      method: 'spray',
-      plannedDate: '01.09.2026',
-      status: 'completed',
-      dosageDoses: 54000
-    },
-    {
-      id: 'vac-102',
-      ageDays: 14,
+      id: 'vac-1',
       targetHouse: 'Птичник № 3 (Молодняк)',
       disease: 'Болезнь Гамборо (ИББ)',
-      vaccineName: 'Гамборо Вак GM-97',
+      vaccineName: 'Гамборомикс D78',
+      ageDays: 14,
       method: 'water',
-      plannedDate: '02.09.2026',
+      dosageDoses: 40000,
       status: 'urgent',
-      dosageDoses: 60000
+      drugStockId: 'st-2'
     },
     {
-      id: 'vac-103',
-      ageDays: 35,
-      targetHouse: 'Птичник № 3 (Молодняк)',
-      disease: 'Болезнь Ньюкасла (НБ)',
-      vaccineName: 'Ньюкасл Клон Ла-Сота',
-      method: 'spray',
-      plannedDate: '06.09.2026',
+      id: 'vac-2',
+      targetHouse: 'Инкубаторий (Petersime)',
+      disease: 'Болезнь Марека + ИБК',
+      vaccineName: 'Нобилис Rismavac + CA',
+      ageDays: 1,
+      method: 'in-ovo',
+      dosageDoses: 55000,
       status: 'pending',
-      dosageDoses: 60000
+      drugStockId: 'st-1'
     },
     {
-      id: 'vac-104',
+      id: 'vac-3',
+      targetHouse: 'Птичник № 1 (Несушка)',
+      disease: 'Ньюкаслская болезнь (НБ)',
+      vaccineName: 'Ньюкасл Клон Ла-Сота',
       ageDays: 110,
-      targetHouse: 'Птичник № 2 (Несушка Декалб)',
+      method: 'spray',
+      dosageDoses: 52000,
+      status: 'urgent',
+      drugStockId: 'st-3'
+    },
+    {
+      id: 'vac-4',
+      targetHouse: 'Птичник № 2 (Несушка)',
       disease: 'Синдром снижения яйценоскости (ССЯ-76)',
       vaccineName: 'ЭДС-Вак инактивированная',
+      ageDays: 125,
       method: 'injection',
-      plannedDate: '12.09.2026',
+      dosageDoses: 45000,
       status: 'pending',
-      dosageDoses: 62000
+      drugStockId: 'st-4'
     }
   ]);
 
-  // Склад ветеринарной аптеки и биопрепаратов
   private readonly _stock = persistedSignal<DrugStockItem[]>('yieldflow_vet_stock', [
     {
       id: 'st-1',
-      name: 'Марек Вакс HVT + Rispens',
-      category: 'Вакцины',
-      batchNumber: 'SER-8842',
+      name: 'Вакцина против болезни Марека (Rismavac)',
       stockDoses: 120000,
       unit: 'доз',
-      expiryDate: '11.2027',
-      status: 'ok'
+      batchNumber: 'V-2026-04',
+      expiryDate: '12.2026',
+      category: 'vaccine',
+      status: 'sufficient'
     },
     {
       id: 'st-2',
-      name: 'Гамборо Вак GM-97',
-      category: 'Вакцины',
-      batchNumber: 'SER-9102',
-      stockDoses: 65000,
+      name: 'Гамборомикс D78 (ИББ живая)',
+      stockDoses: 85000,
       unit: 'доз',
-      expiryDate: '04.2027',
-      status: 'low'
+      batchNumber: 'V-2026-08',
+      expiryDate: '10.2026',
+      category: 'vaccine',
+      status: 'sufficient'
     },
     {
       id: 'st-3',
-      name: 'Чиктоник (Комплекс аминокислот и витаминов)',
-      category: 'Витамины/Электролиты',
-      batchNumber: 'VIT-3301',
-      stockDoses: 450,
-      unit: 'литров',
-      expiryDate: '08.2027',
-      status: 'ok'
+      name: 'Ньюкасл Клон Ла-Сота (Живая лиофилизированная)',
+      stockDoses: 110000,
+      unit: 'доз',
+      batchNumber: 'V-2026-11',
+      expiryDate: '03.2027',
+      category: 'vaccine',
+      status: 'sufficient'
     },
     {
       id: 'st-4',
-      name: 'Вироцид (Пенный дезинфектант)',
-      category: 'Дезинфектанты',
-      batchNumber: 'DES-4411',
-      stockDoses: 800,
-      unit: 'литров',
-      expiryDate: '01.2028',
-      status: 'ok'
+      name: 'ЭДС-Вак (Инактивированная эмульсия)',
+      stockDoses: 95000,
+      unit: 'доз',
+      batchNumber: 'V-2026-09',
+      expiryDate: '01.2027',
+      category: 'vaccine',
+      status: 'sufficient'
     },
     {
       id: 'st-5',
-      name: 'Ньюкасл Клон Ла-Сота (Вакцина против НБ)',
-      category: 'Вакцины',
-      batchNumber: 'SER-9240',
-      stockDoses: 100000,
-      unit: 'доз',
-      expiryDate: '12.2027',
-      status: 'ok'
+      name: 'Энрофлоксацин 10% (Антибактериальный р-р)',
+      stockDoses: 45,
+      unit: 'литров',
+      batchNumber: 'AB-884',
+      expiryDate: '06.2027',
+      category: 'antibiotic',
+      status: 'sufficient'
     },
     {
       id: 'st-6',
-      name: 'ЭДС-Вак инактивированная (ССЯ-76)',
-      category: 'Вакцины',
-      batchNumber: 'SER-9315',
-      stockDoses: 80000,
-      unit: 'доз',
-      expiryDate: '10.2027',
-      status: 'ok'
+      name: 'Витаминный комплекс Чиктоник',
+      stockDoses: 120,
+      unit: 'литров',
+      batchNumber: 'VIT-91',
+      expiryDate: '08.2027',
+      category: 'vitamin',
+      status: 'sufficient'
     }
   ]);
 
-  // Журнал ежедневного клинического осмотра и эпизоотического статуса
   private readonly _logs = persistedSignal<HealthCheckLog[]>('yieldflow_vet_logs', [
     {
-      id: 'VET-LOG-501',
-      date: '01.09.2026',
+      id: 'log-1',
+      date: 'Сегодня, 08:30',
       house: 'Птичник № 1 (Несушка Ломанн)',
       flockAgeWeeks: 34,
       mortalityCount: 6,
       mortalityRatePercent: 0.01,
-      clinicalSigns: 'Клиническое состояние стада отличное. Аппетит и поение в норме.',
+      clinicalSigns: 'Птица активна, потребление воды в норме, помет сформирован.',
       vetDoctor: 'Иванов С. М.',
       quarantineStatus: 'normal'
     },
     {
-      id: 'VET-LOG-502',
-      date: '01.09.2026',
+      id: 'log-2',
+      date: 'Сегодня, 09:15',
       house: 'Птичник № 2 (Несушка Декалб)',
-      flockAgeWeeks: 28,
-      mortalityCount: 14,
+      flockAgeWeeks: 42,
+      mortalityCount: 8,
       mortalityRatePercent: 0.02,
-      clinicalSigns: 'Локальный тепловой стресс в секции В. Усилена вентиляция, назначена выпойка витамина C.',
+      clinicalSigns: 'Норма. Оперение чистое, признаков респираторных хрипов нет.',
       vetDoctor: 'Иванов С. М.',
-      quarantineStatus: 'observation'
+      quarantineStatus: 'normal'
+    },
+    {
+      id: 'log-3',
+      date: 'Вчера, 15:40',
+      house: 'Птичник № 3 (Молодняк)',
+      flockAgeWeeks: 12,
+      mortalityCount: 4,
+      mortalityRatePercent: 0.01,
+      clinicalSigns: 'Плановый осмотр перед дегельминтизацией. Состояние удовлетворительное.',
+      vetDoctor: 'Смирнова Е. В.',
+      quarantineStatus: 'normal'
     }
   ]);
 
@@ -149,98 +160,97 @@ export class VeterinaryService {
   readonly logs = this._logs.asReadonly();
 
   readonly pendingVaccinationsCount = computed(() =>
-    this._schedule().filter(s => s.status !== 'completed').length
+    this._schedule().filter(s => s.status === 'urgent' || s.status === 'pending').length
   );
 
   readonly totalDailyMortality = computed(() =>
-    this._logs().reduce((sum, l) => sum + l.mortalityCount, 0)
+    this._logs()
+      .filter(l => l.date.includes('Сегодня'))
+      .reduce((sum, l) => sum + l.mortalityCount, 0)
   );
 
-  readonly flockLivabilityPercent = computed(() => 98.6);
+  // Динамический расчёт общей сохранности стада по птичникам
+  readonly flockLivabilityPercent = computed(() => {
+    const houses = this.poultryService.houses();
+    if (houses.length === 0) return 100;
+    const totalInitial = houses.reduce((sum, h) => sum + h.initialBirdCount, 0);
+    const totalCurrent = houses.reduce((sum, h) => sum + h.birdCount, 0);
+    if (totalInitial === 0) return 100;
+    return Math.round((totalCurrent / totalInitial) * 1000) / 10;
+  });
 
-  // Выполнение вакцинации и списание доз из аптеки
   completeVaccination(scheduleId: string): boolean {
     const item = this._schedule().find(s => s.id === scheduleId);
     if (!item || item.status === 'completed') return false;
 
-    // Определение препарата по совпадению наименования
-    const targetName = item.vaccineName.toLowerCase();
-    const drugToDeduct = this._stock().find(drug => {
-      const dName = drug.name.toLowerCase();
-      if (targetName.includes('марек') && dName.includes('марек')) return true;
-      if (targetName.includes('гамборо') && dName.includes('гамборо')) return true;
-      if (targetName.includes('ньюкасл') && dName.includes('ньюкасл')) return true;
-      if (targetName.includes('эдс') && dName.includes('эдс')) return true;
-      return dName.includes(targetName.slice(0, 5));
-    });
+    let drugDeducted = false;
 
-    if (!drugToDeduct || drugToDeduct.stockDoses < item.dosageDoses) {
-      console.warn(`[Veterinary] Недостаточно доз или препарат не найден на складе для: ${item.vaccineName}`);
+    if (item.drugStockId) {
+      const targetDrug = this._stock().find(d => d.id === item.drugStockId);
+      if (targetDrug && targetDrug.stockDoses >= item.dosageDoses) {
+        this._stock.update(stock =>
+          stock.map(drug =>
+            drug.id === item.drugStockId
+              ? { ...drug, stockDoses: drug.stockDoses - item.dosageDoses }
+              : drug
+          )
+        );
+        drugDeducted = true;
+      }
+    } else {
+      const fallbackDrug = this._stock().find(d =>
+        d.name.toLowerCase().includes(item.vaccineName.slice(0, 7).toLowerCase())
+      );
+      if (fallbackDrug && fallbackDrug.stockDoses >= item.dosageDoses) {
+        this._stock.update(stock =>
+          stock.map(drug =>
+            drug.id === fallbackDrug.id
+              ? { ...drug, stockDoses: drug.stockDoses - item.dosageDoses }
+              : drug
+          )
+        );
+        drugDeducted = true;
+      }
+    }
+
+    if (!drugDeducted) {
       return false;
     }
 
-    // 1. Помечаем вакцинацию как выполненную
-    this._schedule.update(list =>
-      list.map(s => (s.id === scheduleId ? { ...s, status: 'completed' } : s))
-    );
-
-    // 2. Списываем дозы из аптеки
-    this._stock.update(stocks =>
-      stocks.map(drug => {
-        if (drug.id === drugToDeduct.id) {
-          const newDoses = Math.max(0, drug.stockDoses - item.dosageDoses);
-          return {
-            ...drug,
-            stockDoses: newDoses,
-            status: newDoses < 15000 ? 'low' : drug.status
-          };
-        }
-        return drug;
-      })
+    this._schedule.update(schedule =>
+      schedule.map(s => (s.id === scheduleId ? { ...s, status: 'completed' } : s))
     );
 
     return true;
   }
 
-  // Добавление записи клинического осмотра
-  addHealthCheckLog(log: Omit<HealthCheckLog, 'id' | 'date'>): void {
-    const now = new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(new Date());
-
-    const newEntry: HealthCheckLog = {
-      ...log,
-      id: `VET-LOG-${Date.now().toString().slice(-4)}`,
-      date: now
-    };
-
-    this._logs.update(logs => [newEntry, ...logs]);
-  }
-
-  // Пополнение запаса препарата в аптеке
   replenishDrugStock(drugId: string, amount: number): boolean {
-    const doses = Number(amount);
-    if (isNaN(doses) || doses <= 0) return false;
+    const count = Number(amount);
+    if (!count || count <= 0) return false;
 
     let updated = false;
-
-    this._stock.update(stocks =>
-      stocks.map(drug => {
-        if (drug.id === drugId) {
+    this._stock.update(stock =>
+      stock.map(d => {
+        if (d.id === drugId) {
           updated = true;
-          const newTotal = drug.stockDoses + doses;
-          return {
-            ...drug,
-            stockDoses: newTotal,
-            status: newTotal > 20000 ? 'ok' : drug.status
-          };
+          return { ...d, stockDoses: d.stockDoses + count };
         }
-        return drug;
+        return d;
       })
     );
 
     return updated;
+  }
+
+  addHealthCheckLog(log: Omit<HealthCheckLog, 'id' | 'date'>): void {
+    const timeFormatted = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+
+    const newEntry: HealthCheckLog = {
+      ...log,
+      id: `log-${Date.now().toString().slice(-4)}`,
+      date: `Сегодня, ${timeFormatted}`
+    };
+
+    this._logs.update(logs => [newEntry, ...logs]);
   }
 }

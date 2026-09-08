@@ -1,24 +1,24 @@
 export interface VaccineScheduleItem {
   id: string;
-  ageDays: number;              // Возраст птицы (в днях)
-  targetHouse: string;          // Корпус / Птичник
-  disease: string;              // Болезнь (Ньюкасла, Марека, Гамборо, Бронхит)
-  vaccineName: string;          // Название препарата
-  method: 'water' | 'spray' | 'injection' | 'in-ovo'; // Метод выпойки/спрея
-  plannedDate: string;
-  status: 'completed' | 'pending' | 'urgent';
+  targetHouse: string;
+  disease: string;
+  vaccineName: string;
+  ageDays: number;
+  method: 'water' | 'spray' | 'injection' | 'in-ovo';
   dosageDoses: number;
+  status: 'urgent' | 'pending' | 'completed';
+  drugStockId?: string;
 }
 
 export interface DrugStockItem {
   id: string;
-  name: string;                 // Наименование препарата
-  category: 'Вакцины' | 'Антибиотики' | 'Витамины/Электролиты' | 'Дезинфектанты';
-  batchNumber: string;
+  name: string;
   stockDoses: number;
   unit: string;
+  batchNumber: string;
   expiryDate: string;
-  status: 'ok' | 'low' | 'expiring';
+  category: 'vaccine' | 'antibiotic' | 'vitamin' | 'disinfectant';
+  status: 'sufficient' | 'low' | 'critical';
 }
 
 export interface HealthCheckLog {
@@ -26,9 +26,9 @@ export interface HealthCheckLog {
   date: string;
   house: string;
   flockAgeWeeks: number;
-  mortalityCount: number;       // Падёж (гол.)
-  mortalityRatePercent: number; // % падежа
-  clinicalSigns: string;        // Клинические признаки
-  vetDoctor: string;            // Ответственный ветврач
+  mortalityCount: number;
+  mortalityRatePercent: number;
+  clinicalSigns: string;
+  vetDoctor: string;
   quarantineStatus: 'normal' | 'observation' | 'quarantine';
 }

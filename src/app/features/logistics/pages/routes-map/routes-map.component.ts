@@ -23,7 +23,7 @@ export class RoutesMapComponent {
   readonly onTimeRate = this.logisticsService.onTimeRatePercent;
   readonly mercuryDocs = this.logisticsService.approvedMercuryDocsCount;
 
-  // Модальное окно создания отгрузки (B5)
+  // Модальное окно создания отгрузки
   readonly isCreateModalOpen = signal<boolean>(false);
 
   newClientName: string = 'X5 Retail Group (РЦ Подольск)';
@@ -74,7 +74,13 @@ export class RoutesMapComponent {
   onStatusChange(shipmentId: string, event: Event): void {
     const select = event.target as HTMLSelectElement;
     const newStatus = select.value as ShipmentOrder['shippingStatus'];
-    this.logisticsService.updateShipmentStatus(shipmentId, newStatus);
+    let onTime: boolean | undefined = undefined;
+
+    if (newStatus === 'delivered') {
+      onTime = confirm('Заказ доставлен вовремя (в рамках тайм-слота РЦ)?\nНажмите «ОК» — вовремя, «Отмена» — с опозданием.');
+    }
+
+    this.logisticsService.updateShipmentStatus(shipmentId, newStatus, onTime);
   }
 
   getShipmentStatusBadge(status: string): string {

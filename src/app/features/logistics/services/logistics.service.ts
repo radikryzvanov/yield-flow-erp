@@ -61,7 +61,8 @@ export class LogisticsService {
       tempInsideCelsius: 5.0,
       departureTime: 'Доставлен: 10:45 (Разгружен)',
       mercuryDocStatus: 'approved',
-      shippingStatus: 'delivered'
+      shippingStatus: 'delivered',
+      deliveredOnTime: true
     }
   ]);
 
@@ -123,12 +124,28 @@ export class LogisticsService {
   });
 
   readonly activeVehiclesCount = computed(() => this._fleet().filter(f => f.status === 'active').length);
-  readonly onTimeRatePercent = computed(() => 99.4);
+
+  readonly onTimeRatePercent = computed(() => {
+    const delivered = this._shipments().filter(s => s.shippingStatus === 'delivered');
+    if (delivered.length === 0) return 100;
+    const onTime = delivered.filter(s => s.deliveredOnTime !== false).length;
+    return Math.round((onTime / delivered.length) * 1000) / 10;
+  });
+
   readonly approvedMercuryDocsCount = computed(() => this._shipments().filter(s => s.mercuryDocStatus === 'approved').length);
 
-  updateShipmentStatus(shipmentId: string, status: ShipmentOrder['shippingStatus']): void {
+  updateShipmentStatus(shipmentId: string, status: ShipmentOrder['shippingStatus'], deliveredOnTime?: boolean): void {
     this._shipments.update(items =>
-      items.map(s => (s.id === shipmentId ? { ...s, shippingStatus: status } : s))
+      items.map(s => {
+        if (s.id === shipmentId) {
+          return {
+            ...s,
+            shippingStatus: status,
+            ...(status === 'delivered' ? { deliveredOnTime: deliveredOnTime ?? true } : {})
+          };
+        }
+        return s;
+      })
     );
   }
 
