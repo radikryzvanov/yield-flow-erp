@@ -2,6 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
+import { PoultryManagementService } from '../../services/poultry-management.service';
 import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
 import { ExportService } from '../../../../shared/services/export.service';
 
@@ -14,14 +15,16 @@ import { ExportService } from '../../../../shared/services/export.service';
 })
 export class EggWarehouseComponent {
   protected readonly warehouseService = inject(EggWarehouseService);
+  protected readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
 
   readonly stocks = this.warehouseService.stocks;
   readonly totalStockEggs = this.warehouseService.totalStockEggs;
   readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
+  readonly poultryHouses = this.poultryService.houses;
 
-  // Форма ручной приёмки партии валового сбора
-  newBatchHouse = 'Птичник № 1 (Промышленная несушка)';
+  // Форма ручной приёмки партии валового сбора (C3: связка с реальными корпусами)
+  newBatchHouse = this.poultryHouses()[0]?.name ?? 'Птичник № 1 (Промышленная несушка)';
   newBatchCount: number | null = null;
 
   // Сигналы фильтрации

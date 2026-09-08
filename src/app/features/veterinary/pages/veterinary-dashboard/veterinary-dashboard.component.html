@@ -124,6 +124,9 @@
             placeholder="Например: 8"
             class="input-field"
             min="0" />
+          <small style="color: #64748b; font-size: 11px; display: block; margin-top: 4px;">
+            * Только для клинического осмотра. Списание поголовья производится через суточный отчёт птичника.
+          </small>
         </div>
       </div>
 
@@ -161,7 +164,7 @@
       </button>
     </div>
 
-    <!-- Состояние аптечного склада -->
+    <!-- Состояние аптечного склада и форма пополнения (B3) -->
     <div class="section-card">
       <h3 class="card-title">Остатки биопрепаратов и вакцин</h3>
       <div class="stock-list">
@@ -174,6 +177,29 @@
             <span class="dose-count">{{ drug.stockDoses | number }}</span>
             <span class="unit">{{ drug.unit }}</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Форма B3: приход препаратов -->
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <h4 style="font-size: 14px; margin-bottom: 12px; color: #1e293b;">📦 Пополнение запаса ветпрепаратов</h4>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label style="font-size: 12px; margin-bottom: 4px; display: block;">Препарат:</label>
+          <select [(ngModel)]="selectedDrugId" class="input-field">
+            <option *ngFor="let drug of stock()" [value]="drug.id">
+              {{ drug.name }} (остаток: {{ drug.stockDoses | number }} {{ drug.unit }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-row" style="display: flex; gap: 8px; align-items: flex-end;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label style="font-size: 12px; margin-bottom: 4px; display: block;">Количество доз / литров:</label>
+            <input type="number" [(ngModel)]="replenishAmount" min="1" class="input-field" placeholder="Количество" />
+          </div>
+          <button type="button" class="btn-action" style="height: 38px;" (click)="submitReplenish()">
+            Пополнить склад
+          </button>
         </div>
       </div>
     </div>

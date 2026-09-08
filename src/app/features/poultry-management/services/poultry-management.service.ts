@@ -141,6 +141,28 @@ export class PoultryManagementService {
     return +avg.toFixed(1);
   });
 
+  // Приём выведенного суточного молодняка из инкубатория (C1)
+  receiveNewFlock(houseId: string, birdsCount: number): boolean {
+    const count = Number(birdsCount);
+    if (isNaN(count) || count <= 0) return false;
+
+    let found = false;
+    this._houses.update(houses =>
+      houses.map(h => {
+        if (h.id === houseId || h.name === houseId) {
+          found = true;
+          return {
+            ...h,
+            birdCount: h.birdCount + count,
+            initialBirdCount: h.initialBirdCount + count
+          };
+        }
+        return h;
+      })
+    );
+    return found;
+  }
+
   // Метод внесения сменного отчета из формы poultry-list
   submitDailyReport(report: DailyReportInput): void {
     const eggs = report.dailyEggCount ?? report.eggCount ?? 0;

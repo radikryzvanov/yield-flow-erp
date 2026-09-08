@@ -86,22 +86,22 @@
       </button>
     </div>
 
-    <!-- Списание на птичник -->
+    <!-- Списание на птичник (C3) -->
     <div class="form-card">
       <h3 class="card-title">Списание корма в птичник</h3>
       <div class="form-group">
-        <label>Птичник-получатель</label>
-        <input
-          type="text"
-          [(ngModel)]="deductHouseName"
-          placeholder="Птичник № 1 (Промышленная несушка)"
-          class="input-field" />
+        <label>Птичник-получатель (C3)</label>
+        <select [(ngModel)]="selectedHouseId" (change)="onHouseChange()" class="input-field">
+          <option *ngFor="let h of poultryHouses()" [value]="h.id">
+            {{ h.name }} ({{ h.crossType }})
+          </option>
+        </select>
       </div>
 
       <div class="form-row">
         <div class="form-group flex-1">
           <label>Тип птицы</label>
-          <select [(ngModel)]="deductBirdType" class="input-field">
+          <select [(ngModel)]="deductBirdType" class="input-field" disabled>
             <option value="layer">Несушка</option>
             <option value="rearing">Молодняк</option>
             <option value="broiler">Бройлер</option>

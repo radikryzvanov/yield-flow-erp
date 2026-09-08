@@ -102,6 +102,28 @@
       <div class="sanitizing-desc" *ngIf="cab.status === 'sanitization'">
         🧹 Проводится мойка пенными дезсредствами и аэрозольная газация парами формальдегида перед следующей закладкой партии.
       </div>
+
+      <!-- Кнопки действий на карточке шкафа (B2) -->
+      <div class="cabinet-actions" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+        <button
+          *ngIf="cab.status === 'sanitization' || cab.eggsCount === 0"
+          type="button"
+          class="btn-export-excel"
+          style="padding: 6px 12px; font-size: 13px;"
+          (click)="openSetBatchModal(cab)">
+          🥚 Заложить партию ИЯ
+        </button>
+
+        <button
+          *ngIf="cab.status === 'hatching'"
+          type="button"
+          class="btn-export-excel"
+          style="padding: 6px 12px; font-size: 13px; background-color: #16a34a; border-color: #16a34a;"
+          (click)="openCompleteHatchModal(cab)">
+          🐣 Завершить вывод молодняка
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -164,4 +186,75 @@
       </table>
     </div>
   </div>
+
+  <!-- Модальное окно: Закладка новой партии яйца -->
+  <div class="modal-backdrop" *ngIf="isSetBatchModalOpen()">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Закладка партии в {{ activeCabinet()?.name }}</h2>
+        <button type="button" class="btn-close" (click)="closeSetBatchModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="batchNum">Номер партии ИЯ:</label>
+          <input id="batchNum" type="text" [(ngModel)]="batchNumberInput" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="crossType">Кросс птицы:</label>
+          <select id="crossType" [(ngModel)]="crossTypeInput" class="form-control">
+            <option value="Ломанн ЛСЛ Классик">Ломанн ЛСЛ Классик</option>
+            <option value="Хайсекс Браун">Хайсекс Браун</option>
+            <option value="Декалб Белый">Декалб Белый</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eggsCount">Количество закладываемого яйца (шт):</label>
+          <input id="eggsCount" type="number" [(ngModel)]="eggsCountInput" min="100" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="hatchExp">Плановый вывод (%):</label>
+          <input id="hatchExp" type="number" step="0.5" [(ngModel)]="expectedHatchRateInput" min="50" max="100" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeSetBatchModal()">Отмена</button>
+        <button type="button" class="btn-save" (click)="submitSetBatch()">Запустить инкубацию</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Завершение вывода цыплят -->
+  <div class="modal-backdrop" *ngIf="isCompleteHatchModalOpen()">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Вывод молодняка ({{ activeCabinet()?.name }})</h2>
+        <button type="button" class="btn-close" (click)="closeCompleteHatchModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Партия: <b>{{ activeCabinet()?.batchNumber }}</b> (Заложено: {{ activeCabinet()?.eggsCount | number }} шт)</p>
+
+        <div class="form-group">
+          <label for="chicksCount">Фактически выведено кондиционных цыплят (гол):</label>
+          <input id="chicksCount" type="number" [(ngModel)]="chicksHatchedInput" min="1" [max]="activeCabinet()?.eggsCount ?? 100000" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="targetHouse">Целевой птичник (перевод поголовья):</label>
+          <select id="targetHouse" [(ngModel)]="selectedHouseId" class="form-control">
+            <option *ngFor="let h of poultryHouses()" [value]="h.id">
+              {{ h.name }} ({{ h.crossType }} — {{ h.birdCount }} гол.)
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeCompleteHatchModal()">Отмена</button>
+        <button type="button" class="btn-save" (click)="submitCompleteHatch()">Зафиксировать вывод и очистить шкаф</button>
+      </div>
+    </div>
+  </div>
+
 </div>

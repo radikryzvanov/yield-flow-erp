@@ -111,7 +111,17 @@ export class LogisticsService {
   readonly shipments = this._shipments.asReadonly();
   readonly fleet = this._fleet.asReadonly();
 
-  readonly totalDailyShippedTons = computed(() => 64.8);
+  readonly totalDailyShippedTons = computed(() => {
+    const tonsDirect = this._shipments()
+      .filter(s => s.unit.includes('тонн') && s.shippingStatus !== 'loading')
+      .reduce((sum, s) => sum + Number(s.quantityUnits), 0);
+    const eggBoxes = this._shipments()
+      .filter(s => s.unit.includes('кор') && s.shippingStatus !== 'loading')
+      .reduce((sum, s) => sum + Number(s.quantityUnits), 0);
+    const eggTons = (eggBoxes * 360 * 0.06) / 1000;
+    return Math.round((tonsDirect + eggTons) * 10) / 10;
+  });
+
   readonly activeVehiclesCount = computed(() => this._fleet().filter(f => f.status === 'active').length);
   readonly onTimeRatePercent = computed(() => 99.4);
   readonly approvedMercuryDocsCount = computed(() => this._shipments().filter(s => s.mercuryDocStatus === 'approved').length);
@@ -126,5 +136,14 @@ export class LogisticsService {
     this._fleet.update(items =>
       items.map(v => (v.id === vehicleId ? { ...v, status } : v))
     );
+  }
+
+  createShipment(order: Omit<ShipmentOrder, 'id' | 'mercuryDocStatus'>): void {
+    const newOrder: ShipmentOrder = {
+      ...order,
+      id: `SH-2026-${Math.floor(100 + Math.random() * 900)}`,
+      mercuryDocStatus: 'approved'
+    };
+    this._shipments.update(items => [newOrder, ...items]);
   }
 }

@@ -56,6 +56,9 @@
       </div>
 
       <div class="table-toolbar-actions">
+        <button class="btn-export-excel" style="background-color: #2563eb; border-color: #2563eb; color: #fff;" (click)="openCreateModal()" type="button">
+          <span>➕</span> Новая отгрузка
+        </button>
         <button class="btn-export-excel" (click)="exportToExcel()" type="button">
           <span>📥</span> Экспорт в Excel
         </button>
@@ -72,7 +75,7 @@
             <th>Объем отгрузки</th>
             <th>Автомобиль / Водитель</th>
             <th>Реф (°C)</th>
-            <th>Статус рейса</th>
+            <th>Статус рейса (B5)</th>
             <th>Меркурий ВСД</th>
           </tr>
         </thead>
@@ -99,12 +102,15 @@
               </span>
             </td>
             <td>
-              <span class="status-badge"
-                    [class.badge-transit]="s.shippingStatus === 'in_transit'"
-                    [class.badge-loading]="s.shippingStatus === 'loading'"
-                    [class.badge-delivered]="s.shippingStatus === 'delivered'">
-                {{ getShipmentStatusBadge(s.shippingStatus) }}
-              </span>
+              <select
+                [value]="s.shippingStatus"
+                (change)="onStatusChange(s.id, $event)"
+                class="status-select"
+                style="padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid #cbd5e1;">
+                <option value="loading">На погрузке</option>
+                <option value="in_transit">В пути к РЦ</option>
+                <option value="delivered">Доставлен</option>
+              </select>
             </td>
             <td>
               <span class="vsd-badge">✅ Оформлен</span>
@@ -150,4 +156,68 @@
       </div>
     </div>
   </div>
+
+  <!-- Модальное окно создания новой отгрузки (B5) -->
+  <div class="modal-backdrop" *ngIf="isCreateModalOpen()">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Регистрация новой отгрузки / рейса</h2>
+        <button type="button" class="btn-close" (click)="closeCreateModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="clientName">Клиент / Торговая сеть:</label>
+          <input id="clientName" type="text" [(ngModel)]="newClientName" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="destCity">Город / РЦ назначения:</label>
+          <input id="destCity" type="text" [(ngModel)]="newDestinationCity" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="prodType">Номенклатура продукции:</label>
+          <input id="prodType" type="text" [(ngModel)]="newProductType" class="form-control" />
+        </div>
+
+        <div class="form-row" style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label for="qtyUnits">Объем:</label>
+            <input id="qtyUnits" type="number" [(ngModel)]="newQuantityUnits" min="1" class="form-control" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="unitName">Единица измерения:</label>
+            <select id="unitName" [(ngModel)]="newUnit" class="form-control">
+              <option value="кор. (259 200 шт)">кор. (яйцо)</option>
+              <option value="тонн">тонн (мясо)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="carrierCar">Транспорт (из автопарка):</label>
+          <select id="carrierCar" [(ngModel)]="newCarrierVehicle" class="form-control">
+            <option *ngFor="let car of fleet()" [value]="car.model + ' ' + car.plateNumber">
+              {{ car.model }} ({{ car.plateNumber }}) — {{ car.coolingMode }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="driverName">Водитель-экспедитор:</label>
+          <input id="driverName" type="text" [(ngModel)]="newDriverName" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="tempInside">Температура в рефрижераторе (°C):</label>
+          <input id="tempInside" type="number" step="0.1" [(ngModel)]="newTempInside" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeCreateModal()">Отмена</button>
+        <button type="button" class="btn-save" (click)="submitCreateShipment()">Сформировать накладную и ВСД</button>
+      </div>
+    </div>
+  </div>
+
 </div>

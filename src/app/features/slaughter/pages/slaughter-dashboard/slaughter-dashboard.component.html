@@ -31,9 +31,14 @@
   <div class="dock-card">
     <div class="dock-header">
       <div class="dock-tag">Участок приёмки и подвески живой птицы</div>
-      <span class="dock-status" [class.status-wait]="pendingDelivery()" [class.status-empty]="!pendingDelivery()">
-        {{ pendingDelivery() ? 'Партия в накопителе' : 'Очередь чиста' }}
-      </span>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" class="btn-ctrl" style="padding: 4px 10px; font-size: 12px; background: #2563eb; color: #fff; border: none;" (click)="openDeliveryModal()">
+          + Принять партию птицы
+        </button>
+        <span class="dock-status" [class.status-wait]="pendingDelivery()" [class.status-empty]="!pendingDelivery()">
+          {{ pendingDelivery() ? 'Партия в накопителе' : 'Очередь чиста' }}
+        </span>
+      </div>
     </div>
 
     <div *ngIf="pendingDelivery() as d; else noDeliveryBlock" class="dock-body">
@@ -60,7 +65,7 @@
 
     <ng-template #noDeliveryBlock>
       <div class="dock-empty">
-        Все доставленные партии обработаны. Ожидается прибытие транспорта из цеха промышленного стада.
+        Все доставленные партии обработаны. Нажмите «+ Принять партию птицы» для регистрации прибывшего транспорта.
       </div>
     </ng-template>
   </div>
@@ -158,4 +163,39 @@
       </table>
     </div>
   </div>
+
+  <!-- Модальное окно приёмки партии птицы (B4) -->
+  <div class="modal-backdrop" *ngIf="isDeliveryModalOpen()">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Приёмка партии птицы на убой</h2>
+        <button type="button" class="btn-close" (click)="closeDeliveryModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="houseSelect">Птичник-источник (комплекс):</label>
+          <select id="houseSelect" [(ngModel)]="selectedHouseId" (change)="onHouseSelectChange()" class="form-control">
+            <option *ngFor="let h of poultryHouses()" [value]="h.id">
+              {{ h.name }} (Остаток: {{ h.birdCount | number }} гол.)
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="birdsCount">Поголовье к навеске (гол):</label>
+          <input id="birdsCount" type="number" [(ngModel)]="birdsCountInput" min="100" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="avgWeight">Средний живой вес (кг):</label>
+          <input id="avgWeight" type="number" step="0.05" [(ngModel)]="averageWeightInput" min="0.5" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeDeliveryModal()">Отмена</button>
+        <button type="button" class="btn-save" (click)="submitDelivery()">Принять в зону навески</button>
+      </div>
+    </div>
+  </div>
+
 </div>

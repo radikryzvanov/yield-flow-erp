@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedWarehouseService } from '../../services/feed-warehouse.service';
+import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
 import { FeedLog } from '../../interfaces/feed-warehouse.interface';
 import { ExportService } from '../../../../shared/services/export.service';
 
@@ -14,21 +15,24 @@ import { ExportService } from '../../../../shared/services/export.service';
 })
 export class FeedDashboardComponent {
   protected readonly feedService = inject(FeedWarehouseService);
+  protected readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
 
   readonly silos = this.feedService.silos;
   readonly totalFeedTons = this.feedService.totalFeedTons;
   readonly totalCapacityTons = this.feedService.totalCapacityTons;
   readonly totalFeedValueRub = this.feedService.totalFeedValueRub;
+  readonly poultryHouses = this.poultryService.houses;
 
   // Форма пополнения (производство партии комбикорма)
   replenishSiloId = 'silo-1';
   replenishTons: number | null = null;
 
-  // Форма списания (раздача в птичник)
-  deductHouseName = 'Птичник № 1 (Промышленная несушка)';
-  deductBirdType: 'layer' | 'broiler' | 'rearing' = 'layer';
-  deductAgeDays: number = 180;
+  // Форма списания (C3: синхронизация с реальными птичниками)
+  selectedHouseId = this.poultryHouses()[0]?.id ?? 'house-1';
+  deductHouseName = this.poultryHouses()[0]?.name ?? 'Птичник № 1 (Промышленная несушка)';
+  deductBirdType: 'layer' | 'broiler' | 'rearing' = this.poultryHouses()[0]?.birdType ?? 'layer';
+  deductAgeDays: number = this.poultryHouses()[0]?.ageDays ?? 180;
   deductTons: number | null = null;
 
   // Фильтрация журнала
@@ -46,6 +50,15 @@ export class FeedDashboardComponent {
       log.date.toLowerCase().includes(query)
     );
   });
+
+  onHouseChange(): void {
+    const house = this.poultryHouses().find(h => h.id === this.selectedHouseId);
+    if (house) {
+      this.deductHouseName = house.name;
+      this.deductBirdType = house.birdType;
+      this.deductAgeDays = house.ageDays;
+    }
+  }
 
   submitReplenish(): void {
     const tons = Number(this.replenishTons);
@@ -70,6 +83,8 @@ export class FeedDashboardComponent {
 
     if (ok) {
       this.deductTons = null;
+    } else {
+      alert(`Недостаточно корма требуемой рецептуры для «${this.deductHouseName}» в силосах.`);
     }
   }
 

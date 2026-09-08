@@ -21,16 +21,16 @@
     </div>
   </div>
 
-  <!-- Панель быстрой приёмки валового яйца -->
+  <!-- Панель быстрой приёмки валового яйца (C3) -->
   <div class="section-card quick-intake-card">
     <h2 class="section-title">Приёмка валового сбора с транспортера</h2>
     <div class="quick-intake-form">
       <div class="form-group flex-2">
         <label>Источник поступления (Птичник / Бригада)</label>
         <select [(ngModel)]="newBatchHouse" class="input-field">
-          <option value="Птичник № 1 (Промышленная несушка)">Птичник № 1 (Промышленная несушка)</option>
-          <option value="Птичник № 2 (Промышленная несушка)">Птичник № 2 (Промышленная несушка)</option>
-          <option value="Птичник № 3 (Молодняк)">Птичник № 3 (Молодняк)</option>
+          <option *ngFor="let house of poultryHouses()" [value]="house.name">
+            {{ house.name }} ({{ house.crossType }})
+          </option>
         </select>
       </div>
 

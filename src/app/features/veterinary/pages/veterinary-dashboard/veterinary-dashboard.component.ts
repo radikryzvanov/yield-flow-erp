@@ -33,6 +33,10 @@ export class VeterinaryDashboardComponent {
   newLogDoctor = 'Иванов С. М.';
   newLogStatus: 'normal' | 'observation' | 'quarantine' = 'normal';
 
+  // Форма B3: пополнение аптеки
+  selectedDrugId: string = 'st-1';
+  replenishAmount: number | null = 10000;
+
   // Фильтрация графика вакцинаций
   scheduleFilter = 'ALL';
 
@@ -44,7 +48,26 @@ export class VeterinaryDashboardComponent {
 
   // Отметка вакцинации как выполненной
   markVaccinated(id: string): void {
-    this.vetService.completeVaccination(id);
+    const success = this.vetService.completeVaccination(id);
+    if (!success) {
+      alert('Не удалось списать препарат: проверьте наличие достаточного количества доз на складе аптеки.');
+    }
+  }
+
+  // Отправка формы пополнения препарата (B3)
+  submitReplenish(): void {
+    const amount = Number(this.replenishAmount);
+    if (!this.selectedDrugId || isNaN(amount) || amount <= 0) {
+      alert('Укажите корректный объем для пополнения склада.');
+      return;
+    }
+
+    const success = this.vetService.replenishDrugStock(this.selectedDrugId, amount);
+    if (success) {
+      this.replenishAmount = null;
+    } else {
+      alert('Препарат не найден в номенклатуре аптеки.');
+    }
   }
 
   // Отправка формы клинического осмотра

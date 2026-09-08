@@ -131,6 +131,30 @@ export class SlaughterService {
     this._products().reduce((sum, p) => sum + (p.yieldKg * p.pricePerKgRub), 0)
   );
 
+  // Регистрация новой поступившей партии птицы (B4)
+  addIncomingDelivery(data: { sourceHouse: string; birdsCount: number; averageWeightKg: number }): boolean {
+    const count = Number(data.birdsCount);
+    const weight = Number(data.averageWeightKg);
+    if (!count || count <= 0 || !weight || weight <= 0) return false;
+
+    const timeFormatted = new Intl.DateTimeFormat('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date());
+
+    const newDelivery: IncomingFlockDelivery = {
+      id: `DELIV-${Date.now().toString().slice(-4)}`,
+      sourceHouse: data.sourceHouse,
+      birdsCount: count,
+      averageWeightKg: weight,
+      deliveryTime: `Сегодня, ${timeFormatted} (Автовесовая)`,
+      status: 'docked'
+    };
+
+    this._deliveries.update(list => [newDelivery, ...list]);
+    return true;
+  }
+
   // Пуск конвейера по входящей партии
   startBatchProcessing(deliveryId: string): void {
     const delivery = this._deliveries().find(d => d.id === deliveryId);
