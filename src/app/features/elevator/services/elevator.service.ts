@@ -91,16 +91,25 @@ export class ElevatorService {
     weightTons: number;
     moisturePercent: number;
     targetSiloId: string;
-  }): void {
+  }): { accepted: number; overflow: number } {
     const weight = Number(data.weightTons) || 0;
     const moisture = Number(data.moisturePercent) || 0;
+    let overflow = 0;
+    let accepted = 0;
 
     this._silos.update(silos =>
       silos.map(silo => {
         if (silo.id === data.targetSiloId) {
-          const newWeight = Math.min(silo.capacityTons, silo.currentTons + weight);
+          const freeSpace = silo.capacityTons - silo.currentTons;
+          accepted = Math.max(0, Math.min(freeSpace, weight));
+          overflow = Math.round((weight - accepted) * 100) / 100;
           const status = moisture > 14.5 ? 'drying_required' : 'normal';
-          return { ...silo, currentTons: newWeight, moisturePercent: moisture, status };
+          return {
+            ...silo,
+            currentTons: Math.round((silo.currentTons + accepted) * 100) / 100,
+            moisturePercent: moisture,
+            status
+          };
         }
         return silo;
       })
@@ -112,11 +121,13 @@ export class ElevatorService {
         date: 'Только что',
         truckNumber: data.truckNumber,
         culture: data.culture,
-        weightTons: weight,
+        weightTons: accepted,
         moisturePercent: moisture,
         targetSiloId: data.targetSiloId
       },
       ...logs
     ]);
+
+    return { accepted, overflow };
   }
 }

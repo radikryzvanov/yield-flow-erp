@@ -79,10 +79,12 @@ export class FinanceService {
   // Структура операционных затрат предприятия
   readonly costBreakdown = computed<CostBreakdownItem[]>(() => {
     const feed = this.dailyFeedCostRub();
-    const fot = 110_000;
-    const energy = 50_000;
-    const vet = 35_000;
-    const other = 25_000;
+    const overhead = this.dailyOverheadCostsRub();
+
+    const fot = Math.round(overhead * 0.5);
+    const energy = Math.round(overhead * 0.227273);
+    const vet = Math.round(overhead * 0.159091);
+    const other = Math.round(overhead * 0.113636);
     const total = feed + fot + energy + vet + other;
 
     if (total === 0) return [];

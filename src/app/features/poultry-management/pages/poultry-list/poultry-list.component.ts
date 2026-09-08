@@ -97,7 +97,17 @@ export class PoultryListComponent {
     // 3. Списываем съеденный комбикорм со склада кормов
     const totalFeedTons = Math.round(((currentBirds * feedGrams) / 1_000_000) * 100) / 100;
     if (totalFeedTons > 0) {
-      this.feedWarehouseService.deductFeedForHouse(house.name, house.birdType, house.ageDays, totalFeedTons);
+      const feedOk = this.feedWarehouseService.deductFeedForHouse(
+        house.name,
+        house.birdType,
+        house.ageDays,
+        totalFeedTons
+      );
+      if (!feedOk) {
+        alert(
+          `Внимание: на складе кормов недостаточно комбикорма нужной рецептуры для «${house.name}». Отчёт сохранён, но списание корма выполнено не полностью или не выполнено вовсе — проверьте склад кормов.`
+        );
+      }
     }
 
     this.closeModal();

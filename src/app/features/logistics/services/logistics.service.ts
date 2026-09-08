@@ -1,11 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { persistedSignal } from '../../../shared/utils/persisted-signal';
 import { ShipmentOrder, FleetVehicle, LogisticsKpi } from '../interfaces/logistics.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LogisticsService {
-  private readonly _shipments = signal<ShipmentOrder[]>([
+  private readonly _shipments = persistedSignal<ShipmentOrder[]>('yieldflow_logistics_shipments', [
     {
       id: 'SH-2026-881',
       clientName: 'X5 Retail Group (РЦ Подольск)',
@@ -64,7 +65,7 @@ export class LogisticsService {
     }
   ]);
 
-  private readonly _fleet = signal<FleetVehicle[]>([
+  private readonly _fleet = persistedSignal<FleetVehicle[]>('yieldflow_logistics_fleet', [
     {
       id: 'FL-01',
       plateNumber: 'Р 440 АК 73',
@@ -114,4 +115,16 @@ export class LogisticsService {
   readonly activeVehiclesCount = computed(() => this._fleet().filter(f => f.status === 'active').length);
   readonly onTimeRatePercent = computed(() => 99.4);
   readonly approvedMercuryDocsCount = computed(() => this._shipments().filter(s => s.mercuryDocStatus === 'approved').length);
+
+  updateShipmentStatus(shipmentId: string, status: ShipmentOrder['shippingStatus']): void {
+    this._shipments.update(items =>
+      items.map(s => (s.id === shipmentId ? { ...s, shippingStatus: status } : s))
+    );
+  }
+
+  updateVehicleStatus(vehicleId: string, status: FleetVehicle['status']): void {
+    this._fleet.update(items =>
+      items.map(v => (v.id === vehicleId ? { ...v, status } : v))
+    );
+  }
 }

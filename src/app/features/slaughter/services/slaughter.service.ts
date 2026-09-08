@@ -134,7 +134,9 @@ export class SlaughterService {
   // Пуск конвейера по входящей партии
   startBatchProcessing(deliveryId: string): void {
     const delivery = this._deliveries().find(d => d.id === deliveryId);
-    if (!delivery || delivery.status !== 'docked') return;
+    if (!delivery || delivery.status !== 'docked' || delivery.birdsCount <= 0 || delivery.averageWeightKg <= 0) {
+      return;
+    }
 
     const liveWeightKg = delivery.birdsCount * delivery.averageWeightKg;
     const liveWeightTons = Math.round((liveWeightKg / 1000) * 100) / 100;
@@ -157,7 +159,7 @@ export class SlaughterService {
       })
     );
 
-    // 2. Обновление статуса главной линии
+    // 2. Обновление статуса главной линии с динамическим весом
     this._lines.update(lines =>
       lines.map((l, idx) => {
         if (idx === 0) {
@@ -165,6 +167,7 @@ export class SlaughterService {
             ...l,
             status: 'running',
             currentBatch: `${delivery.sourceHouse} (${delivery.birdsCount} гол.)`,
+            averageLiveWeightKg: delivery.averageWeightKg,
             birdsProcessedToday: l.birdsProcessedToday + delivery.birdsCount
           };
         }
@@ -178,6 +181,8 @@ export class SlaughterService {
       minute: '2-digit'
     }).format(new Date());
 
+    const firstGradeRate = meatYieldKg > 0 ? Math.round((grade1 / meatYieldKg) * 1000) / 10 : 78.5;
+
     const newLog: SlaughterBatchLog = {
       id: `SLAUGHT-${Date.now().toString().slice(-4)}`,
       date: `Сегодня, ${timeFormatted}`,
@@ -185,7 +190,7 @@ export class SlaughterService {
       birdsCount: delivery.birdsCount,
       totalLiveWeightTons: liveWeightTons,
       totalMeatYieldTons: meatYieldTons,
-      firstGradePercent: 81.4,
+      firstGradePercent: firstGradeRate,
       vetInspectionStatus: 'passed'
     };
 

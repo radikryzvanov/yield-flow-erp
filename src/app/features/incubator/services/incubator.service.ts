@@ -175,6 +175,12 @@ export class IncubatorService {
     const hatched = Number(data.chicksHatched);
     if (isNaN(hatched) || hatched <= 0) return false;
 
+    // Валидация A7: цыплят не может вылупиться больше, чем заложено яиц
+    if (hatched > cabinet.eggsCount) {
+      console.warn(`[Incubator] Количество выведенных цыплят (${hatched}) превышает закладку (${cabinet.eggsCount})`);
+      return false;
+    }
+
     const hatchRate = Math.round((hatched / cabinet.eggsCount) * 1000) / 10;
 
     const timeFormatted = new Intl.DateTimeFormat('ru-RU', {

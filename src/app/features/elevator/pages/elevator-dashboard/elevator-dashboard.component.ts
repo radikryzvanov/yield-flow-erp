@@ -54,19 +54,36 @@ export class ElevatorDashboardComponent {
     const weight = Number(this.weightTons());
     const moisture = Number(this.moisturePercent());
     const siloId = this.selectedSiloId();
+    const selectedCultureValue = this.culture();
 
     if (!truck || !weight || isNaN(weight) || isNaN(moisture)) {
-      console.warn('Заполните все обязательные поля приёмки');
+      alert('Заполните все обязательные поля приёмки');
       return;
     }
 
-    this.elevatorService.receiveGrain({
+    // Проверка A6: соответствие культуры содержимому силоса
+    const targetSilo = this.silos().find(s => s.id === siloId);
+    if (targetSilo && targetSilo.culture !== selectedCultureValue) {
+      const confirmed = confirm(
+        `Внимание: в силосе «${targetSilo.name}» хранится «${targetSilo.culture}», а вы принимаете «${selectedCultureValue}». Продолжить приёмку в этот силос?`
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    // Приёмка зерна с контролем A5: обработка переполнения
+    const result = this.elevatorService.receiveGrain({
       truckNumber: truck,
-      culture: this.culture(),
+      culture: selectedCultureValue,
       weightTons: weight,
       moisturePercent: moisture,
       targetSiloId: siloId
     });
+
+    if (result.overflow > 0) {
+      alert(`Внимание: силос заполнен. Принято ${result.accepted} т из ${weight} т, излишек ${result.overflow} т не размещён — выберите другой силос.`);
+    }
 
     // Очистка формы после успешной записи
     this.truckNumber.set('');

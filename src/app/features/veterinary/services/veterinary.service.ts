@@ -95,6 +95,26 @@ export class VeterinaryService {
       unit: 'литров',
       expiryDate: '01.2028',
       status: 'ok'
+    },
+    {
+      id: 'st-5',
+      name: 'Ньюкасл Клон Ла-Сота (Вакцина против НБ)',
+      category: 'Вакцины',
+      batchNumber: 'SER-9240',
+      stockDoses: 100000,
+      unit: 'доз',
+      expiryDate: '12.2027',
+      status: 'ok'
+    },
+    {
+      id: 'st-6',
+      name: 'ЭДС-Вак инактивированная (ССЯ-76)',
+      category: 'Вакцины',
+      batchNumber: 'SER-9315',
+      stockDoses: 80000,
+      unit: 'доз',
+      expiryDate: '10.2027',
+      status: 'ok'
     }
   ]);
 
@@ -143,16 +163,31 @@ export class VeterinaryService {
     const item = this._schedule().find(s => s.id === scheduleId);
     if (!item || item.status === 'completed') return false;
 
+    // Определение препарата по совпадению наименования
+    const targetName = item.vaccineName.toLowerCase();
+    const drugToDeduct = this._stock().find(drug => {
+      const dName = drug.name.toLowerCase();
+      if (targetName.includes('марек') && dName.includes('марек')) return true;
+      if (targetName.includes('гамборо') && dName.includes('гамборо')) return true;
+      if (targetName.includes('ньюкасл') && dName.includes('ньюкасл')) return true;
+      if (targetName.includes('эдс') && dName.includes('эдс')) return true;
+      return dName.includes(targetName.slice(0, 5));
+    });
+
+    if (!drugToDeduct || drugToDeduct.stockDoses < item.dosageDoses) {
+      console.warn(`[Veterinary] Недостаточно доз или препарат не найден на складе для: ${item.vaccineName}`);
+      return false;
+    }
+
     // 1. Помечаем вакцинацию как выполненную
     this._schedule.update(list =>
       list.map(s => (s.id === scheduleId ? { ...s, status: 'completed' } : s))
     );
 
-    // 2. Списываем дозы соответствующего препарата из аптеки
+    // 2. Списываем дозы из аптеки
     this._stock.update(stocks =>
       stocks.map(drug => {
-        const matchesName = drug.name.toLowerCase().includes(item.vaccineName.slice(0, 7).toLowerCase());
-        if (matchesName && drug.stockDoses > 0) {
+        if (drug.id === drugToDeduct.id) {
           const newDoses = Math.max(0, drug.stockDoses - item.dosageDoses);
           return {
             ...drug,
