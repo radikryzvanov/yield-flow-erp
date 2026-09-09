@@ -1,52 +1,81 @@
 .poultry-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.page-header h1 {
-  margin: 0;
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
   font-size: 24px;
-  color: #0f172a;
   font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
 }
 
 .subtitle {
-  margin: 4px 0 0 0;
+  font-size: 13.5px;
   color: #64748b;
-  font-size: 14px;
+  margin: 0;
 }
 
 /* KPI Панель */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .kpi-card {
   background: #ffffff;
-  padding: 16px 20px;
-  border-radius: 10px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .kpi-title {
   font-size: 13px;
+  font-weight: 600;
   color: #64748b;
-  font-weight: 500;
+}
+
+.kpi-icon {
+  font-size: 20px;
 }
 
 .kpi-value {
   font-size: 26px;
-  font-weight: 700;
-  margin: 6px 0;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 4px;
 }
 
-.unit {
+.kpi-value.text-primary {
+  color: #2563eb;
+}
+
+.kpi-value.text-success {
+  color: #16a34a;
+}
+
+.kpi-value.text-warning {
+  color: #d97706;
+}
+
+.kpi-value .unit {
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: #64748b;
 }
 
@@ -55,201 +84,189 @@
   color: #94a3b8;
 }
 
-.text-primary { color: #2563eb; }
-.text-success { color: #16a34a; }
-.text-warning { color: #d97706; }
-.text-danger { color: #dc2626; }
-
-/* Панель тулбара */
-.toolbar-card {
+/* Карточка таблицы и тулбар */
+.card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.table-toolbar-header {
   padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   flex-wrap: wrap;
-  gap: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.toolbar-title h3 {
+.table-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: #1e293b;
 }
 
-.houses-counter {
-  font-size: 12px;
-  color: #64748b;
-}
-
-.table-toolbar {
+.table-toolbar-actions {
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
-.input-search, .select-filter {
-  padding: 8px 12px;
+.table-toolbar-actions input,
+.table-toolbar-actions select {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #1e293b;
+  outline: none;
+}
+
+.table-toolbar-actions input:focus,
+.table-toolbar-actions select:focus {
+  border-color: #2563eb;
+}
+
+.btn-export-excel {
+  height: 36px;
+  padding: 0 14px;
+  background-color: #f8fafc;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 13px;
-  color: #1e293b;
-  outline: none;
-  background-color: #ffffff;
-}
-
-.input-search:focus, .select-filter:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
-
-.input-search {
-  min-width: 220px;
-}
-
-.btn-export {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #107c41;
-  color: #ffffff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 13px;
   font-weight: 600;
+  color: #334155;
   cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-export:hover {
-  background-color: #0c6133;
-}
-
-/* Сетка карточек птичников */
-.houses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-}
-
-.house-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  padding: 18px;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.house-card.border-warning {
-  border-left: 4px solid #f59e0b;
-}
-
-.house-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.house-title {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.cross-badge {
-  font-size: 12px;
-  background: #f1f5f9;
-  color: #475569;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.status-pill {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 12px;
-  background: #e2e8f0;
-  color: #475569;
-  white-space: nowrap;
-}
-
-.status-pill.status-active {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.metric-group {
-  background: #f8fafc;
-  padding: 10px 12px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.metric-row {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  gap: 6px;
+  transition: background 0.15s;
 }
 
-.label {
+.btn-export-excel:hover {
+  background-color: #e2e8f0;
+}
+
+/* Таблица */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.data-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.house-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.house-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.house-id {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-muted {
   color: #64748b;
 }
 
-.val {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.norm {
-  font-size: 11px;
-  font-weight: 400;
-  color: #94a3b8;
-}
-
-.house-actions {
-  margin-top: auto;
-}
-
-.btn-report {
-  width: 100%;
-  padding: 9px 14px;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
+.type-pill {
+  display: inline-block;
+  padding: 3px 8px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+}
+
+.type-layer {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.type-broiler {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.type-rearing {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.rate-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.rate-high {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.btn-action {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #2563eb;
+  background-color: #eff6ff;
+  color: #2563eb;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.15s;
 }
 
-.btn-report:hover {
-  background: #1d4ed8;
+.btn-action:hover {
+  background-color: #2563eb;
+  color: #ffffff;
 }
 
-.empty-state-card {
-  background: #ffffff;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-  padding: 32px;
+.empty-state {
   text-align: center;
+  padding: 30px;
   color: #94a3b8;
-  font-style: italic;
 }
 
 /* Модальное окно */
@@ -260,11 +277,11 @@
   width: 100vw;
   height: 100vh;
   background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
-  padding: 16px;
+  z-index: 1000;
 }
 
 .modal-dialog {
@@ -273,13 +290,11 @@
   width: 100%;
   max-width: 480px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
 .modal-header {
-  padding: 18px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
@@ -287,107 +302,83 @@
 }
 
 .modal-header h2 {
+  font-size: 17px;
+  font-weight: 700;
   margin: 0;
-  font-size: 18px;
   color: #0f172a;
 }
 
 .btn-close {
-  background: none;
+  background: transparent;
   border: none;
   font-size: 18px;
   color: #94a3b8;
   cursor: pointer;
 }
 
-.btn-close:hover {
-  color: #0f172a;
-}
-
 .modal-body {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.modal-subtitle {
-  margin: 0 0 6px 0;
-  font-size: 13px;
-  color: #64748b;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  margin-bottom: 14px;
 }
 
 .form-group label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
 }
 
 .form-control {
-  padding: 9px 12px;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13.5px;
   outline: none;
+  box-sizing: border-box;
 }
 
 .form-control:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
 .modal-footer {
   padding: 14px 20px;
   border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  background: #f8fafc;
 }
 
 .btn-cancel {
-  padding: 8px 16px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  border-radius: 6px;
+  padding: 8px 14px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
   cursor: pointer;
-}
-
-.btn-cancel:hover {
-  background: #f1f5f9;
 }
 
 .btn-save {
   padding: 8px 16px;
-  background: #16a34a;
-  border: none;
-  color: #ffffff;
-  border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-.btn-save:hover {
-  background: #15803d;
-  .toolbar-title-group {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-
-  .houses-counter {
-    font-size: 0.85rem;
-    color: #64748b;
-    font-weight: 500;
-  }
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

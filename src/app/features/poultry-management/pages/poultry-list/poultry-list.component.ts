@@ -11,7 +11,7 @@ import { ToastService } from '../../../../shared/services/toast.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './poultry-list.component.html',
-  styleUrl: './poultry-list.component.css'
+  styleUrls: ['./poultry-list.component.css']
 })
 export class PoultryListComponent {
   protected readonly poultryService = inject(PoultryManagementService);
@@ -74,36 +74,34 @@ export class PoultryListComponent {
 
   saveReport(): void {
     if (this.isSaving()) return;
+
+    const house = this.selectedHouse();
+    if (!house) return;
+
+    const eggCount = Number(this.eggsInput);
+    const feedGrams = Number(this.feedInput);
+    const mortality = Number(this.mortalityInput);
+    const temp = Number(this.tempInput);
+
+    if (
+      isNaN(mortality) || mortality < 0 ||
+      isNaN(eggCount) || eggCount < 0 ||
+      isNaN(feedGrams) || feedGrams < 0 ||
+      isNaN(temp)
+    ) {
+      this.toastService.show('Показатели не могут быть отрицательными. Проверьте введённые данные.', 'error');
+      return;
+    }
+
+    if (mortality > house.birdCount) {
+      this.toastService.show(`Падёж (${mortality} гол.) не может превышать текущее поголовье (${house.birdCount} гол.).`, 'error');
+      return;
+    }
+
     this.isSaving.set(true);
-
     try {
-      const house = this.selectedHouse();
-      if (!house) return;
-
-      const eggCount = Number(this.eggsInput);
-      const feedGrams = Number(this.feedInput);
-      const mortality = Number(this.mortalityInput);
-      const temp = Number(this.tempInput);
-
-      // Проблема 3: Проверка на NaN и отрицательные числа
-      if (
-        isNaN(mortality) || mortality < 0 ||
-        isNaN(eggCount) || eggCount < 0 ||
-        isNaN(feedGrams) || feedGrams < 0 ||
-        isNaN(temp)
-      ) {
-        this.toastService.show('Показатели не могут быть отрицательными. Проверьте введённые данные.', 'error');
-        return;
-      }
-
-      if (mortality > house.birdCount) {
-        this.toastService.show(`Падёж (${mortality} гол.) не может превышать текущее поголовье (${house.birdCount} гол.).`, 'error');
-        return;
-      }
-
       const totalFeedTons = Math.round(((house.birdCount * feedGrams) / 1_000_000) * 100) / 100;
 
-      // Списание корма со склада
       if (totalFeedTons > 0) {
         const feedOk = this.feedWarehouseService.deductFeedForHouse(
           house.name,

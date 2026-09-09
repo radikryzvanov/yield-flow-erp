@@ -22,14 +22,13 @@ export class FinanceDashboardComponent {
 
   readonly dailyRevenue = this.financeService.dailyRevenueRub;
   readonly dailyFeedCost = this.financeService.dailyFeedCostRub;
-  readonly dailyOverhead = this.financeService.dailyOverheadCostsRub;
+  readonly dailyOverhead = this.financeService.dailyOverheadCosts;
   readonly dailyProfit = this.financeService.dailyProfitRub;
   readonly costPerEgg = this.financeService.costPerEggRub;
   readonly costBreakdown = this.financeService.costBreakdown;
   readonly eggPrices = this.financeService.eggPrices;
   readonly feedCostPerKg = this.financeService.feedCostPerKg;
 
-  // Динамический расчёт средней цены яйца: выручка / суточный сбор яйца
   readonly avgPricePerEgg = computed(() => {
     const totalEggs = this.poultryService.totalDailyEggs();
     const revenue = this.dailyRevenue();
@@ -49,37 +48,54 @@ export class FinanceDashboardComponent {
 
   constructor() {
     const prices = this.eggPrices();
-    this.priceCB = prices['СВ'] ?? 11.5;
-    this.priceC0 = prices['С0'] ?? 9.8;
-    this.priceC1 = prices['С1'] ?? 8.5;
-    this.priceC2 = prices['С2'] ?? 7.2;
-    this.priceDirty = prices['Грязь/Насечка'] ?? 5.0;
-    this.feedCostInput = this.feedCostPerKg();
-    this.overheadInput = this.dailyOverhead();
+    if (prices) {
+      this.priceCB = prices['СВ'] ?? 11.5;
+      this.priceC0 = prices['С0'] ?? 9.8;
+      this.priceC1 = prices['С1'] ?? 8.5;
+      this.priceC2 = prices['С2'] ?? 7.2;
+      this.priceDirty = prices['Грязь/Насечка'] ?? 5.0;
+    }
+    this.feedCostInput = this.feedCostPerKg() ?? 28.5;
+    this.overheadInput = this.dailyOverhead() ?? 220000;
   }
 
   saveFinancialSettings(): void {
     if (this.isSavingSettings()) return;
 
+    const cb = Number(this.priceCB);
+    const c0 = Number(this.priceC0);
+    const c1 = Number(this.priceC1);
+    const c2 = Number(this.priceC2);
+    const dirty = Number(this.priceDirty);
+    const feed = Number(this.feedCostInput);
+    const overhead = Number(this.overheadInput);
+
     if (
-      this.priceCB < 0 || this.priceC0 < 0 || this.priceC1 < 0 || this.priceC2 < 0 ||
-      this.priceDirty < 0 || this.feedCostInput < 0 || this.overheadInput < 0
+      isNaN(cb) || cb < 0 ||
+      isNaN(c0) || c0 < 0 ||
+      isNaN(c1) || c1 < 0 ||
+      isNaN(c2) || c2 < 0 ||
+      isNaN(dirty) || dirty < 0 ||
+      isNaN(feed) || feed < 0 ||
+      isNaN(overhead) || overhead < 0
     ) {
-      this.toastService.show('Цены и статьи затрат не могут быть отрицательными!', 'error');
+      this.toastService.show('Цены и статьи затрат не могут быть отрицательными или пустыми!', 'error');
       return;
     }
 
     this.isSavingSettings.set(true);
     try {
-      this.financeService.updateEggPrice('СВ', Number(this.priceCB));
-      this.financeService.updateEggPrice('С0', Number(this.priceC0));
-      this.financeService.updateEggPrice('С1', Number(this.priceC1));
-      this.financeService.updateEggPrice('С2', Number(this.priceC2));
-      this.financeService.updateEggPrice('Грязь/Насечка', Number(this.priceDirty));
-      this.financeService.updateFeedCostPerKg(Number(this.feedCostInput));
-      this.financeService.updateOverheadCosts(Number(this.overheadInput));
+      this.financeService.updateEggPrice('СВ', cb);
+      this.financeService.updateEggPrice('С0', c0);
+      this.financeService.updateEggPrice('С1', c1);
+      this.financeService.updateEggPrice('С2', c2);
+      this.financeService.updateEggPrice('Грязь/Насечка', dirty);
+      this.financeService.updateFeedCostPerKg(feed);
+      this.financeService.updateOverheadCosts(overhead);
 
-      this.toastService.show('Прейскурант цен и накладные расходы успешно обновлены.');
+      this.toastService.show('Прейскурант цен и накладные расходы успешно сохранены!');
+    } catch {
+      this.toastService.show('Произошла ошибка при сохранении настроек.', 'error');
     } finally {
       this.isSavingSettings.set(false);
     }

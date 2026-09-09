@@ -1,122 +1,125 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { persistedSignal } from '../../../shared/utils/persisted-signal';
+import { EggWarehouseService } from '../../poultry-management/services/egg-warehouse.service';
+import { FeedWarehouseService } from '../../feed-warehouse/services/feed-warehouse.service';
 import { PoultryManagementService } from '../../poultry-management/services/poultry-management.service';
 import { CostBreakdownItem } from '../interfaces/finance.interface';
-
-export interface EggPriceMap {
-  [category: string]: number;
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class FinanceService {
+  private readonly eggWarehouse = inject(EggWarehouseService);
+  private readonly feedWarehouse = inject(FeedWarehouseService);
   private readonly poultryService = inject(PoultryManagementService);
 
-  // Оптовый прейскурант реализации яйца (за десяток в рублях)
-  readonly eggPrices = persistedSignal<EggPriceMap>('yieldflow_finance_egg_prices', {
-    'СВ': 115,
-    'С0': 95,
-    'С1': 82,
-    'С2': 68,
-    'Грязь/Насечка': 35
+  // Прейскурант цен на яйцо (руб / шт)
+  private readonly _eggPrices = persistedSignal<Record<string, number>>('yieldflow_finance_egg_prices', {
+    'СВ': 11.5,
+    'С0': 9.8,
+    'С1': 8.5,
+    'С2': 7.2,
+    'Грязь/Насечка': 5.0
   });
 
-  // Себестоимость комбикорма за 1 кг
-  readonly feedCostPerKg = persistedSignal<number>('yieldflow_finance_feed_cost_kg', 22.50);
+  // Стоимость корма (руб / кг)
+  private readonly _feedCostPerKg = persistedSignal<number>('yieldflow_finance_feed_cost_kg', 28.5);
 
-  // Суточные постоянные накладные расходы (ФОТ, энергетика, амортизация, ветеринария: 110k + 50k + 35k + 25k = 220k)
-  readonly dailyOverheadCostsRub = persistedSignal<number>('yieldflow_finance_overhead_rub', 220_000);
+  // Накладные расходы в сутки (руб)
+  private readonly _dailyOverheadCosts = persistedSignal<number>('yieldflow_finance_daily_overhead', 220000);
 
-  // Сбор оперативных данных напрямую из птичников
-  readonly totalDailyEggs = computed(() => this.poultryService.totalDailyEggs());
-  readonly dailyFeedTons = computed(() => this.poultryService.totalDailyFeedTons());
+  readonly eggPrices = this._eggPrices.asReadonly();
+  readonly feedCostPerKg = this._feedCostPerKg.asReadonly();
+  readonly dailyOverheadCosts = this._dailyOverheadCosts.asReadonly();
 
-  // Расчёт затрат на корма за сутки
-  readonly dailyFeedCostRub = computed(() => {
-    return Math.round(this.dailyFeedTons() * 1000 * this.feedCostPerKg());
-  });
-
-  // Расчёт суточной выручки с учётом категорийности и прейскуранта
+  // Суточная выручка от реализации яйца
   readonly dailyRevenueRub = computed(() => {
-    const totalEggs = this.totalDailyEggs();
-    if (totalEggs === 0) return 0;
+    const prices = this._eggPrices();
+    const stocks = this.eggWarehouse.stocks();
+    const totalDailyEggs = this.poultryService.totalDailyEggs();
 
-    const prices = this.eggPrices();
-    const pC0 = prices['С0'] ?? 95;
-    const pC1 = prices['С1'] ?? 82;
-    const pC2 = prices['С2'] ?? 68;
-    const pWaste = prices['Грязь/Насечка'] ?? 35;
+    if (!stocks || stocks.length === 0 || totalDailyEggs <= 0) {
+      return 0;
+    }
 
-    const revC0 = (totalEggs * 0.30 * pC0) / 10;
-    const revC1 = (totalEggs * 0.55 * pC1) / 10;
-    const revC2 = (totalEggs * 0.12 * pC2) / 10;
-    const revWaste = (totalEggs * 0.03 * pWaste) / 10;
+    const totalStock = stocks.reduce((sum, s) => sum + s.count, 0);
 
-    return Math.round(revC0 + revC1 + revC2 + revWaste);
+    return Math.round(
+      stocks.reduce((sum, s) => {
+        const share = totalStock > 0 ? s.count / totalStock : 0.2;
+        const dailyCategoryEggs = totalDailyEggs * share;
+        const price = prices[s.category] ?? 8.0;
+        return sum + dailyCategoryEggs * price;
+      }, 0)
+    );
   });
 
-  // Производственная себестоимость одного яйца (руб/шт)
-  readonly costPerEggRub = computed(() => {
-    const totalEggs = this.totalDailyEggs();
-    if (totalEggs === 0) return 0;
-    const totalDailyCosts = this.dailyFeedCostRub() + this.dailyOverheadCostsRub();
-    return Math.round((totalDailyCosts / totalEggs) * 100) / 100;
+  // Суточные прямые затраты на кормление
+  readonly dailyFeedCostRub = computed(() => {
+    const totalFeedTons = this.poultryService.totalDailyFeedTons();
+    const costPerKg = this._feedCostPerKg();
+    return Math.round(totalFeedTons * 1000 * costPerKg);
+  });
+
+  // Суточные совокупные расходы (корма + накладные)
+  readonly totalDailyExpensesRub = computed(() => {
+    return this.dailyFeedCostRub() + this._dailyOverheadCosts();
   });
 
   // Чистая суточная прибыль фабрики
   readonly dailyProfitRub = computed(() => {
-    return this.dailyRevenueRub() - (this.dailyFeedCostRub() + this.dailyOverheadCostsRub());
+    return this.dailyRevenueRub() - this.totalDailyExpensesRub();
   });
 
-  // Рентабельность производства (%)
-  readonly profitabilityPercent = computed(() => {
-    const revenue = this.dailyRevenueRub();
-    if (revenue === 0) return 0;
-    return Math.round((this.dailyProfitRub() / revenue) * 1000) / 10;
+  // Себестоимость одного столового яйца
+  readonly costPerEggRub = computed(() => {
+    const totalEggs = this.poultryService.totalDailyEggs();
+    if (totalEggs <= 0) return 0;
+    return Math.round((this.totalDailyExpensesRub() / totalEggs) * 100) / 100;
   });
 
-  // Структура операционных затрат предприятия
+  // Структура затрат для графика и калькуляции
   readonly costBreakdown = computed<CostBreakdownItem[]>(() => {
     const feed = this.dailyFeedCostRub();
-    const overhead = this.dailyOverheadCostsRub();
-
-    const fot = Math.round(overhead * 0.5);
-    const energy = Math.round(overhead * 0.227273);
-    const vet = Math.round(overhead * 0.159091);
-    const other = Math.round(overhead * 0.113636);
-    const total = feed + fot + energy + vet + other;
+    const overhead = this._dailyOverheadCosts();
+    const total = feed + overhead;
 
     if (total === 0) return [];
 
+    const feedShare = Math.round((feed / total) * 1000) / 10;
+    const overheadShare = Math.round((overhead / total) * 1000) / 10;
+
     return [
-      { category: 'Комбикорма и рационы', amountRub: feed, sharePercent: Math.round((feed / total) * 100), color: '#d97706' },
-      { category: 'Фонд оплаты труда (ФОТ)', amountRub: fot, sharePercent: Math.round((fot / total) * 100), color: '#2563eb' },
-      { category: 'Энергоресурсы (Газ, Свет)', amountRub: energy, sharePercent: Math.round((energy / total) * 100), color: '#dc2626' },
-      { category: 'Ветеринария и биозащита', amountRub: vet, sharePercent: Math.round((vet / total) * 100), color: '#16a34a' },
-      { category: 'Амортизация и логистика', amountRub: other, sharePercent: Math.round((other / total) * 100), color: '#64748b' }
+      {
+        category: 'Корма и рационы (ПК)',
+        amountRub: feed,
+        sharePercent: feedShare,
+        color: '#f59e0b'
+      },
+      {
+        category: 'Накладные расходы (ЗП, энергетика, амортизация)',
+        amountRub: overhead,
+        sharePercent: overheadShare,
+        color: '#3b82f6'
+      }
     ];
   });
 
-  updateEggPrice(category: string, pricePerTenRub: number): void {
-    const price = Number(pricePerTenRub);
-    if (isNaN(price) || price <= 0) return;
-
-    this.eggPrices.update(prices => ({
-      ...prices,
-      [category]: price
+  updateEggPrice(category: string, price: number): void {
+    const validPrice = isNaN(price) || price < 0 ? 0 : price;
+    this._eggPrices.update(current => ({
+      ...current,
+      [category]: validPrice
     }));
   }
 
-  updateFeedCostPerKg(costRub: number): void {
-    const cost = Number(costRub);
-    if (isNaN(cost) || cost <= 0) return;
-    this.feedCostPerKg.set(cost);
+  updateFeedCostPerKg(cost: number): void {
+    const validCost = isNaN(cost) || cost < 0 ? 0 : cost;
+    this._feedCostPerKg.set(validCost);
   }
 
-  updateOverheadCosts(overheadRub: number): void {
-    const overhead = Number(overheadRub);
-    if (isNaN(overhead) || overhead < 0) return;
-    this.dailyOverheadCostsRub.set(overhead);
+  updateOverheadCosts(costs: number): void {
+    const validCosts = isNaN(costs) || costs < 0 ? 0 : costs;
+    this._dailyOverheadCosts.set(validCosts);
   }
 }
