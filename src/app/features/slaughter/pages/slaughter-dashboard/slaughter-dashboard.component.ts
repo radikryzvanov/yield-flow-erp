@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SlaughterService } from '../../services/slaughter.service';
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { SlaughterBatchLog } from '../../interfaces/slaughter.interface';
 
 @Component({
@@ -17,6 +18,7 @@ export class SlaughterDashboardComponent {
   protected readonly slaughterService = inject(SlaughterService);
   protected readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly lines = this.slaughterService.lines;
   readonly products = this.slaughterService.products;
@@ -28,6 +30,8 @@ export class SlaughterDashboardComponent {
 
   // Управление формой приёмки новой партии
   readonly isDeliveryModalOpen = signal<boolean>(false);
+  readonly isDelivering = signal<boolean>(false);
+  readonly isProcessingBatch = signal<boolean>(false);
 
   // Поля формы
   selectedHouseId: string = '';
@@ -58,42 +62,58 @@ export class SlaughterDashboardComponent {
   }
 
   submitDelivery(): void {
+    if (this.isDelivering()) return;
+
     const count = Number(this.birdsCountInput);
     const weight = Number(this.averageWeightInput);
 
-    if (!count || count <= 0 || !weight || weight <= 0) {
-      alert('Укажите корректное поголовье и средний вес птицы.');
+    if (isNaN(count) || count <= 0 || isNaN(weight) || weight <= 0) {
+      this.toastService.show('Поголовье и средний вес птицы должны быть положительными числами.', 'error');
       return;
     }
 
-    const houseName = this.customSourceHouse.trim() || 'Транспортный цех';
+    this.isDelivering.set(true);
+    try {
+      const houseName = this.customSourceHouse.trim() || 'Транспортный цех';
 
-    const success = this.slaughterService.addIncomingDelivery({
-      sourceHouse: houseName,
-      birdsCount: count,
-      averageWeightKg: weight
-    });
+      const success = this.slaughterService.addIncomingDelivery({
+        sourceHouse: houseName,
+        birdsCount: count,
+        averageWeightKg: weight
+      });
 
-    if (success) {
-      // Списание птицы из птичника при отгрузке на убой
-      if (this.selectedHouseId) {
-        this.poultryService.submitDailyReport({
-          houseId: this.selectedHouseId,
-          mortalityCount: count // уменьшает активное поголовье птичника
-        });
+      if (success) {
+        if (this.selectedHouseId) {
+          this.poultryService.submitDailyReport({
+            houseId: this.selectedHouseId,
+            mortalityCount: count
+          });
+        }
+        this.toastService.show(`Партия птицы (${count} гол.) принята в зону навески.`);
+        this.closeDeliveryModal();
+      } else {
+        this.toastService.show('Не удалось зарегистрировать партию.', 'error');
       }
-      this.closeDeliveryModal();
-    } else {
-      alert('Не удалось зарегистрировать партию.');
+    } finally {
+      this.isDelivering.set(false);
     }
   }
 
   startBatch(deliveryId: string): void {
-    this.slaughterService.startBatchProcessing(deliveryId);
+    if (this.isProcessingBatch()) return;
+
+    this.isProcessingBatch.set(true);
+    try {
+      this.slaughterService.startBatchProcessing(deliveryId);
+      this.toastService.show('Навеска и убой запущены: линия в работе, склад пополнен.');
+    } finally {
+      this.isProcessingBatch.set(false);
+    }
   }
 
   setLineState(lineId: string, state: 'running' | 'paused' | 'sanitization'): void {
     this.slaughterService.toggleLineStatus(lineId, state);
+    this.toastService.show(`Режим линии изменён на: ${state === 'running' ? 'В работе' : state === 'paused' ? 'Останов' : 'Мойка'}.`);
   }
 
   exportToExcel(): void {

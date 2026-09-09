@@ -81,16 +81,16 @@
         type="button"
         class="btn-primary"
         (click)="submitReplenish()"
-        [disabled]="!replenishTons || replenishTons <= 0">
-        Закачать в силос
+        [disabled]="isReplenishing() || !replenishTons || replenishTons! <= 0">
+        {{ isReplenishing() ? 'Закачка...' : 'Закачать в силос' }}
       </button>
     </div>
 
-    <!-- Списание на птичник (C3) -->
+    <!-- Списание на птичник -->
     <div class="form-card">
       <h3 class="card-title">Списание корма в птичник</h3>
       <div class="form-group">
-        <label>Птичник-получатель (C3)</label>
+        <label>Птичник-получатель</label>
         <select [(ngModel)]="selectedHouseId" (change)="onHouseChange()" class="input-field">
           <option *ngFor="let h of poultryHouses()" [value]="h.id">
             {{ h.name }} ({{ h.crossType }})
@@ -133,8 +133,8 @@
         type="button"
         class="btn-danger"
         (click)="submitDeduct()"
-        [disabled]="!deductTons || deductTons <= 0">
-        Списать по рациону
+        [disabled]="isDeducting() || !deductTons || deductTons! <= 0">
+        {{ isDeducting() ? 'Списание...' : 'Списать по рациону' }}
       </button>
     </div>
   </div>

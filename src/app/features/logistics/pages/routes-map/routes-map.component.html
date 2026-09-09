@@ -75,7 +75,7 @@
             <th>Объем отгрузки</th>
             <th>Автомобиль / Водитель</th>
             <th>Реф (°C)</th>
-            <th>Статус рейса (B5)</th>
+            <th>Статус рейса</th>
             <th>Меркурий ВСД</th>
           </tr>
         </thead>
@@ -157,7 +157,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно создания новой отгрузки (B5) -->
+  <!-- Модальное окно создания новой отгрузки -->
   <div class="modal-backdrop" *ngIf="isCreateModalOpen()">
     <div class="modal-dialog">
       <div class="modal-header">
@@ -215,9 +215,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeCreateModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="submitCreateShipment()">Сформировать накладную и ВСД</button>
+        <button type="button" class="btn-save" [disabled]="isCreatingShipment()" (click)="submitCreateShipment()">
+          {{ isCreatingShipment() ? 'Формирование...' : 'Сформировать накладную и ВСД' }}
+        </button>
       </div>
     </div>
   </div>
-
 </div>

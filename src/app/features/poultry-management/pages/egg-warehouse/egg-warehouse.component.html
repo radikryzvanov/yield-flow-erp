@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <!-- Панель быстрой приёмки валового яйца (C3) -->
+  <!-- Панель быстрой приёмки валового яйца -->
   <div class="section-card quick-intake-card">
     <h2 class="section-title">Приёмка валового сбора с транспортера</h2>
     <div class="quick-intake-form">
@@ -48,8 +48,8 @@
         type="button"
         class="btn-primary"
         (click)="submitNewBatch()"
-        [disabled]="!newBatchCount || newBatchCount <= 0">
-        Принять с линии
+        [disabled]="isSaving() || !newBatchCount || newBatchCount <= 0">
+        {{ isSaving() ? 'Приёмка...' : 'Принять с линии' }}
       </button>
     </div>
   </div>

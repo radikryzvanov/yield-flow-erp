@@ -159,12 +159,12 @@
         type="button"
         class="btn-primary"
         (click)="submitHealthCheck()"
-        [disabled]="newLogMortalityCount === null || newLogMortalityCount < 0">
-        Записать в ветжурнал
+        [disabled]="isSavingLog() || newLogMortalityCount === null || newLogMortalityCount < 0">
+        {{ isSavingLog() ? 'Запись...' : 'Записать в ветжурнал' }}
       </button>
     </div>
 
-    <!-- Состояние аптечного склада и форма пополнения (B3) -->
+    <!-- Состояние аптечного склада и форма пополнения -->
     <div class="section-card">
       <h3 class="card-title">Остатки биопрепаратов и вакцин</h3>
       <div class="stock-list">
@@ -180,7 +180,7 @@
         </div>
       </div>
 
-      <!-- Форма B3: приход препаратов -->
+      <!-- Форма прихода препаратов -->
       <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
         <h4 style="font-size: 14px; margin-bottom: 12px; color: #1e293b;">📦 Пополнение запаса ветпрепаратов</h4>
         <div class="form-group" style="margin-bottom: 10px;">
@@ -197,8 +197,13 @@
             <label style="font-size: 12px; margin-bottom: 4px; display: block;">Количество доз / литров:</label>
             <input type="number" [(ngModel)]="replenishAmount" min="1" class="input-field" placeholder="Количество" />
           </div>
-          <button type="button" class="btn-action" style="height: 38px;" (click)="submitReplenish()">
-            Пополнить склад
+          <button
+            type="button"
+            class="btn-action"
+            style="height: 38px;"
+            [disabled]="isReplenishingDrug() || !replenishAmount || replenishAmount! <= 0"
+            (click)="submitReplenish()">
+            {{ isReplenishingDrug() ? 'Пополнение...' : 'Пополнить склад' }}
           </button>
         </div>
       </div>

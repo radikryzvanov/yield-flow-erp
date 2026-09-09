@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LogisticsService } from '../../services/logistics.service';
 import { ShipmentOrder } from '../../interfaces/logistics.interface';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-routes-map',
@@ -15,6 +16,7 @@ import { ExportService } from '../../../../shared/services/export.service';
 export class RoutesMapComponent {
   protected readonly logisticsService = inject(LogisticsService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly shipments = this.logisticsService.shipments;
   readonly fleet = this.logisticsService.fleet;
@@ -25,6 +27,7 @@ export class RoutesMapComponent {
 
   // Модальное окно создания отгрузки
   readonly isCreateModalOpen = signal<boolean>(false);
+  readonly isCreatingShipment = signal<boolean>(false);
 
   newClientName: string = 'X5 Retail Group (РЦ Подольск)';
   newDestinationCity: string = 'Москва и МО';
@@ -50,25 +53,39 @@ export class RoutesMapComponent {
   }
 
   submitCreateShipment(): void {
-    if (!this.newClientName.trim() || !this.newQuantityUnits || this.newQuantityUnits <= 0) {
-      alert('Заполните наименование клиента и объем отгрузки.');
+    if (this.isCreatingShipment()) return;
+
+    const qty = Number(this.newQuantityUnits);
+    if (!this.newClientName.trim()) {
+      this.toastService.show('Укажите наименование клиента / РЦ.', 'error');
       return;
     }
 
-    this.logisticsService.createShipment({
-      clientName: this.newClientName.trim(),
-      destinationCity: this.newDestinationCity.trim(),
-      productType: this.newProductType.trim(),
-      quantityUnits: Number(this.newQuantityUnits),
-      unit: this.newUnit,
-      carrierVehicle: this.newCarrierVehicle,
-      driverName: this.newDriverName.trim(),
-      tempInsideCelsius: Number(this.newTempInside) || 4.0,
-      departureTime: this.newDepartureTime.trim(),
-      shippingStatus: this.newStatus
-    });
+    if (isNaN(qty) || qty <= 0) {
+      this.toastService.show('Объём отгрузки должен быть числом больше нуля.', 'error');
+      return;
+    }
 
-    this.closeCreateModal();
+    this.isCreatingShipment.set(true);
+    try {
+      this.logisticsService.createShipment({
+        clientName: this.newClientName.trim(),
+        destinationCity: this.newDestinationCity.trim(),
+        productType: this.newProductType.trim(),
+        quantityUnits: qty,
+        unit: this.newUnit,
+        carrierVehicle: this.newCarrierVehicle,
+        driverName: this.newDriverName.trim(),
+        tempInsideCelsius: Number(this.newTempInside) || 4.0,
+        departureTime: this.newDepartureTime.trim(),
+        shippingStatus: this.newStatus
+      });
+
+      this.toastService.show(`Накладная и ВСД для «${this.newClientName.trim()}» успешно сформированы.`);
+      this.closeCreateModal();
+    } finally {
+      this.isCreatingShipment.set(false);
+    }
   }
 
   onStatusChange(shipmentId: string, event: Event): void {
@@ -81,6 +98,7 @@ export class RoutesMapComponent {
     }
 
     this.logisticsService.updateShipmentStatus(shipmentId, newStatus, onTime);
+    this.toastService.show(`Статус рейса ${shipmentId} обновлён на: ${this.getShipmentStatusBadge(newStatus)}.`);
   }
 
   getShipmentStatusBadge(status: string): string {

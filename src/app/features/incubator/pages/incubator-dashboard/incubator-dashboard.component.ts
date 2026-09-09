@@ -5,6 +5,7 @@ import { IncubatorService } from '../../services/incubator.service';
 import { IncubatorCabinet, IncubationLog } from '../../interfaces/incubator.interface';
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-incubator-dashboard',
@@ -17,6 +18,7 @@ export class IncubatorDashboardComponent {
   protected readonly incubatorService = inject(IncubatorService);
   protected readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly cabinets = this.incubatorService.cabinets;
   readonly totalEggs = this.incubatorService.totalEggsInIncubation;
@@ -33,6 +35,10 @@ export class IncubatorDashboardComponent {
   readonly isSetBatchModalOpen = signal<boolean>(false);
   readonly isCompleteHatchModalOpen = signal<boolean>(false);
   readonly activeCabinet = signal<IncubatorCabinet | null>(null);
+
+  // Флаги сохранения для предотвращения задвоения
+  readonly isSettingBatch = signal<boolean>(false);
+  readonly isCompletingHatch = signal<boolean>(false);
 
   // Поля формы закладки партии
   batchNumberInput: string = '';
@@ -78,26 +84,47 @@ export class IncubatorDashboardComponent {
   }
 
   submitSetBatch(): void {
+    if (this.isSettingBatch()) return;
+
     const cab = this.activeCabinet();
     if (!cab) return;
 
-    if (!this.batchNumberInput.trim() || !this.eggsCountInput || this.eggsCountInput <= 0) {
-      alert('Заполните корректный номер партии и количество яиц.');
+    const count = Number(this.eggsCountInput);
+    const expRate = Number(this.expectedHatchRateInput);
+
+    if (!this.batchNumberInput.trim()) {
+      this.toastService.show('Укажите номер партии инкубационного яйца.', 'error');
       return;
     }
 
-    const success = this.incubatorService.setBatch({
-      cabinetId: cab.id,
-      batchNumber: this.batchNumberInput.trim(),
-      crossType: this.crossTypeInput,
-      eggsCount: Number(this.eggsCountInput),
-      expectedHatchRatePercent: Number(this.expectedHatchRateInput)
-    });
+    if (isNaN(count) || count <= 0) {
+      this.toastService.show('Количество закладываемого яйца должно быть больше 0.', 'error');
+      return;
+    }
 
-    if (success) {
-      this.closeSetBatchModal();
-    } else {
-      alert('Ошибка при закладке партии в шкаф.');
+    if (isNaN(expRate) || expRate < 10 || expRate > 100) {
+      this.toastService.show('Плановый вывод должен быть в диапазоне от 10% до 100%.', 'error');
+      return;
+    }
+
+    this.isSettingBatch.set(true);
+    try {
+      const success = this.incubatorService.setBatch({
+        cabinetId: cab.id,
+        batchNumber: this.batchNumberInput.trim(),
+        crossType: this.crossTypeInput,
+        eggsCount: count,
+        expectedHatchRatePercent: expRate
+      });
+
+      if (success) {
+        this.toastService.show(`Партия «${this.batchNumberInput.trim()}» заложена в «${cab.name}».`);
+        this.closeSetBatchModal();
+      } else {
+        this.toastService.show('Ошибка при закладке партии в шкаф.', 'error');
+      }
+    } finally {
+      this.isSettingBatch.set(false);
     }
   }
 
@@ -115,37 +142,44 @@ export class IncubatorDashboardComponent {
   }
 
   submitCompleteHatch(): void {
+    if (this.isCompletingHatch()) return;
+
     const cab = this.activeCabinet();
     if (!cab) return;
 
     const hatched = Number(this.chicksHatchedInput);
     if (isNaN(hatched) || hatched <= 0) {
-      alert('Укажите корректное количество выведенных цыплят.');
+      this.toastService.show('Укажите корректное количество выведенных цыплят больше нуля.', 'error');
       return;
     }
 
     if (hatched > cab.eggsCount) {
-      alert(`Ошибка: количество цыплят (${hatched}) не может превышать закладку яиц (${cab.eggsCount}).`);
+      this.toastService.show(`Выведено цыплят (${hatched}) не может быть больше, чем заложено яиц (${cab.eggsCount})!`, 'error');
       return;
     }
 
-    const house = this.poultryHouses().find(h => h.id === this.selectedHouseId);
-    const houseName = house ? house.name : 'Ремонтный блок';
+    this.isCompletingHatch.set(true);
+    try {
+      const house = this.poultryHouses().find(h => h.id === this.selectedHouseId);
+      const houseName = house ? house.name : 'Ремонтный блок';
 
-    const success = this.incubatorService.completeHatch({
-      cabinetId: cab.id,
-      chicksHatched: hatched,
-      destinationHouse: houseName
-    });
+      const success = this.incubatorService.completeHatch({
+        cabinetId: cab.id,
+        chicksHatched: hatched,
+        destinationHouse: houseName
+      });
 
-    if (success) {
-      // С1: автоматическое пополнение поголовья целевого птичника
-      if (this.selectedHouseId) {
-        this.poultryService.receiveNewFlock(this.selectedHouseId, hatched);
+      if (success) {
+        if (this.selectedHouseId) {
+          this.poultryService.receiveNewFlock(this.selectedHouseId, hatched);
+        }
+        this.toastService.show(`Вывод зафиксирован: ${hatched} гол. переведены в «${houseName}».`);
+        this.closeCompleteHatchModal();
+      } else {
+        this.toastService.show('Не удалось зафиксировать вывод цыплят.', 'error');
       }
-      this.closeCompleteHatchModal();
-    } else {
-      alert('Не удалось зафиксировать вывод цыплят.');
+    } finally {
+      this.isCompletingHatch.set(false);
     }
   }
 
@@ -159,7 +193,6 @@ export class IncubatorDashboardComponent {
     }
   }
 
-  // Централизованный экспорт журнала вывода в Excel
   exportToExcel(): void {
     const data = this.filteredLogs();
     if (data.length === 0) return;

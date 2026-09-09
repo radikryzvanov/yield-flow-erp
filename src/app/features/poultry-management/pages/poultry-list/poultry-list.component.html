@@ -1,170 +1,170 @@
 <div class="poultry-container">
   <div class="page-header">
     <div>
-      <h1>Оперативный зоотехнический контроль (Птичники)</h1>
-      <p class="subtitle">Мониторинг поголовья, яйценоскости по кроссам, микроклимата и расхода корма</p>
+      <h1 class="page-title">Птичники и технологические зоны</h1>
+      <p class="subtitle">Оперативный мониторинг микроклимата, яйценоскости, расхода рационов и сохранности поголовья</p>
     </div>
   </div>
 
-  <!-- KPI панель по всей фабрике -->
+  <!-- KPI панель -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Общее поголовье</div>
-      <div class="kpi-value text-primary">{{ totalBirds() | number }} <span class="unit">голов</span></div>
-      <div class="kpi-note">В 4 корпусах содержания</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Общее поголовье</span>
+        <span class="kpi-icon">🐔</span>
+      </div>
+      <div class="kpi-value text-primary">{{ totalBirds() | number }} <span class="unit">гол.</span></div>
+      <div class="kpi-note">В {{ houses().length }} технологических корпусах</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Суточный сбор яйца</div>
-      <div class="kpi-value text-success">{{ totalDailyEggs() | number }} <span class="unit">шт / сут</span></div>
-      <div class="kpi-note">Поступает на яйцесклад</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Валовый сбор за смену</span>
+        <span class="kpi-icon">🥚</span>
+      </div>
+      <div class="kpi-value text-success">{{ totalDailyEggs() | number }} <span class="unit">шт</span></div>
+      <div class="kpi-note">Средняя яйценоскость: {{ averageLayingRate() }}%</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Средняя яйценоскость</div>
-      <div class="kpi-value text-primary">{{ averageLayingRate() }}%</div>
-      <div class="kpi-note">По промышленному стаду</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Суточный расход корма</div>
+      <div class="kpi-header">
+        <span class="kpi-title">Суточный расход кормов</span>
+        <span class="kpi-icon">🌾</span>
+      </div>
       <div class="kpi-value text-warning">{{ totalDailyFeedTons() }} <span class="unit">тонн</span></div>
-      <div class="kpi-note">Заказ со склада кормоцеха</div>
+      <div class="kpi-note">Рационы ПК-1, ПК-2, ПК-4</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">Статус комплексов</span>
+        <span class="kpi-icon">🛡️</span>
+      </div>
+      <div class="kpi-value text-success">100% Норма</div>
+      <div class="kpi-note">Карантинных зон нет</div>
     </div>
   </div>
 
-  <!-- Единая панель управления и фильтрации -->
-  <div class="table-toolbar-header">
-    <div class="toolbar-title-group">
-      <h3 class="table-title">Производственные корпуса</h3>
-      <span class="houses-counter">Показано: {{ filteredHouses().length }} из {{ houses().length }}</span>
-    </div>
+  <!-- Карточка таблицы с тулбаром -->
+  <div class="card">
+    <div class="table-toolbar-header">
+      <h3 class="table-title">📋 Технологические карты корпусов</h3>
 
-    <div class="table-toolbar-actions">
-      <input
-        type="text"
-        placeholder="Поиск по корпусу / кроссу..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)" />
+      <div class="table-toolbar-actions">
+        <input
+          type="text"
+          placeholder="Поиск по корпусу или кроссу..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)" />
 
-      <select
-        [ngModel]="selectedType()"
-        (ngModelChange)="selectedType.set($event)">
-        <option value="ALL">Все типы стада</option>
-        <option value="layer">Промышленная несушка</option>
-        <option value="broiler">Бройлеры откорма</option>
-        <option value="rearing">Ремонтный молодняк</option>
-      </select>
+        <select
+          [ngModel]="selectedBirdType()"
+          (ngModelChange)="selectedBirdType.set($event)">
+          <option value="ALL">Все типы стада</option>
+          <option value="layer">Промышленная несушка</option>
+          <option value="broiler">Бройлеры откорма</option>
+          <option value="rearing">Ремонтный молодняк</option>
+        </select>
 
-      <button type="button" class="btn-export-excel" (click)="exportToExcel()">
-        <span>📥</span> Экспорт в Excel
-      </button>
-    </div>
-  </div>
-
-  <!-- Список карточек птичников -->
-  <div class="houses-grid">
-    <div *ngFor="let house of filteredHouses()" class="house-card" [class.border-warning]="!isTemperatureNormal(house.temperature, house.targetTemperature) || (house.birdType === 'layer' && house.actualLayingRatePercent < house.targetLayingRatePercent - 2)">
-      <div class="house-header">
-        <div>
-          <h3 class="house-title">{{ house.name }}</h3>
-          <span class="cross-badge">Кросс: {{ house.crossType }}</span>
-        </div>
-        <span class="status-pill" [class.status-active]="house.status === 'active'">
-          Неделя {{ getAgeWeeks(house.ageDays) }} ({{ house.ageDays }} дн)
-        </span>
-      </div>
-
-      <!-- Поголовье -->
-      <div class="metric-group">
-        <div class="metric-row">
-          <span class="label">Текущее поголовье:</span>
-          <span class="val">{{ house.birdCount | number }} гол.</span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Сохранность стада:</span>
-          <span class="val text-success">{{ (house.birdCount / house.initialBirdCount * 100) | number:'1.1-1' }}%</span>
-        </div>
-      </div>
-
-      <!-- Продуктивность (для несушек) -->
-      <div class="metric-group" *ngIf="house.birdType === 'layer'">
-        <div class="metric-row">
-          <span class="label">Яйценоскость (Факт / План):</span>
-          <span class="val" [class.text-danger]="house.actualLayingRatePercent < house.targetLayingRatePercent - 2" [class.text-success]="house.actualLayingRatePercent >= house.targetLayingRatePercent - 2">
-            {{ house.actualLayingRatePercent }}% <span class="norm">/ {{ house.targetLayingRatePercent }}%</span>
-          </span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Суточный сбор яйца:</span>
-          <span class="val">{{ house.dailyEggCount | number }} шт.</span>
-        </div>
-      </div>
-
-      <!-- Кормление и микроклимат -->
-      <div class="metric-group">
-        <div class="metric-row">
-          <span class="label">Расход корма (Факт / Норма):</span>
-          <span class="val" [class.text-danger]="house.feedPerBirdGrams > house.targetFeedGrams + 3">
-            {{ house.feedPerBirdGrams }} г <span class="norm">/ {{ house.targetFeedGrams }} г/гол</span>
-          </span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Температура в зале:</span>
-          <span class="val" [class.text-danger]="!isTemperatureNormal(house.temperature, house.targetTemperature)" [class.text-success]="isTemperatureNormal(house.temperature, house.targetTemperature)">
-            {{ house.temperature }}°C <span class="norm">/ норма {{ house.targetTemperature }}°C</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Кнопка внесения отчета -->
-      <div class="house-actions">
-        <button type="button" class="btn-report" (click)="openReportModal(house)">
-          Внести суточный отчёт
+        <button class="btn-export-excel" (click)="exportToExcel()" type="button">
+          <span>📥</span> Экспорт в Excel
         </button>
       </div>
     </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Корпус</th>
+            <th>Направление</th>
+            <th>Кросс / Возраст</th>
+            <th>Поголовье</th>
+            <th>Сбор яйца (сут)</th>
+            <th>Продуктивность</th>
+            <th>Кормление</th>
+            <th>t° / Влажность</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of filteredHouses()">
+            <td>
+              <div class="house-cell">
+                <span class="house-name font-bold">{{ h.name }}</span>
+                <span class="house-id text-muted">{{ h.id }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="type-pill" [ngClass]="'type-' + h.birdType">
+                {{ h.birdType === 'layer' ? 'Несушка' : h.birdType === 'broiler' ? 'Бройлер' : 'Молодняк' }}
+              </span>
+            </td>
+            <td>
+              <div>{{ h.crossType }}</div>
+              <small class="text-muted">{{ h.ageDays }} дней</small>
+            </td>
+            <td class="font-bold">{{ h.birdCount | number }} гол.</td>
+            <td>
+              <span class="font-bold">{{ h.dailyEggCount > 0 ? (h.dailyEggCount | number) : '—' }}</span>
+            </td>
+            <td>
+              <span *ngIf="h.birdType === 'layer'" class="rate-badge" [class.rate-high]="h.actualLayingRatePercent >= h.targetLayingRatePercent">
+                {{ h.actualLayingRatePercent }}%
+              </span>
+              <span *ngIf="h.birdType !== 'layer'" class="text-muted">—</span>
+            </td>
+            <td>{{ h.feedPerBirdGrams }} г/гол</td>
+            <td>
+              <span>{{ h.temperature }}°C / {{ h.humidityPercent }}%</span>
+            </td>
+            <td>
+              <button type="button" class="btn-action" (click)="openReportModal(h)">
+                Внести отчёт
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredHouses().length === 0">
+            <td colspan="9" class="empty-state">Корпусов по заданным фильтрам не найдено</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <div *ngIf="filteredHouses().length === 0" class="empty-state-card">
-    Корпусов по заданным критериям фильтрации не найдено
-  </div>
-
-  <!-- Модальное окно внесения отчета -->
+  <!-- Модальное окно суточного отчёта -->
   <div class="modal-backdrop" *ngIf="isModalOpen()">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h2>{{ selectedHouse()?.name }}</h2>
-        <button type="button" class="btn-close" (click)="closeModal()">✕</button>
+        <h2>Суточный отчёт: {{ selectedHouse()?.name }}</h2>
+        <button type="button" class="btn-close" (click)="closeReportModal()">✕</button>
       </div>
-
       <div class="modal-body">
-        <p class="modal-subtitle">Ввод фактических суточных данных оператора/зоотехника</p>
-
-        <div class="form-group">
-          <label for="mortality">Падёж за сутки (голов)</label>
-          <input id="mortality" type="number" [(ngModel)]="mortalityInput" min="0" class="form-control" />
-        </div>
-
         <div class="form-group" *ngIf="selectedHouse()?.birdType === 'layer'">
-          <label for="eggs">Сбор яйца за сутки (шт.)</label>
-          <input id="eggs" type="number" [(ngModel)]="eggsInput" min="0" class="form-control" />
+          <label for="eggInput">Валовый сбор яйца (шт):</label>
+          <input id="eggInput" type="number" [(ngModel)]="eggsInput" min="0" class="form-control" />
         </div>
 
         <div class="form-group">
-          <label for="feed">Расход корма на 1 голову (грамм/сут)</label>
-          <input id="feed" type="number" [(ngModel)]="feedInput" min="0" class="form-control" />
+          <label for="mortalityInput">Технологический отход / Падёж (гол):</label>
+          <input id="mortalityInput" type="number" [(ngModel)]="mortalityInput" min="0" class="form-control" />
         </div>
 
         <div class="form-group">
-          <label for="temp">Температура в зале (°C)</label>
-          <input id="temp" type="number" step="0.1" [(ngModel)]="tempInput" class="form-control" />
+          <label for="feedInput">Расход корма на 1 голову (грамм):</label>
+          <input id="feedInput" type="number" [(ngModel)]="feedInput" min="0" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="tempInput">Температура микроклимата (°C):</label>
+          <input id="tempInput" type="number" step="0.1" [(ngModel)]="tempInput" class="form-control" />
         </div>
       </div>
-
       <div class="modal-footer">
-        <button type="button" class="btn-cancel" (click)="closeModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="saveReport()">Сохранить показатели</button>
+        <button type="button" class="btn-cancel" (click)="closeReportModal()">Отмена</button>
+        <button type="button" class="btn-save" [disabled]="isSaving()" (click)="saveReport()">
+          {{ isSaving() ? 'Сохранение...' : 'Сохранить показатели' }}
+        </button>
       </div>
     </div>
   </div>

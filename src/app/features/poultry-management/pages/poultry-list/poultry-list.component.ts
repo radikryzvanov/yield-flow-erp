@@ -2,9 +2,9 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
-import { EggWarehouseService } from '../../services/egg-warehouse.service';
 import { FeedWarehouseService } from '../../../feed-warehouse/services/feed-warehouse.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-poultry-list',
@@ -15,9 +15,9 @@ import { ExportService } from '../../../../shared/services/export.service';
 })
 export class PoultryListComponent {
   protected readonly poultryService = inject(PoultryManagementService);
-  protected readonly eggWarehouseService = inject(EggWarehouseService);
-  protected readonly feedWarehouseService = inject(FeedWarehouseService);
+  private readonly feedWarehouseService = inject(FeedWarehouseService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly houses = this.poultryService.houses;
   readonly totalBirds = this.poultryService.totalBirds;
@@ -27,19 +27,30 @@ export class PoultryListComponent {
 
   // Сигналы фильтрации
   readonly searchQuery = signal<string>('');
-  readonly selectedType = signal<string>('ALL');
+  readonly selectedBirdType = signal<string>('ALL');
 
-  // Отфильтрованный список корпусов
+  // Модальное окно суточного отчёта
+  readonly isModalOpen = signal<boolean>(false);
+  readonly selectedHouse = signal<PoultryHouse | null>(null);
+  readonly isSaving = signal<boolean>(false);
+
+  // Поля формы
+  eggsInput: number = 0;
+  mortalityInput: number = 0;
+  feedInput: number = 0;
+  tempInput: number = 21.0;
+
   readonly filteredHouses = computed(() => {
     const list = this.houses();
     const query = this.searchQuery().trim().toLowerCase();
-    const type = this.selectedType();
+    const type = this.selectedBirdType();
 
     return list.filter((house: PoultryHouse) => {
       const matchesSearch =
         query === '' ||
         house.name.toLowerCase().includes(query) ||
-        house.crossType.toLowerCase().includes(query);
+        house.crossType.toLowerCase().includes(query) ||
+        house.id.toLowerCase().includes(query);
 
       const matchesType = type === 'ALL' || house.birdType === type;
 
@@ -47,131 +58,118 @@ export class PoultryListComponent {
     });
   });
 
-  // Состояние модального окна отчета
-  readonly isModalOpen = signal<boolean>(false);
-  readonly selectedHouse = signal<PoultryHouse | null>(null);
-
-  // Поля формы
-  mortalityInput: number = 0;
-  eggsInput: number = 0;
-  feedInput: number = 115;
-  tempInput: number = 20.0;
-
-  openReportModal(house: PoultryHouse) {
+  openReportModal(house: PoultryHouse): void {
     this.selectedHouse.set(house);
-    this.mortalityInput = 0;
     this.eggsInput = house.dailyEggCount;
+    this.mortalityInput = 0;
     this.feedInput = house.feedPerBirdGrams;
     this.tempInput = house.temperature;
     this.isModalOpen.set(true);
   }
 
-  closeModal() {
+  closeReportModal(): void {
     this.isModalOpen.set(false);
     this.selectedHouse.set(null);
   }
 
-  saveReport() {
-    const house = this.selectedHouse();
-    if (!house) return;
+  saveReport(): void {
+    if (this.isSaving()) return;
+    this.isSaving.set(true);
 
-    const eggCount = Number(this.eggsInput);
-    const feedGrams = Number(this.feedInput);
-    const mortality = Number(this.mortalityInput);
-    const currentBirds = Math.max(0, house.birdCount - mortality);
+    try {
+      const house = this.selectedHouse();
+      if (!house) return;
 
-    // 1. Обновляем показатели в птичнике
-    this.poultryService.submitDailyReport({
-      houseId: house.id,
-      mortalityCount: mortality,
-      dailyEggCount: eggCount,
-      feedPerBirdGrams: feedGrams,
-      temperature: Number(this.tempInput)
-    });
+      const eggCount = Number(this.eggsInput);
+      const feedGrams = Number(this.feedInput);
+      const mortality = Number(this.mortalityInput);
+      const temp = Number(this.tempInput);
 
-    // 2. Отправляем партию на склад яйца
-    if (house.birdType === 'layer' && eggCount > 0) {
-      this.eggWarehouseService.registerIncomingEggs(house.name, eggCount);
-    }
-
-    // 3. Списываем съеденный комбикорм со склада кормов
-    const totalFeedTons = Math.round(((currentBirds * feedGrams) / 1_000_000) * 100) / 100;
-    if (totalFeedTons > 0) {
-      const feedOk = this.feedWarehouseService.deductFeedForHouse(
-        house.name,
-        house.birdType,
-        house.ageDays,
-        totalFeedTons
-      );
-      if (!feedOk) {
-        alert(
-          `Внимание: на складе кормов недостаточно комбикорма нужной рецептуры для «${house.name}». Отчёт сохранён, но списание корма выполнено не полностью или не выполнено вовсе — проверьте склад кормов.`
-        );
+      // Проблема 3: Проверка на NaN и отрицательные числа
+      if (
+        isNaN(mortality) || mortality < 0 ||
+        isNaN(eggCount) || eggCount < 0 ||
+        isNaN(feedGrams) || feedGrams < 0 ||
+        isNaN(temp)
+      ) {
+        this.toastService.show('Показатели не могут быть отрицательными. Проверьте введённые данные.', 'error');
+        return;
       }
+
+      if (mortality > house.birdCount) {
+        this.toastService.show(`Падёж (${mortality} гол.) не может превышать текущее поголовье (${house.birdCount} гол.).`, 'error');
+        return;
+      }
+
+      const totalFeedTons = Math.round(((house.birdCount * feedGrams) / 1_000_000) * 100) / 100;
+
+      // Списание корма со склада
+      if (totalFeedTons > 0) {
+        const feedOk = this.feedWarehouseService.deductFeedForHouse(
+          house.name,
+          house.birdType,
+          house.ageDays,
+          totalFeedTons
+        );
+        if (!feedOk) {
+          this.toastService.show(`Внимание: на складе кормов недостаточно комбикорма для «${house.name}».`, 'error');
+        }
+      }
+
+      this.poultryService.submitDailyReport({
+        houseId: house.id,
+        dailyEggCount: eggCount,
+        mortalityCount: mortality,
+        feedPerBirdGrams: feedGrams,
+        temperature: temp
+      });
+
+      this.toastService.show(`Отчёт по «${house.name}» успешно сохранён.`);
+      this.closeReportModal();
+    } finally {
+      this.isSaving.set(false);
     }
-
-    this.closeModal();
   }
 
-  getAgeWeeks(days: number): number {
-    return Math.floor(days / 7);
-  }
-
-  isTemperatureNormal(actual: number, target: number): boolean {
-    return Math.abs(actual - target) <= 1.0;
-  }
-
-  getBirdTypeLabel(type: string): string {
-    switch (type) {
-      case 'layer': return 'Промышленная несушка';
-      case 'broiler': return 'Бройлеры откорма';
-      case 'rearing': return 'Ремонтный молодняк';
-      default: return type;
-    }
-  }
-
-  // Централизованный экспорт технологической карты птичников
   exportToExcel(): void {
     const data = this.filteredHouses();
     if (data.length === 0) return;
 
     const headers = [
-      'Корпус',
+      'ID',
+      'Наименование корпуса',
+      'Направление',
       'Кросс птицы',
-      'Направление стада',
       'Возраст (дней)',
-      'Возраст (недель)',
-      'Текущее поголовье (гол)',
-      'Сохранность поголовья (%)',
-      'Яйценоскость факт (%)',
-      'Яйценоскость план (%)',
-      'Сбор яйца за сутки (шт)',
-      'Расход корма факт (г/гол)',
-      'Расход корма норма (г/гол)',
-      'Температура факт (°C)',
-      'Температура норма (°C)'
+      'Поголовье (гол)',
+      'Сбор яйца (шт)',
+      'Яйценоскость (%)',
+      'Корм (г/гол)',
+      't° в зале (°C)',
+      'Сохранность (%)'
     ];
 
     const rows = data.map((h: PoultryHouse) => {
-      const safetyPercent = Math.round((h.birdCount / h.initialBirdCount) * 1000) / 10;
+      const safetyPercent =
+        h.initialBirdCount > 0
+          ? Math.round((h.birdCount / h.initialBirdCount) * 1000) / 10
+          : 100;
+
       return [
+        h.id,
         h.name,
+        h.birdType === 'layer' ? 'Несушка' : h.birdType === 'broiler' ? 'Бройлер' : 'Молодняк',
         h.crossType,
-        this.getBirdTypeLabel(h.birdType),
         h.ageDays,
-        this.getAgeWeeks(h.ageDays),
         h.birdCount,
-        safetyPercent,
-        h.birdType === 'layer' ? h.actualLayingRatePercent : null,
-        h.birdType === 'layer' ? h.targetLayingRatePercent : null,
-        h.birdType === 'layer' ? h.dailyEggCount : 0,
+        h.dailyEggCount,
+        `${h.actualLayingRatePercent}%`,
         h.feedPerBirdGrams,
-        h.targetFeedGrams,
         h.temperature,
-        h.targetTemperature
+        `${safetyPercent}%`
       ];
     });
 
-    this.exportService.exportToCsv(headers, rows, 'Технологическая_карта_птичников');
+    this.exportService.exportToCsv(headers, rows, 'Реестр_птичников_YieldFlow');
   }
 }

@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <!-- Терминал зоны навески (SCADA / MES) -->
+  <!-- Терминал зоны навески -->
   <div class="dock-card">
     <div class="dock-header">
       <div class="dock-tag">Участок приёмки и подвески живой птицы</div>
@@ -58,8 +58,8 @@
         </div>
       </div>
 
-      <button type="button" class="btn-launch" (click)="startBatch(d.id)">
-        ▶ Запустить навеску и убой
+      <button type="button" class="btn-launch" [disabled]="isProcessingBatch()" (click)="startBatch(d.id)">
+        {{ isProcessingBatch() ? 'Запуск конвейера...' : '▶ Запустить навеску и убой' }}
       </button>
     </div>
 
@@ -164,7 +164,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно приёмки партии птицы (B4) -->
+  <!-- Модальное окно приёмки партии птицы -->
   <div class="modal-backdrop" *ngIf="isDeliveryModalOpen()">
     <div class="modal-dialog">
       <div class="modal-header">
@@ -193,9 +193,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeDeliveryModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="submitDelivery()">Принять в зону навески</button>
+        <button type="button" class="btn-save" [disabled]="isDelivering()" (click)="submitDelivery()">
+          {{ isDelivering() ? 'Регистрация...' : 'Принять в зону навески' }}
+        </button>
       </div>
     </div>
   </div>
-
 </div>

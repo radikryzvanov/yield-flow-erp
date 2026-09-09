@@ -1,161 +1,135 @@
 <div class="finance-container">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Финансово-экономический мониторинг (Директорат)</h1>
-      <p class="subtitle">Сводный анализ производственной себестоимости, выручки, расходов на корма и операционной прибыли</p>
+      <h1>Финансово-экономический директорат</h1>
+      <p class="subtitle">Unit-экономика производства яйца, структура себестоимости и маржинальность фабрики</p>
     </div>
   </div>
 
-  <!-- Главные KPI показатели -->
+  <!-- KPI карточки -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Суточная выручка</span>
-        <span class="kpi-icon">💰</span>
-      </div>
-      <div class="kpi-value text-primary">{{ dailyRevenue() | number }} <span class="unit">₽ / сут</span></div>
-      <div class="kpi-note">При сборе {{ totalEggs() | number }} шт/сут</div>
+      <div class="kpi-title">Суточная выручка (Gross)</div>
+      <div class="kpi-value text-primary">{{ (dailyRevenue() / 1000) | number:'1.1-1' }} <span class="unit">тыс. ₽</span></div>
+      <div class="kpi-note">Средняя цена реализации: {{ avgPricePerEgg() }} ₽/шт</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Чистая прибыль</span>
-        <span class="kpi-icon">📈</span>
+      <div class="kpi-title">Чистая прибыль за сутки</div>
+      <div class="kpi-value" [class.text-success]="dailyProfit() > 0" [class.text-danger]="dailyProfit() <= 0">
+        {{ (dailyProfit() / 1000) | number:'1.1-1' }} <span class="unit">тыс. ₽</span>
       </div>
-      <div class="kpi-value text-success">
-        {{ dailyProfit() > 0 ? '+' : '' }}{{ dailyProfit() | number }} <span class="unit">₽ / сут</span>
-      </div>
-      <div class="kpi-note">Маржинальность <b>{{ profitability() > 0 ? '+' : '' }}{{ profitability() }}%</b></div>
+      <div class="kpi-note">EBITDA margin комплекса</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Себестоимость 1 яйца</span>
-        <span class="kpi-icon">🥚</span>
-      </div>
-      <div class="kpi-value text-dark">{{ costPerEgg() | number:'1.2-2' }} <span class="unit">₽ / шт</span></div>
-      <div class="kpi-note">Корма (64%) + Накладные (36%)</div>
+      <div class="kpi-title">Себестоимость 1 яйца</div>
+      <div class="kpi-value text-warning">{{ costPerEgg() }} <span class="unit">₽/шт</span></div>
+      <div class="kpi-note">Включая корма и накладные расходы</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">Затраты на корма</span>
-        <span class="kpi-icon">🌾</span>
-      </div>
-      <div class="kpi-value text-warning">{{ dailyFeedCost() | number }} <span class="unit">₽ / сут</span></div>
-      <div class="kpi-note">Расход: {{ feedTons() }} т комбикорма</div>
+      <div class="kpi-title">Суточные затраты на корма</div>
+      <div class="kpi-value text-danger">{{ (dailyFeedCost() / 1000) | number:'1.1-1' }} <span class="unit">тыс. ₽</span></div>
+      <div class="kpi-note">Базис рациона: {{ feedCostPerKg() }} ₽/кг</div>
     </div>
   </div>
 
-  <!-- Панель действий с единым Enterprise тулбаром -->
-  <div class="table-toolbar-header">
-    <h3 class="table-title">Аналитика финансово-производственных результатов</h3>
+  <!-- Форма настроек прейскуранта и расходов -->
+  <div class="section-card">
+    <h3 class="section-title">⚙️ Настройки прейскуранта реализации и нормативных затрат</h3>
+    <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 14px;">
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Цена СВ (₽/шт):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="priceCB" class="input-field" style="width: 100%;" />
+      </div>
 
-    <div class="table-toolbar-actions">
-      <button class="btn-settings" (click)="openSettingsModal()" type="button">
-        <span>⚙️</span> Настройки прейскуранта и затрат
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Цена С0 (₽/шт):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="priceC0" class="input-field" style="width: 100%;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Цена С1 (₽/шт):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="priceC1" class="input-field" style="width: 100%;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Цена С2 (₽/шт):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="priceC2" class="input-field" style="width: 100%;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Цена Грязь/Нас. (₽/шт):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="priceDirty" class="input-field" style="width: 100%;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Корм за кг (₽):</label>
+        <input type="number" step="0.1" min="0" [(ngModel)]="feedCostInput" class="input-field" style="width: 100%;" />
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Накладные расходы (₽/сут):</label>
+        <input type="number" step="1000" min="0" [(ngModel)]="overheadInput" class="input-field" style="width: 100%;" />
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="isSavingSettings()"
+        (click)="saveFinancialSettings()">
+        {{ isSavingSettings() ? 'Пересчёт...' : '💾 Сохранить и пересчитать Unit-экономику' }}
       </button>
-      <button class="btn-export-excel" (click)="exportToExcel()" type="button">
-        <span>📥</span> Экспорт финансового отчёта
-      </button>
     </div>
   </div>
 
-  <!-- Сетка аналитики: Структура затрат и Экономическая эффективность -->
-  <div class="dashboard-grid">
+  <!-- Диаграмма структуры затрат и таблица калькуляции -->
+  <div class="section-card">
+    <div class="table-toolbar-header">
+      <h3 class="table-title">Структура себестоимости готовой продукции</h3>
 
-    <!-- Карточка: Структура затрат -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h3 class="card-title">📊 Структура суточной себестоимости</h3>
-          <p class="card-desc">Доля затрат в производстве валового яйца за текущую смену</p>
-        </div>
-      </div>
-
-      <div class="breakdown-list">
-        <div *ngFor="let item of costBreakdown()" class="breakdown-item">
-          <div class="breakdown-header">
-            <span class="cat-name">{{ item.category }}</span>
-            <span class="cat-val">{{ item.amountRub | number }} ₽ <span class="cat-share">({{ item.sharePercent }}%)</span></span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" [style.width.%]="item.sharePercent" [style.background-color]="item.color"></div>
-          </div>
-        </div>
+      <div class="table-toolbar-actions">
+        <button type="button" class="btn-export-excel" (click)="exportToExcel()">
+          <span>📥</span> Экспорт в Excel
+        </button>
       </div>
     </div>
 
-    <!-- Карточка: Экономическая эффективность -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h3 class="card-title">⚡ Производственно-экономические показатели</h3>
-          <p class="card-desc">Ключевые бенчмарки и юнит-экономика птицефабрики</p>
-        </div>
-      </div>
-
-      <div class="metrics-list">
-        <div class="metric-row">
-          <span class="label">Выручка на 1 несушку в сутки:</span>
-          <span class="val text-primary">7.84 ₽ / гол</span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Затраты на корм на 1 несушку:</span>
-          <span class="val text-warning">2.59 ₽ / гол</span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Кормовая конверсия на 10 яиц:</span>
-          <span class="val highlight-badge">1.28 кг / десяток</span>
-        </div>
-        <div class="metric-row">
-          <span class="label">Точка безубыточности (категория С1):</span>
-          <span class="val">58.40 ₽ / дес.</span>
-        </div>
-        <div class="metric-row ebitda-row">
-          <span class="label">Прогноз месячной прибыли (EBITDA):</span>
-          <span class="val text-success font-bold">
-            {{ dailyProfit() > 0 ? '+' : '' }}{{ (dailyProfit() * 30.5) | number:'1.0-0' }} ₽
-          </span>
-        </div>
+    <!-- Прогресс-бар калькуляции -->
+    <div class="breakdown-bar-wrap" style="display: flex; height: 26px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+      <div
+        *ngFor="let item of costBreakdown()"
+        [style.width.%]="item.sharePercent"
+        [style.background-color]="item.color"
+        [title]="item.category + ': ' + item.sharePercent + '%'">
       </div>
     </div>
 
-  </div>
-
-  <!-- Модальное окно редактирования прейскуранта и накладных расходов -->
-  <div class="modal-backdrop" *ngIf="isSettingsModalOpen()">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h2>Настройки экономических параметров</h2>
-        <button type="button" class="btn-close" (click)="closeSettingsModal()">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <p class="modal-subtitle">Цены реализации яйца за десяток (₽)</p>
-        <div class="form-group" *ngFor="let p of editablePrices">
-          <label [for]="'price-' + p.category">{{ p.category }} (руб/дес):</label>
-          <input [id]="'price-' + p.category" type="number" [(ngModel)]="p.price" min="1" class="form-control" />
-        </div>
-
-        <hr style="margin: 16px 0; border: none; border-top: 1px solid #e2e8f0;" />
-        <p class="modal-subtitle">Базовые параметры затрат</p>
-
-        <div class="form-group">
-          <label for="feedCost">Себестоимость комбикорма (₽/кг):</label>
-          <input id="feedCost" type="number" step="0.1" [(ngModel)]="editableFeedCost" min="1" class="form-control" />
-        </div>
-
-        <div class="form-group">
-          <label for="overheads">Суточные накладные расходы (₽/сут):</label>
-          <input id="overheads" type="number" step="1000" [(ngModel)]="editableOverheads" min="0" class="form-control" />
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" (click)="closeSettingsModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="saveSettings()">Применить изменения</button>
-      </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Категория затрат</th>
+            <th>Сумма в сутки (₽)</th>
+            <th>Доля в структуре (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of costBreakdown()">
+            <td>
+              <span class="color-dot" [style.background-color]="item.color" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;"></span>
+              <strong>{{ item.category }}</strong>
+            </td>
+            <td class="font-bold">{{ item.amountRub | number }} ₽</td>
+            <td>
+              <span class="share-badge" style="font-weight: 700; color: #2563eb;">{{ item.sharePercent }}%</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

@@ -5,6 +5,7 @@ import { EggWarehouseService } from '../../services/egg-warehouse.service';
 import { PoultryManagementService } from '../../services/poultry-management.service';
 import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-egg-warehouse',
@@ -17,15 +18,17 @@ export class EggWarehouseComponent {
   protected readonly warehouseService = inject(EggWarehouseService);
   protected readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly stocks = this.warehouseService.stocks;
   readonly totalStockEggs = this.warehouseService.totalStockEggs;
   readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
   readonly poultryHouses = this.poultryService.houses;
 
-  // Форма ручной приёмки партии валового сбора (C3: связка с реальными корпусами)
+  // Форма ручной приёмки партии валового сбора
   newBatchHouse = this.poultryHouses()[0]?.name ?? 'Птичник № 1 (Промышленная несушка)';
   newBatchCount: number | null = null;
+  readonly isSaving = signal<boolean>(false);
 
   // Сигналы фильтрации
   readonly searchQuery = signal<string>('');
@@ -50,15 +53,27 @@ export class EggWarehouseComponent {
   });
 
   submitNewBatch(): void {
-    const count = Number(this.newBatchCount);
-    if (!count || count <= 0) return;
+    if (this.isSaving()) return;
 
-    this.warehouseService.registerIncomingEggs(this.newBatchHouse, count);
-    this.newBatchCount = null;
+    const count = Number(this.newBatchCount);
+    if (isNaN(count) || count <= 0) {
+      this.toastService.show('Укажите корректное количество яйца больше нуля.', 'error');
+      return;
+    }
+
+    this.isSaving.set(true);
+    try {
+      this.warehouseService.registerIncomingEggs(this.newBatchHouse, count);
+      this.toastService.show(`Партия вала (${count} шт) от «${this.newBatchHouse}» успешно принята.`);
+      this.newBatchCount = null;
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
   sortBatch(batchId: string): void {
     this.warehouseService.sortBatch(batchId);
+    this.toastService.show('Партия рассортирована по товарным категориям ГОСТ.');
   }
 
   exportToExcel(): void {

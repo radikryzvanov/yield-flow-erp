@@ -1,21 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { ToastService } from './shared/services/toast.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
   title = 'yield-flow-erp';
-
-  resetDemoData(): void {
-    const confirmed = confirm('Сбросить все показатели фабрики к эталонным демо-данным?');
-    if (confirmed) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  }
+  protected readonly toastService = inject(ToastService);
 }

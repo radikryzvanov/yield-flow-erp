@@ -1,129 +1,152 @@
 <div class="elevator-container">
   <div class="page-header">
-    <h1>Элеваторный комплекс и лаборатория сырья</h1>
-    <p class="subtitle">Управление силосами, приёмка зерновозов и мониторинг качества зерна</p>
+    <div>
+      <h1>Элеваторный комплекс и приёмка зерна</h1>
+      <p class="subtitle">Управление силосами длительного хранения зернового сырья, лабораторный контроль влажности и автовесовая</p>
+    </div>
   </div>
 
+  <!-- KPI показатели -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-title">Всего зерна в силосах</div>
-      <div class="kpi-value text-primary">{{ totalStoredTons() }} <span class="unit">/ {{ totalCapacityTons() }} т</span></div>
-      <div class="kpi-note">Загрузка комплекса: {{ (totalStoredTons() / totalCapacityTons() * 100) | number:'1.0-0' }}%</div>
+      <div class="kpi-title">Общий объём зерна</div>
+      <div class="kpi-value text-primary">{{ currentStock() | number }} <span class="unit">/ {{ totalCapacity() | number }} т</span></div>
+      <div class="kpi-note">Загрузка комплекса: {{ (currentStock() / totalCapacity() * 100) | number:'1.0-1' }}%</div>
     </div>
 
     <div class="kpi-card">
-      <div class="kpi-title">Силосов в работе</div>
-      <div class="kpi-value text-success">{{ silos().length }} <span class="unit">емкостей</span></div>
-      <div class="kpi-note">Активная система вентиляции</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-title">Требуют внимания / сушки</div>
-      <div class="kpi-value" [class.text-danger]="silosRequiringAttention() > 0" [class.text-success]="silosRequiringAttention() === 0">
-        {{ silosRequiringAttention() }} <span class="unit">банки</span>
+      <div class="kpi-title">Средняя влажность сырья</div>
+      <div class="kpi-value" [class.text-success]="avgMoisture() <= 14.5" [class.text-warning]="avgMoisture() > 14.5">
+        {{ avgMoisture() }}%
       </div>
-      <div class="kpi-note">Контроль влажности > 14.5%</div>
+      <div class="kpi-note">Базисная норма: 14.0% (ГОСТ)</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Силосов в эксплуатации</div>
+      <div class="kpi-value">{{ activeSilosCount() }} <span class="unit">из {{ silos().length }}</span></div>
+      <div class="kpi-note">Термометрия подключена</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-title">Зерносушилка ДСП-50</div>
+      <div class="kpi-value text-success">Готовность</div>
+      <div class="kpi-note">Природный газ / Автоматика</div>
     </div>
   </div>
 
-  <div class="section-title">Силосный парк (Банки длительного хранения)</div>
+  <!-- Сетка силосов элеватора -->
+  <div class="section-title">Силосный корпус (Металлические силосы с конусным дном)</div>
   <div class="silos-grid">
-    <div *ngFor="let silo of silos()" class="silo-card" [class.status-warning]="silo.status !== 'normal'">
+    <div *ngFor="let s of silos()" class="silo-card" [class.need-drying]="s.status === 'drying_required'">
       <div class="silo-header">
         <div>
-          <h3 class="silo-title">{{ silo.name }}</h3>
-          <span class="culture-tag">{{ silo.culture }}</span>
+          <h3 class="silo-name">{{ s.name }}</h3>
+          <span class="culture-tag">{{ s.culture }}</span>
         </div>
-        <span class="badge" [class.badge-active]="silo.status === 'normal'" [class.badge-warning]="silo.status !== 'normal'">
-          {{ silo.status === 'normal' ? 'В норме' : 'Требует сушки' }}
+        <span class="status-indicator" [class.status-ok]="s.status === 'normal'" [class.status-alert]="s.status === 'drying_required'">
+          {{ s.status === 'normal' ? 'Хранение' : 'Требует сушки' }}
         </span>
       </div>
 
       <div class="progress-wrap">
-        <div class="progress-bar" [style.width.%]="(silo.currentTons / silo.capacityTons) * 100"></div>
+        <div class="progress-fill" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
       </div>
 
       <div class="silo-metrics">
-        <div class="metric-row">
-          <span>Заполненность:</span>
-          <span class="val">{{ silo.currentTons }} т из {{ silo.capacityTons }} т</span>
+        <div class="metric">
+          <label>Остаток:</label>
+          <strong>{{ s.currentTons | number }} т</strong>
         </div>
-        <div class="metric-row">
-          <span>Влажность зерна:</span>
-          <span class="val" [class.text-danger]="silo.moisturePercent > 14.5">{{ silo.moisturePercent }}%</span>
+        <div class="metric">
+          <label>Влажность:</label>
+          <strong [class.text-danger]="s.moisturePercent > 14.5">{{ s.moisturePercent }}%</strong>
         </div>
-        <div class="metric-row">
-          <span>Температура насыпи:</span>
-          <span class="val">{{ silo.temperatureC }}°C</span>
+        <div class="metric">
+          <label>Температура:</label>
+          <strong>{{ s.temperatureC }}°C</strong>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="operations-grid">
-    <!-- Форма весовой приёмки -->
+  <!-- Две колонки: Форма приёмки и Журнал -->
+  <div class="columns-grid">
+    <!-- Форма взвешивания и приёмки зерновоза -->
     <div class="form-card">
-      <h3 class="card-title">Приёмка зерновоза (Лабораторный контроль)</h3>
+      <h3 class="card-title">Автовесовая: Приёмка входящего зерновоза</h3>
+
       <div class="form-group">
-        <label>Гос. номер авто / прицепа</label>
-        <input type="text" [ngModel]="truckNumber()" (ngModelChange)="truckNumber.set($event)" placeholder="Например: А 123 ВС 73" class="input-field" />
+        <label>Госномер автомобиля</label>
+        <input
+          type="text"
+          [ngModel]="truckNumber()"
+          (ngModelChange)="truckNumber.set($event)"
+          placeholder="Например: У 704 КТ 73"
+          class="input-field" />
       </div>
 
       <div class="form-group">
         <label>Культура / Сырьё</label>
         <select [ngModel]="culture()" (ngModelChange)="culture.set($event)" class="input-field">
-          <option value="Пшеница фуражная (5 класс)">Пшеница фуражная (5 класс)</option>
+          <option value="Пшеница фуражная 4 класс">Пшеница фуражная 4 класс</option>
           <option value="Кукуруза кормовая">Кукуруза кормовая</option>
-          <option value="Шрот подсолнечный">Шрот подсолнечный</option>
-          <option value="Известняковая мука (ракушка)">Известняковая мука (ракушка)</option>
+          <option value="Шрот соевый 46%">Шрот соевый 46%</option>
+          <option value="Ячмень яровой">Ячмень яровой</option>
         </select>
       </div>
 
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group flex-1">
           <label>Вес нетто (тонн)</label>
-          <input type="number" [ngModel]="weightTons()" (ngModelChange)="weightTons.set($event)" placeholder="30.0" class="input-field" />
+          <input
+            type="number"
+            [ngModel]="weightTons()"
+            (ngModelChange)="weightTons.set($event)"
+            step="0.1"
+            min="0.1"
+            placeholder="25.0"
+            class="input-field" />
         </div>
-        <div class="form-group">
-          <label>Влажность (%)</label>
-          <input type="number" [ngModel]="moisturePercent()" (ngModelChange)="moisturePercent.set($event)" placeholder="13.5" class="input-field" />
+
+        <div class="form-group flex-1">
+          <label>Влажность экспресс (%)</label>
+          <input
+            type="number"
+            [ngModel]="moisturePercent()"
+            (ngModelChange)="moisturePercent.set($event)"
+            step="0.1"
+            min="5"
+            max="35"
+            placeholder="13.5"
+            class="input-field" />
         </div>
       </div>
 
       <div class="form-group">
-        <label>Целевой силос разгрузки</label>
+        <label>Целевой силос выгрузки</label>
         <select [ngModel]="selectedSiloId()" (ngModelChange)="selectedSiloId.set($event)" class="input-field">
-          <option *ngFor="let s of silos()" [value]="s.id">{{ s.name }} ({{ s.culture }})</option>
+          <option *ngFor="let s of silos()" [value]="s.id">
+            {{ s.name }} ({{ s.culture }}, свободно {{ (s.capacityTons - s.currentTons) | number }} т)
+          </option>
         </select>
       </div>
 
-      <button (click)="submitIntake()" class="btn-primary" [disabled]="!truckNumber() || !weightTons() || !moisturePercent()">
-        Зафиксировать приёмку и слить в силос
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="submitIntake()"
+        [disabled]="isSaving() || !weightTons() || weightTons()! <= 0">
+        {{ isSaving() ? 'Приёмка...' : 'Оформить ТТН и принять в силос' }}
       </button>
     </div>
 
-    <!-- Таблица журнала с Enterprise тулбаром -->
-    <div class="table-card">
+    <!-- Журнал последних поступлений с тулбаром -->
+    <div class="section-card">
       <div class="table-toolbar-header">
-        <h3 class="table-title">Журнал поступлений</h3>
+        <h3 class="table-title">Журнал въезда зерновозов</h3>
 
         <div class="table-toolbar-actions">
-          <input
-            type="text"
-            placeholder="Поиск по номеру машины..."
-            [ngModel]="searchQuery()"
-            (ngModelChange)="searchQuery.set($event)" />
-
-          <select
-            [ngModel]="selectedCulture()"
-            (ngModelChange)="selectedCulture.set($event)">
-            <option value="ALL">Все культуры</option>
-            <option value="Пшеница фуражная (5 класс)">Пшеница фуражная</option>
-            <option value="Кукуруза кормовая">Кукуруза кормовая</option>
-            <option value="Шрот подсолнечный">Шрот подсолнечный</option>
-            <option value="Известняковая мука (ракушка)">Известняковая мука</option>
-          </select>
-
           <button type="button" class="btn-export-excel" (click)="exportToExcel()">
             <span>📥</span> Экспорт в Excel
           </button>
@@ -135,26 +158,26 @@
           <thead>
             <tr>
               <th>Время</th>
-              <th>Машина</th>
-              <th>Сырьё</th>
-              <th>Вес</th>
+              <th>Транспорт</th>
+              <th>Культура</th>
+              <th>Вес (т)</th>
               <th>Влажность</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let log of filteredLogs()">
+            <tr *ngFor="let log of intakeLogs()">
               <td>{{ log.date }}</td>
               <td class="font-bold">{{ log.truckNumber }}</td>
               <td>{{ log.culture }}</td>
-              <td>{{ log.weightTons }} т</td>
+              <td class="font-bold text-primary">{{ log.weightTons }} т</td>
               <td>
-                <span class="badge" [class.badge-active]="log.moisturePercent <= 14.5" [class.badge-warning]="log.moisturePercent > 14.5">
+                <span [class.text-danger]="log.moisturePercent > 14.5">
                   {{ log.moisturePercent }}%
                 </span>
               </td>
             </tr>
-            <tr *ngIf="filteredLogs().length === 0">
-              <td colspan="5" class="empty-state">Записей не найдено</td>
+            <tr *ngIf="intakeLogs().length === 0">
+              <td colspan="5" class="empty-state">Поступлений за смену не зафиксировано</td>
             </tr>
           </tbody>
         </table>

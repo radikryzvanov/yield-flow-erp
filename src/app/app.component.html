@@ -1,73 +1,82 @@
-<div class="layout-container">
-  <!-- Боковое меню навигации по фабрике -->
+<div class="app-layout">
+  <!-- Боковое навигационное меню (Enterprise Sidebar) -->
   <aside class="sidebar">
-    <div class="logo-block">
-      <h2>YieldFlow ERP</h2>
-      <span class="sub-logo">Птицеводческий комплекс</span>
+    <div class="brand">
+      <span class="brand-icon">🥚</span>
+      <div class="brand-text">
+        <h2 class="brand-title">YieldFlow ERP</h2>
+        <span class="brand-sub">Птицеводческий комплекс</span>
+      </div>
     </div>
 
     <nav class="nav-menu">
-      <div class="nav-section-title">Производственные цеха</div>
-
+      <div class="nav-section-label">ПРОИЗВОДСТВО И СТАДО</div>
       <a routerLink="/poultry-management" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🏠</span>
-        <span>Птичники</span>
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Птичники и поголовье</span>
       </a>
-
-      <a routerLink="/incubator" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🐣</span>
-        <span>Инкубаторий</span>
-      </a>
-
-      <a routerLink="/elevator" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🏭</span>
-        <span>Элеватор (Сырьё)</span>
-      </a>
-
-      <a routerLink="/feed-warehouse" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🌾</span>
-        <span>Кормоцех</span>
-      </a>
-
       <a routerLink="/egg-warehouse" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🥚</span>
-        <span>Яйцесклад (Сортировка)</span>
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Склад готового яйца</span>
+      </a>
+      <a routerLink="/incubator" routerLinkActive="active-link" class="nav-item">
+        <span class="nav-icon">🐣</span>
+        <span class="nav-label">Промышленный инкубаторий</span>
       </a>
 
-      <a routerLink="/veterinary" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">💉</span>
-        <span>Ветблок</span>
+      <div class="nav-section-label">КОРМОПРОИЗВОДСТВО</div>
+      <a routerLink="/elevator" routerLinkActive="active-link" class="nav-item">
+        <span class="nav-icon">🌾</span>
+        <span class="nav-label">Элеватор и приёмка зерна</span>
+      </a>
+      <a routerLink="/feed-warehouse" routerLinkActive="active-link" class="nav-item">
+        <span class="nav-icon">🏭</span>
+        <span class="nav-label">Склад кормов и силосы</span>
       </a>
 
+      <div class="nav-section-label">ПЕРЕРАБОТКА И СБЫТ</div>
       <a routerLink="/slaughter" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🍗</span>
-        <span>Убойный цех</span>
+        <span class="nav-icon">🍗</span>
+        <span class="nav-label">Убойный цех (Мясо)</span>
       </a>
-
-      <div class="nav-section-title">Сбыт и Аналитика</div>
-
       <a routerLink="/logistics" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">🚚</span>
-        <span>Логистика и Сбыт</span>
+        <span class="nav-icon">🚛</span>
+        <span class="nav-label">Логистика и транспорт</span>
       </a>
 
-      <a routerLink="/finance-calc" routerLinkActive="active-link" class="nav-item">
-        <span class="icon">📊</span>
-        <span>Директорат / Финансы</span>
+      <div class="nav-section-label">КОНТРОЛЬ И ЭКОНОМИКА</div>
+      <a routerLink="/veterinary" routerLinkActive="active-link" class="nav-item">
+        <span class="nav-icon">💉</span>
+        <span class="nav-label">Ветблок и аптека</span>
+      </a>
+      <a routerLink="/finance" routerLinkActive="active-link" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Финансовый директорат</span>
       </a>
     </nav>
 
-    <!-- Панель сброса к демо-данным внизу меню -->
     <div class="sidebar-footer">
-      <button type="button" class="btn-reset-demo" (click)="resetDemoData()" title="Восстановить эталонные показатели">
-        <span class="icon">🔄</span>
-        <span>Сбросить демо-данные</span>
-      </button>
+      <div class="system-status">
+        <span class="status-dot"></span>
+        <span>ERP v2.4 Enterprise</span>
+      </div>
     </div>
   </aside>
 
-  <!-- Рабочая область, куда загружаются страницы -->
+  <!-- Основная рабочая область -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
+
+  <!-- Контейнер для всплывающих Toast-уведомлений -->
+  <div class="toast-container" *ngIf="toastService.messages().length > 0">
+    <div
+      *ngFor="let m of toastService.messages()"
+      class="toast-item"
+      [class.toast-error]="m.type === 'error'"
+      [class.toast-info]="m.type === 'info'"
+      (click)="toastService.dismiss(m.id)">
+      {{ m.text }}
+    </div>
+  </div>
 </div>

@@ -103,7 +103,7 @@
         🧹 Проводится мойка пенными дезсредствами и аэрозольная газация парами формальдегида перед следующей закладкой партии.
       </div>
 
-      <!-- Кнопки действий на карточке шкафа (B2) -->
+      <!-- Кнопки действий на карточке шкафа -->
       <div class="cabinet-actions" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
         <button
           *ngIf="cab.status === 'sanitization' || cab.eggsCount === 0"
@@ -221,7 +221,9 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeSetBatchModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="submitSetBatch()">Запустить инкубацию</button>
+        <button type="button" class="btn-save" [disabled]="isSettingBatch()" (click)="submitSetBatch()">
+          {{ isSettingBatch() ? 'Запуск...' : 'Запустить инкубацию' }}
+        </button>
       </div>
     </div>
   </div>
@@ -252,9 +254,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeCompleteHatchModal()">Отмена</button>
-        <button type="button" class="btn-save" (click)="submitCompleteHatch()">Зафиксировать вывод и очистить шкаф</button>
+        <button type="button" class="btn-save" [disabled]="isCompletingHatch()" (click)="submitCompleteHatch()">
+          {{ isCompletingHatch() ? 'Фиксация...' : 'Зафиксировать вывод и очистить шкаф' }}
+        </button>
       </div>
     </div>
   </div>
-
 </div>

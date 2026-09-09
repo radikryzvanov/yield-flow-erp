@@ -1,9 +1,10 @@
-import { Component, inject, signal, model, computed } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElevatorService } from '../../services/elevator.service';
-import { GrainIntakeLog } from '../../interfaces/elevator.interface';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { GrainIntakeLog } from '../../interfaces/elevator.interface';
 
 @Component({
   selector: 'app-elevator-dashboard',
@@ -15,108 +16,112 @@ import { ExportService } from '../../../../shared/services/export.service';
 export class ElevatorDashboardComponent {
   protected readonly elevatorService = inject(ElevatorService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly silos = this.elevatorService.silos;
-  readonly totalStoredTons = this.elevatorService.totalStoredTons;
-  readonly totalCapacityTons = this.elevatorService.totalCapacityTons;
-  readonly silosRequiringAttention = this.elevatorService.silosRequiringAttention;
+  readonly intakeLogs = this.elevatorService.intakeLogs;
+  readonly totalCapacity = this.elevatorService.totalCapacityTons;
 
-  // Поля формы приёмки (через model() для корректной работы [(ngModel)])
-  truckNumber = model('');
-  culture = model('Кукуруза кормовая');
-  weightTons = model<number | null>(null);
-  moisturePercent = model<number | null>(null);
-  selectedSiloId = model('silo-2');
+  // Реальные computed-сигналы из сервиса элеватора
+  readonly currentStock = computed(() =>
+    this.silos().reduce((sum, s) => sum + s.currentTons, 0)
+  );
 
-  // Сигналы фильтрации весового журнала
-  readonly searchQuery = model<string>('');
-  readonly selectedCulture = model<string>('ALL');
+  readonly activeSilosCount = computed(() =>
+    this.silos().filter(s => s.currentTons > 0).length
+  );
 
-  readonly filteredLogs = computed(() => {
-    const list = this.elevatorService.intakeLogs();
-    const query = this.searchQuery().trim().toLowerCase();
-    const cult = this.selectedCulture();
-
-    return list.filter((log: GrainIntakeLog) => {
-      const matchesSearch =
-        query === '' ||
-        log.truckNumber.toLowerCase().includes(query) ||
-        log.date.toLowerCase().includes(query);
-
-      const matchesCulture = cult === 'ALL' || log.culture === cult;
-
-      return matchesSearch && matchesCulture;
-    });
+  readonly avgMoisture = computed(() => {
+    const active = this.silos().filter(s => s.currentTons > 0);
+    if (active.length === 0) return 14.0;
+    const total = active.reduce((sum, s) => sum + s.moisturePercent, 0);
+    return Math.round((total / active.length) * 10) / 10;
   });
 
+  // Поля формы приёмки зерна
+  truckNumber = signal<string>('У 704 КТ 73');
+  culture = signal<string>('Пшеница фуражная 4 класс');
+  weightTons = signal<number | null>(28.5);
+  moisturePercent = signal<number | null>(13.8);
+  selectedSiloId = signal<string>('silo-1');
+  readonly isSaving = signal<boolean>(false);
+
   submitIntake(): void {
-    const truck = this.truckNumber();
+    if (this.isSaving()) return;
+
+    const truck = this.truckNumber().trim();
     const weight = Number(this.weightTons());
     const moisture = Number(this.moisturePercent());
     const siloId = this.selectedSiloId();
     const selectedCultureValue = this.culture();
 
-    if (!truck || !weight || isNaN(weight) || isNaN(moisture)) {
-      alert('Заполните все обязательные поля приёмки');
+    if (!truck) {
+      this.toastService.show('Укажите госномер автомобиля-зерновоза.', 'error');
       return;
     }
 
-    // Проверка A6: соответствие культуры содержимому силоса
+    if (isNaN(weight) || weight <= 0) {
+      this.toastService.show('Вес зерна должен быть числом больше 0.', 'error');
+      return;
+    }
+
+    if (isNaN(moisture) || moisture < 5 || moisture > 35) {
+      this.toastService.show('Влажность зерна должна быть в технологическом диапазоне 5–35%.', 'error');
+      return;
+    }
+
     const targetSilo = this.silos().find(s => s.id === siloId);
     if (targetSilo && targetSilo.culture !== selectedCultureValue) {
       const confirmed = confirm(
-        `Внимание: в силосе «${targetSilo.name}» хранится «${targetSilo.culture}», а вы принимаете «${selectedCultureValue}». Продолжить приёмку в этот силос?`
+        `Внимание: в силосе «${targetSilo.name}» сейчас хранится «${targetSilo.culture}», а вы принимаете «${selectedCultureValue}». Продолжить приёмку в этот силос?`
       );
-      if (!confirmed) {
-        return;
+      if (!confirmed) return;
+    }
+
+    this.isSaving.set(true);
+    try {
+      const result = this.elevatorService.receiveGrain({
+        truckNumber: truck,
+        culture: selectedCultureValue,
+        weightTons: weight,
+        moisturePercent: moisture,
+        targetSiloId: siloId
+      });
+
+      if (result.overflow > 0) {
+        this.toastService.show(`Внимание: силос заполнен. Принято ${result.accepted} т из ${weight} т, излишек ${result.overflow} т не размещён!`, 'error');
+      } else {
+        this.toastService.show(`Партия зерна (${result.accepted} т) успешно принята в «${targetSilo?.name ?? siloId}».`);
       }
+
+      this.weightTons.set(null);
+    } finally {
+      this.isSaving.set(false);
     }
-
-    // Приёмка зерна с контролем A5: обработка переполнения
-    const result = this.elevatorService.receiveGrain({
-      truckNumber: truck,
-      culture: selectedCultureValue,
-      weightTons: weight,
-      moisturePercent: moisture,
-      targetSiloId: siloId
-    });
-
-    if (result.overflow > 0) {
-      alert(`Внимание: силос заполнен. Принято ${result.accepted} т из ${weight} т, излишек ${result.overflow} т не размещён — выберите другой силос.`);
-    }
-
-    // Очистка формы после успешной записи
-    this.truckNumber.set('');
-    this.weightTons.set(null);
-    this.moisturePercent.set(null);
   }
 
-  // Централизованный экспорт весового журнала в Excel
   exportToExcel(): void {
-    const data = this.filteredLogs();
+    const data = this.intakeLogs();
     if (data.length === 0) return;
 
     const headers = [
-      'Время / Дата приёмки',
-      'Гос. номер автотранспорта',
+      'Дата / Время',
+      'Транспорт (Авто)',
       'Культура / Сырьё',
-      'Вес нетто (тонн)',
+      'Вес партии (т)',
       'Влажность (%)',
-      'Целевой силос / Бункер'
+      'Целевой силос'
     ];
 
-    const rows = data.map((l: GrainIntakeLog) => {
-      const siloName = this.silos().find(s => s.id === l.targetSiloId)?.name || l.targetSiloId;
-      return [
-        l.date,
-        l.truckNumber,
-        l.culture,
-        l.weightTons,
-        l.moisturePercent,
-        siloName
-      ];
-    });
+    const rows = data.map((l: GrainIntakeLog) => [
+      l.date,
+      l.truckNumber,
+      l.culture,
+      l.weightTons,
+      `${l.moisturePercent}%`,
+      l.targetSiloId
+    ]);
 
-    this.exportService.exportToCsv(headers, rows, 'Весовой_журнал_элеватора');
+    this.exportService.exportToCsv(headers, rows, 'Журнал_приемки_зерна_Элеватор');
   }
 }

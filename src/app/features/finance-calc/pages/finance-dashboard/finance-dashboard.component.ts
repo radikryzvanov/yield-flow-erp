@@ -1,8 +1,11 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FinanceService, EggPriceMap } from '../../services/finance.service';
+import { FinanceService } from '../../services/finance.service';
+import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { CostBreakdownItem } from '../../interfaces/finance.interface';
 
 @Component({
   selector: 'app-finance-dashboard',
@@ -13,86 +16,91 @@ import { ExportService } from '../../../../shared/services/export.service';
 })
 export class FinanceDashboardComponent {
   protected readonly financeService = inject(FinanceService);
+  private readonly poultryService = inject(PoultryManagementService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly dailyRevenue = this.financeService.dailyRevenueRub;
+  readonly dailyFeedCost = this.financeService.dailyFeedCostRub;
+  readonly dailyOverhead = this.financeService.dailyOverheadCostsRub;
   readonly dailyProfit = this.financeService.dailyProfitRub;
   readonly costPerEgg = this.financeService.costPerEggRub;
-  readonly profitability = this.financeService.profitabilityPercent;
-  readonly dailyFeedCost = this.financeService.dailyFeedCostRub;
   readonly costBreakdown = this.financeService.costBreakdown;
-  readonly totalEggs = this.financeService.totalDailyEggs;
-  readonly feedTons = this.financeService.dailyFeedTons;
-
   readonly eggPrices = this.financeService.eggPrices;
   readonly feedCostPerKg = this.financeService.feedCostPerKg;
-  readonly dailyOverheadCostsRub = this.financeService.dailyOverheadCostsRub;
 
-  // Управление модальным окном настроек
-  readonly isSettingsModalOpen = signal<boolean>(false);
+  // Динамический расчёт средней цены яйца: выручка / суточный сбор яйца
+  readonly avgPricePerEgg = computed(() => {
+    const totalEggs = this.poultryService.totalDailyEggs();
+    const revenue = this.dailyRevenue();
+    if (!totalEggs || totalEggs <= 0) return 8.5;
+    return Math.round((revenue / totalEggs) * 100) / 100;
+  });
 
-  // Локальные поля формы настроек
-  editableFeedCost: number = 0;
-  editableOverheads: number = 0;
-  editablePrices: { category: string; price: number }[] = [];
+  // Локальные поля формы прейскуранта и затрат
+  priceCB: number = 11.5;
+  priceC0: number = 9.8;
+  priceC1: number = 8.5;
+  priceC2: number = 7.2;
+  priceDirty: number = 5.0;
+  feedCostInput: number = 28.5;
+  overheadInput: number = 220000;
+  readonly isSavingSettings = signal<boolean>(false);
 
-  openSettingsModal(): void {
-    this.editableFeedCost = this.feedCostPerKg();
-    this.editableOverheads = this.dailyOverheadCostsRub();
-    const currentPrices = this.eggPrices();
-    this.editablePrices = Object.keys(currentPrices).map(cat => ({
-      category: cat,
-      price: currentPrices[cat]
-    }));
-    this.isSettingsModalOpen.set(true);
+  constructor() {
+    const prices = this.eggPrices();
+    this.priceCB = prices['СВ'] ?? 11.5;
+    this.priceC0 = prices['С0'] ?? 9.8;
+    this.priceC1 = prices['С1'] ?? 8.5;
+    this.priceC2 = prices['С2'] ?? 7.2;
+    this.priceDirty = prices['Грязь/Насечка'] ?? 5.0;
+    this.feedCostInput = this.feedCostPerKg();
+    this.overheadInput = this.dailyOverhead();
   }
 
-  closeSettingsModal(): void {
-    this.isSettingsModalOpen.set(false);
+  saveFinancialSettings(): void {
+    if (this.isSavingSettings()) return;
+
+    if (
+      this.priceCB < 0 || this.priceC0 < 0 || this.priceC1 < 0 || this.priceC2 < 0 ||
+      this.priceDirty < 0 || this.feedCostInput < 0 || this.overheadInput < 0
+    ) {
+      this.toastService.show('Цены и статьи затрат не могут быть отрицательными!', 'error');
+      return;
+    }
+
+    this.isSavingSettings.set(true);
+    try {
+      this.financeService.updateEggPrice('СВ', Number(this.priceCB));
+      this.financeService.updateEggPrice('С0', Number(this.priceC0));
+      this.financeService.updateEggPrice('С1', Number(this.priceC1));
+      this.financeService.updateEggPrice('С2', Number(this.priceC2));
+      this.financeService.updateEggPrice('Грязь/Насечка', Number(this.priceDirty));
+      this.financeService.updateFeedCostPerKg(Number(this.feedCostInput));
+      this.financeService.updateOverheadCosts(Number(this.overheadInput));
+
+      this.toastService.show('Прейскурант цен и накладные расходы успешно обновлены.');
+    } finally {
+      this.isSavingSettings.set(false);
+    }
   }
 
-  saveSettings(): void {
-    if (this.editableFeedCost > 0) {
-      this.financeService.updateFeedCostPerKg(this.editableFeedCost);
-    }
-    if (this.editableOverheads >= 0) {
-      this.financeService.updateOverheadCosts(this.editableOverheads);
-    }
-    for (const item of this.editablePrices) {
-      if (item.price > 0) {
-        this.financeService.updateEggPrice(item.category, item.price);
-      }
-    }
-    this.closeSettingsModal();
-  }
-
-  // Централизованный экспорт финансово-экономического отчета
   exportToExcel(): void {
+    const data = this.costBreakdown();
+    if (data.length === 0) return;
+
     const headers = [
-      'Статья затрат / Показатель',
-      'Сумма (₽ / сут)',
-      'Доля в себестоимости (%)',
-      'Примечание / Бенчмарк'
+      'Статья калькуляции затрат',
+      'Сумма за сутки (руб.)',
+      'Доля в структуре себестоимости (%)'
     ];
 
-    // Выгружаем расшифровку затрат
-    const rows: (string | number)[][] = this.costBreakdown().map(item => [
+    const rows = data.map((item: CostBreakdownItem) => [
       item.category,
       item.amountRub,
-      item.sharePercent,
-      'Производственные расходы'
+      `${item.sharePercent}%`
     ]);
 
-    // Добавляем ключевые сводные строки P&L
-    rows.push(
-      ['---', '---', '---', '---'],
-      ['Суточная выручка', this.dailyRevenue(), 100, `При сборе ${this.totalEggs()} шт/сут`],
-      ['Чистая суточная прибыль', this.dailyProfit(), '-', `Рентабельность ${this.profitability()}%`],
-      ['Себестоимость 1 яйца (₽)', this.costPerEgg(), '-', 'Корма + Накладные расходы'],
-      ['Затраты на корма (₽)', this.dailyFeedCost(), '-', `Расход: ${this.feedTons()} т комбикорма`],
-      ['Прогноз месячной EBITDA (₽)', Math.round(this.dailyProfit() * 30.5), '-', 'Операционная прибыль за 30.5 дней']
-    );
-
-    this.exportService.exportToCsv(headers, rows, 'Финансово_экономический_отчет_Директорат');
+    this.exportService.exportToCsv(headers, rows, 'Калькуляция_себестоимости_YieldFlow');
   }
 }

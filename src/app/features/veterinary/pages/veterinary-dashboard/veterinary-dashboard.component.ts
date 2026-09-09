@@ -1,9 +1,10 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VeterinaryService } from '../../services/veterinary.service';
 import { VaccineScheduleItem, DrugStockItem, HealthCheckLog } from '../../interfaces/veterinary.interface';
 import { ExportService } from '../../../../shared/services/export.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-veterinary-dashboard',
@@ -15,6 +16,7 @@ import { ExportService } from '../../../../shared/services/export.service';
 export class VeterinaryDashboardComponent {
   protected readonly vetService = inject(VeterinaryService);
   private readonly exportService = inject(ExportService);
+  private readonly toastService = inject(ToastService);
 
   readonly schedule = this.vetService.schedule;
   readonly stock = this.vetService.stock;
@@ -32,10 +34,12 @@ export class VeterinaryDashboardComponent {
   newLogSigns = '';
   newLogDoctor = 'Иванов С. М.';
   newLogStatus: 'normal' | 'observation' | 'quarantine' = 'normal';
+  readonly isSavingLog = signal<boolean>(false);
 
-  // Форма B3: пополнение аптеки
+  // Форма пополнения аптеки
   selectedDrugId: string = 'st-1';
   replenishAmount: number | null = 10000;
+  readonly isReplenishingDrug = signal<boolean>(false);
 
   // Фильтрация графика вакцинаций
   scheduleFilter = 'ALL';
@@ -49,46 +53,70 @@ export class VeterinaryDashboardComponent {
   // Отметка вакцинации как выполненной
   markVaccinated(id: string): void {
     const success = this.vetService.completeVaccination(id);
-    if (!success) {
-      alert('Не удалось списать препарат: проверьте наличие достаточного количества доз на складе аптеки.');
+    if (success) {
+      this.toastService.show('Вакцинация успешно проведена, препарат списан со склада.');
+    } else {
+      this.toastService.show('Не удалось списать препарат: проверьте наличие достаточного количества доз в аптеке.', 'error');
     }
   }
 
-  // Отправка формы пополнения препарата (B3)
+  // Отправка формы пополнения препарата
   submitReplenish(): void {
+    if (this.isReplenishingDrug()) return;
+
     const amount = Number(this.replenishAmount);
     if (!this.selectedDrugId || isNaN(amount) || amount <= 0) {
-      alert('Укажите корректный объем для пополнения склада.');
+      this.toastService.show('Укажите корректный объём пополнения больше нуля.', 'error');
       return;
     }
 
-    const success = this.vetService.replenishDrugStock(this.selectedDrugId, amount);
-    if (success) {
-      this.replenishAmount = null;
-    } else {
-      alert('Препарат не найден в номенклатуре аптеки.');
+    this.isReplenishingDrug.set(true);
+    try {
+      const success = this.vetService.replenishDrugStock(this.selectedDrugId, amount);
+      if (success) {
+        this.toastService.show(`Запас препарата успешно пополнен на ${amount} доз/л.`);
+        this.replenishAmount = null;
+      } else {
+        this.toastService.show('Препарат не найден в номенклатуре аптеки.', 'error');
+      }
+    } finally {
+      this.isReplenishingDrug.set(false);
     }
   }
 
   // Отправка формы клинического осмотра
   submitHealthCheck(): void {
-    if (this.newLogMortalityCount === null || this.newLogMortalityCount < 0) return;
+    if (this.isSavingLog()) return;
 
-    this.vetService.addHealthCheckLog({
-      house: this.newLogHouse,
-      flockAgeWeeks: Number(this.newLogAgeWeeks) || 1,
-      mortalityCount: Number(this.newLogMortalityCount),
-      mortalityRatePercent: Number(this.newLogMortalityRate) || 0.01,
-      clinicalSigns: this.newLogSigns.trim() || 'Клинических отклонений не выявлено.',
-      vetDoctor: this.newLogDoctor.trim() || 'Дежурный ветврач',
-      quarantineStatus: this.newLogStatus
-    });
+    const mortality = Number(this.newLogMortalityCount);
+    const age = Number(this.newLogAgeWeeks);
+    const rate = Number(this.newLogMortalityRate);
 
-    this.newLogMortalityCount = null;
-    this.newLogSigns = '';
+    if (isNaN(mortality) || mortality < 0 || isNaN(age) || age <= 0 || isNaN(rate) || rate < 0) {
+      this.toastService.show('Падёж и возраст не могут быть отрицательными числами.', 'error');
+      return;
+    }
+
+    this.isSavingLog.set(true);
+    try {
+      this.vetService.addHealthCheckLog({
+        house: this.newLogHouse,
+        flockAgeWeeks: age,
+        mortalityCount: mortality,
+        mortalityRatePercent: rate || 0.01,
+        clinicalSigns: this.newLogSigns.trim() || 'Клинических отклонений не выявлено.',
+        vetDoctor: this.newLogDoctor.trim() || 'Дежурный ветврач',
+        quarantineStatus: this.newLogStatus
+      });
+
+      this.toastService.show(`Запись осмотра по «${this.newLogHouse}» внесена в ветжурнал.`);
+      this.newLogMortalityCount = null;
+      this.newLogSigns = '';
+    } finally {
+      this.isSavingLog.set(false);
+    }
   }
 
-  // Экспорт журнала осмотров в Excel
   exportLogsToExcel(): void {
     const data = this.logs();
     if (data.length === 0) return;
