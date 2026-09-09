@@ -13,4 +13,12 @@ import { ToastService } from './shared/services/toast.service';
 export class AppComponent {
   title = 'yield-flow-erp';
   protected readonly toastService = inject(ToastService);
+
+  resetDemoData(): void {
+    const confirmed = confirm('Сбросить все показатели фабрики к эталонным демо-данным?');
+    if (confirmed) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  }
 }
