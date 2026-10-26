@@ -27,9 +27,12 @@
     <div class="quick-intake-form">
       <div class="form-group flex-2">
         <label>Источник поступления (Птичник / Бригада)</label>
-        <select [(ngModel)]="newBatchHouse" class="input-field">
-          @for (house of poultryHouses(); track house) {
-            <option [value]="house.name">
+        <select
+          [ngModel]="newBatchHouseId()"
+          (ngModelChange)="newBatchHouseId.set($event)"
+          class="input-field">
+          @for (house of poultryHouses(); track house.id) {
+            <option [value]="house.id">
               {{ house.name }} ({{ house.crossType }})
             </option>
           }

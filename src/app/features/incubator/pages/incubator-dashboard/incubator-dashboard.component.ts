@@ -6,6 +6,7 @@ import { IncubatorCabinet, IncubationLog } from '../../interfaces/incubator.inte
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { apiErrorMessage } from '../../../../core/api/api-error';
 
 @Component({
   selector: 'app-incubator-dashboard',
@@ -171,7 +172,14 @@ export class IncubatorDashboardComponent {
 
       if (success) {
         if (this.selectedHouseId) {
-          this.poultryService.receiveNewFlock(this.selectedHouseId, hatched);
+          // Поголовье в птичнике меняет сервер; при ошибке показываем причину.
+          this.poultryService.receiveNewFlock(this.selectedHouseId, hatched).subscribe({
+            error: (error: unknown) =>
+              this.toastService.show(
+                apiErrorMessage(error, 'Не удалось записать приём молодняка в птичник.'),
+                'error'
+              )
+          });
         }
         this.toastService.show(`Вывод зафиксирован: ${hatched} гол. переведены в «${houseName}».`);
         this.closeCompleteHatchModal();

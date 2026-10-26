@@ -1,70 +1,79 @@
 <div class="app-layout">
-  <!-- Боковое навигационное меню (Enterprise Sidebar) -->
-  <aside class="sidebar">
-    <div class="brand">
-      <span class="brand-icon">🥚</span>
-      <div class="brand-text">
-        <h2 class="brand-title">YieldFlow ERP</h2>
-        <span class="brand-sub">Птицеводческий комплекс</span>
+  <!-- Боковое меню показываем только вошедшему пользователю -->
+  @if (auth.isAuthenticated()) {
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">🥚</span>
+        <div class="brand-text">
+          <h2 class="brand-title">YieldFlow ERP</h2>
+          <span class="brand-sub">Птицеводческий комплекс</span>
+        </div>
       </div>
-    </div>
 
-    <nav class="nav-menu">
-      <div class="nav-section-label">ПРОИЗВОДСТВО И СТАДО</div>
-      <a routerLink="/poultry-management" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Птичники и поголовье</span>
-      </a>
-      <a routerLink="/egg-warehouse" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">📦</span>
-        <span class="nav-label">Склад готового яйца</span>
-      </a>
-      <a routerLink="/incubator" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🐣</span>
-        <span class="nav-label">Промышленный инкубаторий</span>
-      </a>
+      <nav class="nav-menu">
+        <div class="nav-section-label">ПРОИЗВОДСТВО И СТАДО</div>
+        <a routerLink="/poultry-management" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Птичники и поголовье</span>
+        </a>
+        <a routerLink="/egg-warehouse" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">📦</span>
+          <span class="nav-label">Склад готового яйца</span>
+        </a>
+        <a routerLink="/incubator" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🐣</span>
+          <span class="nav-label">Промышленный инкубаторий</span>
+        </a>
 
-      <div class="nav-section-label">КОРМОПРОИЗВОДСТВО</div>
-      <a routerLink="/elevator" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🌾</span>
-        <span class="nav-label">Элеватор и приёмка зерна</span>
-      </a>
-      <a routerLink="/feed-warehouse" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🏭</span>
-        <span class="nav-label">Склад кормов и силосы</span>
-      </a>
+        <div class="nav-section-label">КОРМОПРОИЗВОДСТВО</div>
+        <a routerLink="/elevator" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🌾</span>
+          <span class="nav-label">Элеватор и приёмка зерна</span>
+        </a>
+        <a routerLink="/feed-warehouse" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🏭</span>
+          <span class="nav-label">Склад кормов и силосы</span>
+        </a>
 
-      <div class="nav-section-label">ПЕРЕРАБОТКА И СБЫТ</div>
-      <a routerLink="/slaughter" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🍗</span>
-        <span class="nav-label">Убойный цех (Мясо)</span>
-      </a>
-      <a routerLink="/logistics" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">🚛</span>
-        <span class="nav-label">Логистика и транспорт</span>
-      </a>
+        <div class="nav-section-label">ПЕРЕРАБОТКА И СБЫТ</div>
+        <a routerLink="/slaughter" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🍗</span>
+          <span class="nav-label">Убойный цех (Мясо)</span>
+        </a>
+        <a routerLink="/logistics" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">🚛</span>
+          <span class="nav-label">Логистика и транспорт</span>
+        </a>
 
-      <div class="nav-section-label">КОНТРОЛЬ И ЭКОНОМИКА</div>
-      <a routerLink="/veterinary" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">💉</span>
-        <span class="nav-label">Ветблок и аптека</span>
-      </a>
-      <a routerLink="/finance-calc" routerLinkActive="active-link" class="nav-item">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">Финансовый директорат</span>
-      </a>
-    </nav>
+        <div class="nav-section-label">КОНТРОЛЬ И ЭКОНОМИКА</div>
+        <a routerLink="/veterinary" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">💉</span>
+          <span class="nav-label">Ветблок и аптека</span>
+        </a>
+        <a routerLink="/finance-calc" routerLinkActive="active-link" class="nav-item">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Финансовый директорат</span>
+        </a>
+      </nav>
 
-    <div class="sidebar-footer">
-      <div class="system-status">
-        <span class="status-dot"></span>
-        <span>ERP v2.4 Enterprise</span>
+      <div class="sidebar-footer">
+        <div class="user-box">
+          <span class="user-name">{{ auth.user()?.fullName }}</span>
+          <span class="user-login">{{ auth.user()?.login }}</span>
+        </div>
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span>ERP v2.4 Enterprise</span>
+        </div>
+        <button type="button" class="btn-reset-demo" (click)="resetDemoData()">
+          Сбросить демо-данные
+        </button>
+        <button type="button" class="btn-logout" (click)="logout()">
+          Выйти
+        </button>
       </div>
-      <button type="button" class="btn-reset-demo" (click)="resetDemoData()">
-        Сбросить демо-данные
-      </button>
-    </div>
-  </aside>
+    </aside>
+  }
 
   <!-- Основная рабочая область -->
   <main class="main-content">

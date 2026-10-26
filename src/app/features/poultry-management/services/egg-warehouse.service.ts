@@ -1,40 +1,83 @@
-import { Injectable, computed } from '@angular/core';
-import { persistedSignal } from '../../../shared/utils/persisted-signal';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, forkJoin, map, switchMap, tap } from 'rxjs';
+import { API_CONFIG } from '../../../core/api/api-config.token';
+import { AuthService } from '../../../core/auth/auth.service';
 import { IncomingEggBatch, EggStock } from '../interfaces/egg-warehouse.interface';
 
+/** Партия яйца в том виде, как её присылает сервер. */
+interface EggBatchDto {
+  id: string;
+  houseName: string;
+  rawEggCount: number;
+  status: 'pending' | 'sorted';
+  receivedAt: string;
+}
+
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
+/** Сервер присылает точное время (ISO); для таблицы переводим в «26.10, 18:30». */
+function toIncomingBatch(dto: EggBatchDto): IncomingEggBatch {
+  return {
+    id: dto.id,
+    houseName: dto.houseName,
+    rawEggCount: dto.rawEggCount,
+    date: dateFormatter.format(new Date(dto.receivedAt)),
+    status: dto.status
+  };
+}
+
+/**
+ * Склад яйца. Источник правды — сервер: он же выполняет сортировку
+ * (в одной транзакции, с защитой от двойного нажатия).
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class EggWarehouseService {
-  // Входящие партии валового яйца из птичников
-  private readonly _incomingBatches = persistedSignal<IncomingEggBatch[]>('yieldflow_egg_batches', [
-    {
-      id: 'batch-101',
-      houseName: 'Птичник № 1 (Промышленная несушка)',
-      rawEggCount: 50199,
-      date: 'Сегодня, 08:30',
-      status: 'pending'
-    },
-    {
-      id: 'batch-102',
-      houseName: 'Птичник № 2 (Промышленная несушка)',
-      rawEggCount: 41035,
-      date: 'Сегодня, 09:15',
-      status: 'pending'
-    }
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(API_CONFIG);
+  private readonly auth = inject(AuthService);
 
-  // Остатки рассортированного яйца на складе готовой продукции
-  private readonly _stocks = persistedSignal<EggStock[]>('yieldflow_egg_stocks', [
-    { category: 'СВ', description: 'Высшая категория (>75г)', count: 18400, unit: 'шт' },
-    { category: 'СО', description: 'Отборное яйцо (65-74.9г)', count: 142000, unit: 'шт' },
-    { category: 'С1', description: 'Первая категория (55-64.9г)', count: 215000, unit: 'шт' },
-    { category: 'С2', description: 'Вторая категория (45-54.9г)', count: 48000, unit: 'шт' },
-    { category: 'Бой/Насечка', description: 'Технический брак / меланж', count: 6200, unit: 'шт' }
-  ]);
+  private readonly _incomingBatches = signal<IncomingEggBatch[]>([]);
+  private readonly _stocks = signal<EggStock[]>([]);
 
   readonly incomingBatches = this._incomingBatches.asReadonly();
   readonly stocks = this._stocks.asReadonly();
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        untracked(() => this.refresh());
+      } else {
+        untracked(() => {
+          this._incomingBatches.set([]);
+          this._stocks.set([]);
+        });
+      }
+    });
+  }
+
+  /** Загрузить партии и остатки с сервера. */
+  refresh(): void {
+    forkJoin({
+      batches: this.http.get<EggBatchDto[]>(`${this.api.baseUrl}/egg-warehouse/batches`),
+      stocks: this.http.get<EggStock[]>(`${this.api.baseUrl}/egg-warehouse/stocks`)
+    }).subscribe({
+      next: ({ batches, stocks }) => {
+        this._incomingBatches.set(batches.map(toIncomingBatch));
+        this._stocks.set(stocks);
+      },
+      error: () => {
+        // Ошибка загрузки: на экране останутся прежние данные; причину увидит перехватчик/консоль.
+      }
+    });
+  }
 
   // Всего рассортированного товарного яйца
   readonly totalStockEggs = computed(() =>
@@ -48,50 +91,38 @@ export class EggWarehouseService {
       .reduce((sum, b) => sum + b.rawEggCount, 0)
   );
 
-  // Регистрация поступления валового яйца из птичника
-  registerIncomingEggs(houseName: string, eggCount: number): void {
-    if (eggCount <= 0) return;
-
-    const newBatch: IncomingEggBatch = {
-      id: 'batch-' + Date.now(),
-      houseName: houseName,
-      rawEggCount: eggCount,
-      date: 'Только что',
-      status: 'pending'
-    };
-
-    this._incomingBatches.update(batches => [newBatch, ...batches]);
+  /** Приёмка валового яйца из птичника (по id птичника). */
+  registerIncomingEggs(houseId: string, eggCount: number): Observable<IncomingEggBatch> {
+    return this.http
+      .post<EggBatchDto>(`${this.api.baseUrl}/egg-warehouse/batches`, {
+        houseId,
+        rawEggCount: eggCount
+      })
+      .pipe(
+        map(toIncomingBatch),
+        tap(batch => this._incomingBatches.update(batches => [batch, ...batches]))
+      );
   }
 
-  // Сортировка партии на яйцесортировочной машине
-  sortBatch(batchId: string): void {
-    const batch = this._incomingBatches().find(b => b.id === batchId);
-    if (!batch || batch.status === 'sorted') return;
-
-    const count = batch.rawEggCount;
-
-    // Стандартное промышленное распределение партий кросса
-    const sv = Math.round(count * 0.05);   // 5% Высшая
-    const s0 = Math.round(count * 0.35);   // 35% Отборное
-    const s1 = Math.round(count * 0.45);   // 45% Первая категория
-    const s2 = Math.round(count * 0.11);   // 11% Вторая категория
-    const reject = count - (sv + s0 + s1 + s2); // 4% Бой/Насечка
-
-    // Пополняем остатки склада
-    this._stocks.update(stocks =>
-      stocks.map(s => {
-        if (s.category === 'СВ') return { ...s, count: s.count + sv };
-        if (s.category === 'СО') return { ...s, count: s.count + s0 };
-        if (s.category === 'С1') return { ...s, count: s.count + s1 };
-        if (s.category === 'С2') return { ...s, count: s.count + s2 };
-        if (s.category === 'Бой/Насечка') return { ...s, count: s.count + reject };
-        return s;
-      })
-    );
-
-    // Помечаем партию как рассортированную
-    this._incomingBatches.update(batches =>
-      batches.map(b => (b.id === batchId ? { ...b, status: 'sorted' } : b))
-    );
+  /** Сортировка партии: сервер раскладывает яйцо по категориям и пополняет остатки. */
+  sortBatch(batchId: string): Observable<void> {
+    return this.http
+      .post<EggBatchDto>(`${this.api.baseUrl}/egg-warehouse/batches/${batchId}/sort`, {})
+      .pipe(
+        tap(dto =>
+          this._incomingBatches.update(batches =>
+            batches.map(b => (b.id === dto.id ? toIncomingBatch(dto) : b))
+          )
+        ),
+        switchMap(() => this.http.get<EggStock[]>(`${this.api.baseUrl}/egg-warehouse/stocks`)),
+        tap(stocks => this._stocks.set(stocks)),
+        map(() => undefined),
+        tap({
+          error: (error: { status?: number }) => {
+            // 409: партию уже рассортировали (например, на другом экране) — обновляем данные.
+            if (error?.status === 409) this.refresh();
+          }
+        })
+      );
   }
 }

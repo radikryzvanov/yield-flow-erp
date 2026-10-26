@@ -1,6 +1,8 @@
 # YieldFlow ERP — учёт птицефабрики на Angular 22
 
-Демо-проект: система управления птицеводческим комплексом в одном окне. Это учебный макет на вымышленных данных, а не готовый продукт. Сервера нет, всё считается и хранится в браузере.
+Демо-проект: система управления птицеводческим комплексом в одном окне. Это учебный макет на вымышленных данных, а не готовый продукт. Разделы «Птичники» и «Склад яйца» работают через собственный сервер (NestJS + PostgreSQL) с входом по логину и паролем; остальные разделы пока считаются и хранятся в браузере.
+
+Документация API (Swagger) и описание устройства: [`backend/README.md`](backend/README.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 Живая версия: https://yield-flow-erp.vercel.app
 
@@ -27,12 +29,17 @@
 - Ленивая загрузка каждого раздела через `loadComponent`
 - Внедрение зависимостей через `inject()`
 - TypeScript, деплой на Vercel
+- HttpClient, функциональный перехватчик (токен входа), guard для защиты страниц
+- Сервер: NestJS, PostgreSQL, TypeORM с миграциями, JWT, Swagger (папка `backend/`)
 
 ## Устройство проекта
 
 ```
+backend/      сервер NestJS: auth, users, houses, egg-warehouse, миграции, тесты
+docs/         описание архитектуры
+render.yaml   описание сервера для хостинга Render
 src/app/
-  core/       общие интерфейсы и настройки
+  core/       общие интерфейсы и настройки, auth/ (вход, перехватчик, guard), api/
   shared/     ExportService (CSV), ToastService, persistedSignal
   features/   разделы: poultry-management, elevator, incubator,
               feed-warehouse, slaughter, logistics, veterinary, finance-calc
@@ -47,13 +54,22 @@ src/app/
 
 ```bash
 npm install
-npm start        # http://localhost:4200
-npm run build    # сборка в dist/yield-flow-erp
-npm test         # тесты (Karma + Jasmine)
+npm start        # http://localhost:4200 (ждёт сервер на http://localhost:3000)
+npm run build    # сборка в dist/yield-flow-erp (боевой адрес сервера — в src/environments/environment.ts)
+npm test         # тесты интерфейса (Karma + Jasmine)
+```
+
+Сервер запускается отдельно, подробности в [`backend/README.md`](backend/README.md):
+
+```bash
+cd backend
+npm install
+cp .env.example .env    # заполните DATABASE_URL, JWT_SECRET, ADMIN_PASSWORD
+npm run start:dev       # http://localhost:3000/api, документация: /api/docs
 ```
 
 ## Что планируется
 
-- Бэкенд и база данных вместо хранения в браузере
-- Тесты остальных сервисов (для финансового расчёта они уже есть)
-- Вход по ролям (зоотехник, бухгалтер, директор)
+- Остальные разделы на сервер (этап 2)
+- Вход по ролям (зоотехник, бухгалтер, директор) и журнал действий (этап 2)
+- Docker, автоматические проверки и сборка на GitHub (этап 3)

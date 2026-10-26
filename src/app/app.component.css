@@ -130,6 +130,44 @@
   color: #f1f5f9;
 }
 
+.user-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #334155;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.user-login {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.btn-logout {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #fecaca;
+  background: transparent;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-logout:hover {
+  background: #7f1d1d;
+  color: #fff;
+}
+
 .main-content {
   flex: 1;
   overflow-y: auto;

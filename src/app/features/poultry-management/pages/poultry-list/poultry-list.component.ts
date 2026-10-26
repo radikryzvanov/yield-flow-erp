@@ -5,6 +5,7 @@ import { PoultryManagementService, PoultryHouse } from '../../services/poultry-m
 import { FeedWarehouseService } from '../../../feed-warehouse/services/feed-warehouse.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { apiErrorMessage } from '../../../../core/api/api-error';
 
 @Component({
   selector: 'app-poultry-list',
@@ -99,34 +100,42 @@ export class PoultryListComponent {
     }
 
     this.isSaving.set(true);
-    try {
-      const totalFeedTons = Math.round(((house.birdCount * feedGrams) / 1_000_000) * 100) / 100;
 
-      if (totalFeedTons > 0) {
-        const feedOk = this.feedWarehouseService.deductFeedForHouse(
-          house.name,
-          house.birdType,
-          house.ageDays,
-          totalFeedTons
-        );
-        if (!feedOk) {
-          this.toastService.show(`Внимание: на складе кормов недостаточно комбикорма для «${house.name}».`, 'error');
-        }
-      }
-
-      this.poultryService.submitDailyReport({
+    this.poultryService
+      .submitDailyReport({
         houseId: house.id,
-        dailyEggCount: eggCount,
+        eggCount,
         mortalityCount: mortality,
         feedPerBirdGrams: feedGrams,
         temperature: temp
-      });
+      })
+      .subscribe({
+        next: () => {
+          // Корм списываем со склада кормов (он пока хранится в браузере) только после того,
+          // как сервер принял отчёт: при ошибке сервера склад кормов не изменится.
+          const totalFeedTons = Math.round(((house.birdCount * feedGrams) / 1_000_000) * 100) / 100;
 
-      this.toastService.show(`Отчёт по «${house.name}» успешно сохранён.`);
-      this.closeReportModal();
-    } finally {
-      this.isSaving.set(false);
-    }
+          if (totalFeedTons > 0) {
+            const feedOk = this.feedWarehouseService.deductFeedForHouse(
+              house.name,
+              house.birdType,
+              house.ageDays,
+              totalFeedTons
+            );
+            if (!feedOk) {
+              this.toastService.show(`Внимание: на складе кормов недостаточно комбикорма для «${house.name}».`, 'error');
+            }
+          }
+
+          this.toastService.show(`Отчёт по «${house.name}» успешно сохранён.`);
+          this.closeReportModal();
+          this.isSaving.set(false);
+        },
+        error: (error: unknown) => {
+          this.toastService.show(apiErrorMessage(error, 'Не удалось сохранить отчёт.'), 'error');
+          this.isSaving.set(false);
+        }
+      });
   }
 
   exportToExcel(): void {
@@ -154,7 +163,7 @@ export class PoultryListComponent {
           : 100;
 
       return [
-        h.id,
+        h.id.slice(0, 8),
         h.name,
         h.birdType === 'layer' ? 'Несушка' : h.birdType === 'broiler' ? 'Бройлер' : 'Молодняк',
         h.crossType,

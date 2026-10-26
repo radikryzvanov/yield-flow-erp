@@ -1,4 +1,4 @@
-﻿import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, inject, computed, signal, effect } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedWarehouseService } from '../../services/feed-warehouse.service';
@@ -32,12 +32,26 @@ export class FeedDashboardComponent {
   readonly isReplenishing = signal<boolean>(false);
 
   // Форма списания (раздача в птичник)
-  selectedHouseId = this.poultryHouses()[0]?.id ?? 'house-1';
-  deductHouseName = this.poultryHouses()[0]?.name ?? 'Птичник № 1 (Промышленная несушка)';
+  selectedHouseId = this.poultryHouses()[0]?.id ?? '';
+  deductHouseName = this.poultryHouses()[0]?.name ?? '';
   deductBirdType: 'layer' | 'broiler' | 'rearing' = this.poultryHouses()[0]?.birdType ?? 'layer';
   deductAgeDays: number = this.poultryHouses()[0]?.ageDays ?? 180;
   deductTons: number | null = null;
   readonly isDeducting = signal<boolean>(false);
+
+  constructor() {
+    // Птичники приходят с сервера не сразу: когда список загрузился, выбираем первый по умолчанию.
+    effect(() => {
+      const houses = this.poultryHouses();
+      const first = houses[0];
+      if (first && !houses.some(h => h.id === this.selectedHouseId)) {
+        this.selectedHouseId = first.id;
+        this.deductHouseName = first.name;
+        this.deductBirdType = first.birdType;
+        this.deductAgeDays = first.ageDays;
+      }
+    });
+  }
 
   // Фильтрация журнала
   searchQuery = '';

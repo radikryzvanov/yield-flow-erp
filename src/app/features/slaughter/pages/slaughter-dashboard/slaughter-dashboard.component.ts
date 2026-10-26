@@ -6,6 +6,7 @@ import { PoultryManagementService } from '../../../poultry-management/services/p
 import { ExportService } from '../../../../shared/services/export.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { SlaughterBatchLog } from '../../interfaces/slaughter.interface';
+import { apiErrorMessage } from '../../../../core/api/api-error';
 
 @Component({
   selector: 'app-slaughter-dashboard',
@@ -84,9 +85,13 @@ export class SlaughterDashboardComponent {
 
       if (success) {
         if (this.selectedHouseId) {
-          this.poultryService.submitDailyReport({
-            houseId: this.selectedHouseId,
-            mortalityCount: count
+          // Птица уходит из птичника на убой: убавляем поголовье (сбор яиц сервер не трогает).
+          this.poultryService.removeBirds(this.selectedHouseId, count).subscribe({
+            error: (error: unknown) =>
+              this.toastService.show(
+                apiErrorMessage(error, 'Не удалось списать птицу из птичника.'),
+                'error'
+              )
           });
         }
         this.toastService.show(`Партия птицы (${count} гол.) принята в зону навески.`);

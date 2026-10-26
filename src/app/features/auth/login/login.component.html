@@ -1,0 +1,62 @@
+<div class="login-page">
+  <form class="login-card" (ngSubmit)="submit()" novalidate>
+    <div class="login-brand">
+      <span class="login-brand-icon">🥚</span>
+      <div>
+        <h1 class="login-title">YieldFlow ERP</h1>
+        <span class="login-subtitle">Вход в систему учёта птицефабрики</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="login">Логин</label>
+      <input
+        id="login"
+        name="login"
+        type="text"
+        autocomplete="username"
+        class="input-field"
+        [ngModel]="login()"
+        (ngModelChange)="login.set($event)"
+        [disabled]="isSubmitting()" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Пароль</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        class="input-field"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+        [disabled]="isSubmitting()" />
+    </div>
+
+    @if (errorMessage(); as message) {
+      <div class="login-error" role="alert">{{ message }}</div>
+    }
+
+    <button type="submit" class="btn-login" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Входим…' : 'Войти' }}
+    </button>
+
+    <div class="server-note" [class.server-offline]="serverState() === 'offline'">
+      @switch (serverState()) {
+        @case ('checking') {
+          <span class="dot dot-wait"></span>
+          Сервер запускается: бесплатному хостингу нужно до минуты. Можно уже вводить данные.
+        }
+        @case ('ready') {
+          <span class="dot dot-ok"></span>
+          Сервер готов к работе
+        }
+        @case ('offline') {
+          <span class="dot dot-off"></span>
+          Сервер пока недоступен. Подождите минуту и повторите попытку входа.
+        }
+      }
+    </div>
+  </form>
+</div>

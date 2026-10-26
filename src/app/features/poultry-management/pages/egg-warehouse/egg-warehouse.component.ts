@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, effect } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EggWarehouseService } from '../../services/egg-warehouse.service';
@@ -6,6 +6,7 @@ import { PoultryManagementService } from '../../services/poultry-management.serv
 import { IncomingEggBatch } from '../../interfaces/egg-warehouse.interface';
 import { ExportService } from '../../../../shared/services/export.service';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { apiErrorMessage } from '../../../../core/api/api-error';
 
 @Component({
   selector: 'app-egg-warehouse',
@@ -25,9 +26,19 @@ export class EggWarehouseComponent {
   readonly totalPendingRawEggs = this.warehouseService.totalPendingRawEggs;
   readonly poultryHouses = this.poultryService.houses;
 
-  // Форма ручной приёмки партии валового сбора
-  newBatchHouse = this.poultryHouses()[0]?.name ?? 'Птичник № 1 (Промышленная несушка)';
+  // Форма ручной приёмки партии валового сбора (выбирается id птичника)
+  readonly newBatchHouseId = signal<string>('');
   newBatchCount: number | null = null;
+
+  constructor() {
+    // Птичники приходят с сервера не сразу: как только список загрузился, выбираем первый по умолчанию.
+    effect(() => {
+      const first = this.poultryHouses()[0];
+      if (first && !this.newBatchHouseId()) {
+        this.newBatchHouseId.set(first.id);
+      }
+    });
+  }
   readonly isSaving = signal<boolean>(false);
 
   // Сигналы фильтрации
@@ -61,19 +72,32 @@ export class EggWarehouseComponent {
       return;
     }
 
-    this.isSaving.set(true);
-    try {
-      this.warehouseService.registerIncomingEggs(this.newBatchHouse, count);
-      this.toastService.show(`Партия вала (${count} шт) от «${this.newBatchHouse}» успешно принята.`);
-      this.newBatchCount = null;
-    } finally {
-      this.isSaving.set(false);
+    const houseId = this.newBatchHouseId();
+    if (!houseId) {
+      this.toastService.show('Выберите птичник-источник.', 'error');
+      return;
     }
+
+    this.isSaving.set(true);
+    this.warehouseService.registerIncomingEggs(houseId, count).subscribe({
+      next: batch => {
+        this.toastService.show(`Партия вала (${count} шт) от «${batch.houseName}» успешно принята.`);
+        this.newBatchCount = null;
+        this.isSaving.set(false);
+      },
+      error: (error: unknown) => {
+        this.toastService.show(apiErrorMessage(error, 'Не удалось принять партию.'), 'error');
+        this.isSaving.set(false);
+      }
+    });
   }
 
   sortBatch(batchId: string): void {
-    this.warehouseService.sortBatch(batchId);
-    this.toastService.show('Партия рассортирована по товарным категориям ГОСТ.');
+    this.warehouseService.sortBatch(batchId).subscribe({
+      next: () => this.toastService.show('Партия рассортирована по товарным категориям ГОСТ.'),
+      error: (error: unknown) =>
+        this.toastService.show(apiErrorMessage(error, 'Не удалось рассортировать партию.'), 'error')
+    });
   }
 
   exportToExcel(): void {

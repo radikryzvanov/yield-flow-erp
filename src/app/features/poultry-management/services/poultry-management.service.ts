@@ -1,5 +1,9 @@
-import { Injectable, computed } from '@angular/core';
-import { persistedSignal } from '../../../shared/utils/persisted-signal';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { API_CONFIG } from '../../../core/api/api-config.token';
+import { apiErrorMessage } from '../../../core/api/api-error';
+import { AuthService } from '../../../core/auth/auth.service';
 
 export interface PoultryHouse {
   id: string;
@@ -21,100 +25,64 @@ export interface PoultryHouse {
   [key: string]: any;
 }
 
+/** Суточный отчёт: именно эти поля принимает сервер. */
 export interface DailyReportInput {
   houseId: string;
-  dailyEggCount?: number;
-  eggCount?: number;
+  eggCount: number;
   mortalityCount?: number;
-  mortality?: number;
   feedPerBirdGrams?: number;
-  feedKg?: number;
   temperature?: number;
-  targetTemperature?: number;
   humidityPercent?: number;
-  [key: string]: any;
 }
 
+/**
+ * Данные птичников. Источник правды — сервер (API); здесь они хранятся в сигнале,
+ * чтобы экраны мгновенно обновлялись. Публичные названия (houses, totalBirds ...)
+ * остались прежними, поэтому другие разделы продолжают работать без изменений.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class PoultryManagementService {
-  private readonly _houses = persistedSignal<PoultryHouse[]>('yieldflow_poultry_houses', [
-    {
-      id: 'house-1',
-      name: 'Птичник № 1 (Промышленная несушка)',
-      birdType: 'layer',
-      crossType: 'Ломанн Браун',
-      ageDays: 196,
-      status: 'active',
-      birdCount: 52000,
-      initialBirdCount: 53500,
-      dailyEggCount: 50199,
-      actualLayingRatePercent: 96.5,
-      targetLayingRatePercent: 95.0,
-      feedPerBirdGrams: 118,
-      targetFeedGrams: 115,
-      temperature: 21.4,
-      targetTemperature: 21.0,
-      humidityPercent: 62
-    },
-    {
-      id: 'house-2',
-      name: 'Птичник № 2 (Промышленная несушка)',
-      birdType: 'layer',
-      crossType: 'Декалб Белый',
-      ageDays: 238,
-      status: 'active',
-      birdCount: 43200,
-      initialBirdCount: 44000,
-      dailyEggCount: 41035,
-      actualLayingRatePercent: 95.0,
-      targetLayingRatePercent: 94.0,
-      feedPerBirdGrams: 116,
-      targetFeedGrams: 115,
-      temperature: 20.8,
-      targetTemperature: 21.0,
-      humidityPercent: 65
-    },
-    {
-      id: 'house-3',
-      name: 'Птичник № 3 (Ремонтный молодняк)',
-      birdType: 'rearing',
-      crossType: 'Ломанн Браун',
-      ageDays: 84,
-      status: 'active',
-      birdCount: 38000,
-      initialBirdCount: 38500,
-      dailyEggCount: 0,
-      actualLayingRatePercent: 0,
-      targetLayingRatePercent: 0,
-      feedPerBirdGrams: 75,
-      targetFeedGrams: 75,
-      temperature: 22.5,
-      targetTemperature: 22.0,
-      humidityPercent: 58
-    },
-    {
-      id: 'house-4',
-      name: 'Птичник № 4 (Мясной бройлер)',
-      birdType: 'broiler',
-      crossType: 'Росс 308',
-      ageDays: 35,
-      status: 'active',
-      birdCount: 22000,
-      initialBirdCount: 22400,
-      dailyEggCount: 0,
-      actualLayingRatePercent: 0,
-      targetLayingRatePercent: 0,
-      feedPerBirdGrams: 155,
-      targetFeedGrams: 155,
-      temperature: 21.0,
-      targetTemperature: 21.0,
-      humidityPercent: 60
-    }
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(API_CONFIG);
+  private readonly auth = inject(AuthService);
+
+  private readonly _houses = signal<PoultryHouse[]>([]);
+  private readonly _loading = signal<boolean>(false);
+  private readonly _loadError = signal<string | null>(null);
 
   readonly houses = this._houses.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly loadError = this._loadError.asReadonly();
+
+  constructor() {
+    // Когда человек вошёл — загружаем данные; когда вышел — очищаем (чужие данные не остаются в памяти).
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        untracked(() => this.refresh());
+      } else {
+        untracked(() => this._houses.set([]));
+      }
+    });
+  }
+
+  /** Загрузить список птичников с сервера. */
+  refresh(): void {
+    this._loading.set(true);
+    this._loadError.set(null);
+
+    this.http.get<PoultryHouse[]>(`${this.api.baseUrl}/houses`).subscribe({
+      next: houses => {
+        this._houses.set(houses);
+        this._loading.set(false);
+      },
+      error: (error: unknown) => {
+        this._loadError.set(apiErrorMessage(error, 'Не удалось загрузить птичники.'));
+        this._loading.set(false);
+      }
+    });
+  }
 
   // Сигналы, которые требует PoultryListComponent
   readonly totalBirds = computed(() =>
@@ -141,54 +109,29 @@ export class PoultryManagementService {
     return +avg.toFixed(1);
   });
 
-  // Приём выведенного суточного молодняка из инкубатория (C1)
-  receiveNewFlock(houseId: string, birdsCount: number): boolean {
-    const count = Number(birdsCount);
-    if (isNaN(count) || count <= 0) return false;
-
-    let found = false;
-    this._houses.update(houses =>
-      houses.map(h => {
-        if (h.id === houseId || h.name === houseId) {
-          found = true;
-          return {
-            ...h,
-            birdCount: h.birdCount + count,
-            initialBirdCount: h.initialBirdCount + count
-          };
-        }
-        return h;
-      })
-    );
-    return found;
+  /** Приём выведенного суточного молодняка из инкубатория. */
+  receiveNewFlock(houseId: string, birdsCount: number): Observable<PoultryHouse> {
+    return this.http
+      .post<PoultryHouse>(`${this.api.baseUrl}/houses/${houseId}/receive-flock`, { birdsCount })
+      .pipe(tap(updated => this.replaceHouse(updated)));
   }
 
-  // Метод внесения сменного отчета из формы poultry-list
-  submitDailyReport(report: DailyReportInput): void {
-    const eggs = report.dailyEggCount ?? report.eggCount ?? 0;
-    const mortality = report.mortalityCount ?? report.mortality ?? 0;
+  /** Убытие птицы из птичника (например, отправка на убой). Сбор яиц не затрагивается. */
+  removeBirds(houseId: string, birdsCount: number): Observable<PoultryHouse> {
+    return this.http
+      .post<PoultryHouse>(`${this.api.baseUrl}/houses/${houseId}/remove-birds`, { birdsCount })
+      .pipe(tap(updated => this.replaceHouse(updated)));
+  }
 
-    this._houses.update(houses =>
-      houses.map(h => {
-        if (h.id === report.houseId) {
-          const newBirdCount = Math.max(0, h.birdCount - mortality);
-          const newRate =
-            newBirdCount > 0 && h.birdType === 'layer'
-              ? +((eggs / newBirdCount) * 100).toFixed(1)
-              : h.actualLayingRatePercent;
+  /** Суточный отчёт зоотехника. Сервер пересчитывает поголовье и яйценоскость. */
+  submitDailyReport(report: DailyReportInput): Observable<PoultryHouse> {
+    const { houseId, ...body } = report;
+    return this.http
+      .post<PoultryHouse>(`${this.api.baseUrl}/houses/${houseId}/daily-reports`, body)
+      .pipe(tap(updated => this.replaceHouse(updated)));
+  }
 
-          return {
-            ...h,
-            ...report,
-            birdCount: newBirdCount,
-            dailyEggCount: eggs,
-            actualLayingRatePercent: newRate,
-            feedPerBirdGrams: report.feedPerBirdGrams ?? h.feedPerBirdGrams,
-            temperature: report.temperature ?? h.temperature
-          };
-        }
-        return h;
-      })
-    );
+  private replaceHouse(updated: PoultryHouse): void {
+    this._houses.update(houses => houses.map(h => (h.id === updated.id ? updated : h)));
   }
 }
