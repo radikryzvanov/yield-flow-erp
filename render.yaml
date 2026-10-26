@@ -1,0 +1,37 @@
+# Описание сервера для хостинга Render (Blueprint).
+# Render сам прочитает этот файл, когда вы подключите репозиторий: New → Blueprint.
+# Значения с sync: false (пароли, адрес базы) Render спросит у вас в панели —
+# в репозиторий они не попадают.
+services:
+  - type: web
+    name: yield-flow-erp-api
+    runtime: node
+    plan: free
+    # Тот же регион, что и у базы Neon, чтобы запросы к базе были быстрыми.
+    region: frankfurt
+    rootDir: backend
+    # --include=dev: для сборки нужен Nest CLI, а он лежит в devDependencies,
+    # которые при NODE_ENV=production иначе не устанавливаются.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start:prod
+    # Адрес «жив ли сервер»: не обращается к базе, поэтому не расходует часы Neon.
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Секрет для подписи токенов: Render сгенерирует длинное случайное значение сам.
+      - key: JWT_SECRET
+        generateValue: true
+      # Строка подключения из панели Neon (Connection string, прямое подключение).
+      - key: DATABASE_URL
+        sync: false
+      # Первый администратор: создаётся один раз при пустой базе.
+      - key: ADMIN_LOGIN
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Адрес сайта на Vercel, которому разрешено обращаться к API.
+      - key: CORS_ORIGINS
+        sync: false
