@@ -1,5 +1,5 @@
-import { Component, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VeterinaryService } from '../../services/veterinary.service';
 import { VaccineScheduleItem, DrugStockItem, HealthCheckLog } from '../../interfaces/veterinary.interface';
@@ -8,8 +8,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-veterinary-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './veterinary-dashboard.component.html',
   styleUrl: './veterinary-dashboard.component.css'
 })

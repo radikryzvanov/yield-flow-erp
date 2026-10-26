@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../services/finance.service';
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
@@ -9,8 +9,8 @@ import { CostBreakdownItem } from '../../interfaces/finance.interface';
 
 @Component({
   selector: 'app-finance-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './finance-dashboard.component.html',
   styleUrl: './finance-dashboard.component.css'
 })

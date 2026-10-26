@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { LogisticsService } from '../../services/logistics.service';
 import { ShipmentOrder } from '../../interfaces/logistics.interface';
@@ -8,8 +8,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-routes-map',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule],
   templateUrl: './routes-map.component.html',
   styleUrl: './routes-map.component.css'
 })

@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ElevatorService } from '../../services/elevator.service';
 import { ExportService } from '../../../../shared/services/export.service';
@@ -8,8 +8,8 @@ import { GrainIntakeLog } from '../../interfaces/elevator.interface';
 
 @Component({
   selector: 'app-elevator-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './elevator-dashboard.component.html',
   styleUrl: './elevator-dashboard.component.css'
 })

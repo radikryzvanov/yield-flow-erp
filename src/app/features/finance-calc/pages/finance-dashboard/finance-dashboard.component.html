@@ -100,12 +100,13 @@
 
     <!-- Прогресс-бар калькуляции -->
     <div class="breakdown-bar-wrap" style="display: flex; height: 26px; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-      <div
-        *ngFor="let item of costBreakdown()"
-        [style.width.%]="item.sharePercent"
-        [style.background-color]="item.color"
-        [title]="item.category + ': ' + item.sharePercent + '%'">
-      </div>
+      @for (item of costBreakdown(); track item) {
+        <div
+          [style.width.%]="item.sharePercent"
+          [style.background-color]="item.color"
+          [title]="item.category + ': ' + item.sharePercent + '%'">
+        </div>
+      }
     </div>
 
     <div class="table-responsive">
@@ -118,16 +119,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of costBreakdown()">
-            <td>
-              <span class="color-dot" [style.background-color]="item.color" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;"></span>
-              <strong>{{ item.category }}</strong>
-            </td>
-            <td class="font-bold">{{ item.amountRub | number }} ₽</td>
-            <td>
-              <span class="share-badge" style="font-weight: 700; color: #2563eb;">{{ item.sharePercent }}%</span>
-            </td>
-          </tr>
+          @for (item of costBreakdown(); track item) {
+            <tr>
+              <td>
+                <span class="color-dot" [style.background-color]="item.color" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;"></span>
+                <strong>{{ item.category }}</strong>
+              </td>
+              <td class="font-bold">{{ item.amountRub | number }} ₽</td>
+              <td>
+                <span class="share-badge" style="font-weight: 700; color: #2563eb;">{{ item.sharePercent }}%</span>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>

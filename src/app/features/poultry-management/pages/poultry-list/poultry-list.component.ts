@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PoultryManagementService, PoultryHouse } from '../../services/poultry-management.service';
 import { FeedWarehouseService } from '../../../feed-warehouse/services/feed-warehouse.service';
@@ -8,8 +8,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-poultry-list',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './poultry-list.component.html',
   styleUrls: ['./poultry-list.component.css']
 })

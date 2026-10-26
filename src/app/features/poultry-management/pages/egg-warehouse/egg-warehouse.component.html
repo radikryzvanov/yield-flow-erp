@@ -28,9 +28,11 @@
       <div class="form-group flex-2">
         <label>Источник поступления (Птичник / Бригада)</label>
         <select [(ngModel)]="newBatchHouse" class="input-field">
-          <option *ngFor="let house of poultryHouses()" [value]="house.name">
-            {{ house.name }} ({{ house.crossType }})
-          </option>
+          @for (house of poultryHouses(); track house) {
+            <option [value]="house.name">
+              {{ house.name }} ({{ house.crossType }})
+            </option>
+          }
         </select>
       </div>
 
@@ -92,29 +94,36 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let batch of filteredBatches()">
-            <td>{{ batch.date }}</td>
-            <td><strong>{{ batch.houseName }}</strong></td>
-            <td>{{ batch.rawEggCount | number }} шт.</td>
-            <td>
-              <span class="badge" [class.badge-pending]="batch.status === 'pending'" [class.badge-sorted]="batch.status === 'sorted'">
-                {{ batch.status === 'pending' ? 'Ожидает калибровки' : 'Рассортировано' }}
-              </span>
-            </td>
-            <td>
-              <button
-                *ngIf="batch.status === 'pending'"
-                type="button"
-                class="btn-sort"
-                (click)="sortBatch(batch.id)">
-                Рассортировать на машине
-              </button>
-              <span *ngIf="batch.status === 'sorted'" class="text-muted">Оприходовано</span>
-            </td>
-          </tr>
-          <tr *ngIf="filteredBatches().length === 0">
-            <td colspan="5" class="empty-state">Партий по заданным условиям не найдено</td>
-          </tr>
+          @for (batch of filteredBatches(); track batch) {
+            <tr>
+              <td>{{ batch.date }}</td>
+              <td><strong>{{ batch.houseName }}</strong></td>
+              <td>{{ batch.rawEggCount | number }} шт.</td>
+              <td>
+                <span class="badge" [class.badge-pending]="batch.status === 'pending'" [class.badge-sorted]="batch.status === 'sorted'">
+                  {{ batch.status === 'pending' ? 'Ожидает калибровки' : 'Рассортировано' }}
+                </span>
+              </td>
+              <td>
+                @if (batch.status === 'pending') {
+                  <button
+                    type="button"
+                    class="btn-sort"
+                    (click)="sortBatch(batch.id)">
+                    Рассортировать на машине
+                  </button>
+                }
+                @if (batch.status === 'sorted') {
+                  <span class="text-muted">Оприходовано</span>
+                }
+              </td>
+            </tr>
+          }
+          @if (filteredBatches().length === 0) {
+            <tr>
+              <td colspan="5" class="empty-state">Партий по заданным условиям не найдено</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
@@ -124,13 +133,15 @@
   <div class="section-card">
     <h2 class="section-title">Остатки готовой продукции по категориям (ГОСТ)</h2>
     <div class="stock-grid">
-      <div *ngFor="let item of stocks()" class="stock-card">
-        <div class="category-header">
-          <span class="cat-badge">{{ item.category }}</span>
-          <span class="cat-desc">{{ item.description }}</span>
+      @for (item of stocks(); track item) {
+        <div class="stock-card">
+          <div class="category-header">
+            <span class="cat-badge">{{ item.category }}</span>
+            <span class="cat-desc">{{ item.description }}</span>
+          </div>
+          <div class="cat-count">{{ item.count | number }} <span class="unit">шт</span></div>
         </div>
-        <div class="cat-count">{{ item.count | number }} <span class="unit">шт</span></div>
-      </div>
+      }
     </div>
   </div>
 </div>

@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IncubatorService } from '../../services/incubator.service';
 import { IncubatorCabinet, IncubationLog } from '../../interfaces/incubator.interface';
@@ -9,8 +9,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-incubator-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './incubator-dashboard.component.html',
   styleUrl: './incubator-dashboard.component.css'
 })

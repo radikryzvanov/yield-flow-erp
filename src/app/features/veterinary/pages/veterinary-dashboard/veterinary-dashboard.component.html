@@ -58,37 +58,44 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of filteredSchedule()">
-            <td><strong>{{ item.ageDays }} дн.</strong></td>
-            <td>{{ item.targetHouse }}</td>
-            <td>{{ item.disease }}</td>
-            <td>
-              <div>{{ item.vaccineName }}</div>
-              <span class="method-tag">{{ item.method }}</span>
-            </td>
-            <td>{{ item.dosageDoses | number }} доз</td>
-            <td>
-              <span class="badge"
-                    [class.badge-completed]="item.status === 'completed'"
-                    [class.badge-urgent]="item.status === 'urgent'"
-                    [class.badge-pending]="item.status === 'pending'">
-                {{ item.status === 'completed' ? 'Выполнено' : item.status === 'urgent' ? 'Срочно!' : 'В плане' }}
-              </span>
-            </td>
-            <td>
-              <button
-                *ngIf="item.status !== 'completed'"
-                type="button"
-                class="btn-action"
-                (click)="markVaccinated(item.id)">
-                Вакцинировать
-              </button>
-              <span *ngIf="item.status === 'completed'" class="text-muted">Проведено</span>
-            </td>
-          </tr>
-          <tr *ngIf="filteredSchedule().length === 0">
-            <td colspan="7" class="empty-state">Мероприятий по заданному фильтру нет</td>
-          </tr>
+          @for (item of filteredSchedule(); track item) {
+            <tr>
+              <td><strong>{{ item.ageDays }} дн.</strong></td>
+              <td>{{ item.targetHouse }}</td>
+              <td>{{ item.disease }}</td>
+              <td>
+                <div>{{ item.vaccineName }}</div>
+                <span class="method-tag">{{ item.method }}</span>
+              </td>
+              <td>{{ item.dosageDoses | number }} доз</td>
+              <td>
+                <span class="badge"
+                  [class.badge-completed]="item.status === 'completed'"
+                  [class.badge-urgent]="item.status === 'urgent'"
+                  [class.badge-pending]="item.status === 'pending'">
+                  {{ item.status === 'completed' ? 'Выполнено' : item.status === 'urgent' ? 'Срочно!' : 'В плане' }}
+                </span>
+              </td>
+              <td>
+                @if (item.status !== 'completed') {
+                  <button
+                    type="button"
+                    class="btn-action"
+                    (click)="markVaccinated(item.id)">
+                    Вакцинировать
+                  </button>
+                }
+                @if (item.status === 'completed') {
+                  <span class="text-muted">Проведено</span>
+                }
+              </td>
+            </tr>
+          }
+          @if (filteredSchedule().length === 0) {
+            <tr>
+              <td colspan="7" class="empty-state">Мероприятий по заданному фильтру нет</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
@@ -152,7 +159,7 @@
           [(ngModel)]="newLogSigns"
           placeholder="Поведение птицы, состояние оперения, помёта, поедаемость..."
           rows="3"
-          class="input-field"></textarea>
+        class="input-field"></textarea>
       </div>
 
       <button
@@ -168,16 +175,18 @@
     <div class="section-card">
       <h3 class="card-title">Остатки биопрепаратов и вакцин</h3>
       <div class="stock-list">
-        <div *ngFor="let drug of stock()" class="stock-item">
-          <div class="stock-main">
-            <div class="drug-name">{{ drug.name }}</div>
-            <div class="drug-sub">Серия: {{ drug.batchNumber }} | Годен до: {{ drug.expiryDate }}</div>
+        @for (drug of stock(); track drug) {
+          <div class="stock-item">
+            <div class="stock-main">
+              <div class="drug-name">{{ drug.name }}</div>
+              <div class="drug-sub">Серия: {{ drug.batchNumber }} | Годен до: {{ drug.expiryDate }}</div>
+            </div>
+            <div class="stock-doses">
+              <span class="dose-count">{{ drug.stockDoses | number }}</span>
+              <span class="unit">{{ drug.unit }}</span>
+            </div>
           </div>
-          <div class="stock-doses">
-            <span class="dose-count">{{ drug.stockDoses | number }}</span>
-            <span class="unit">{{ drug.unit }}</span>
-          </div>
-        </div>
+        }
       </div>
 
       <!-- Форма прихода препаратов -->
@@ -186,9 +195,11 @@
         <div class="form-group" style="margin-bottom: 10px;">
           <label style="font-size: 12px; margin-bottom: 4px; display: block;">Препарат:</label>
           <select [(ngModel)]="selectedDrugId" class="input-field">
-            <option *ngFor="let drug of stock()" [value]="drug.id">
-              {{ drug.name }} (остаток: {{ drug.stockDoses | number }} {{ drug.unit }})
-            </option>
+            @for (drug of stock(); track drug) {
+              <option [value]="drug.id">
+                {{ drug.name }} (остаток: {{ drug.stockDoses | number }} {{ drug.unit }})
+              </option>
+            }
           </select>
         </div>
 
@@ -236,19 +247,21 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of logs()">
-            <td>{{ log.date }}</td>
-            <td class="font-bold">{{ log.house }}</td>
-            <td>{{ log.flockAgeWeeks }} нед.</td>
-            <td class="text-danger font-bold">{{ log.mortalityCount }} гол.</td>
-            <td>{{ log.clinicalSigns }}</td>
-            <td>
-              <span class="status-indicator" [ngClass]="'status-' + log.quarantineStatus">
-                {{ log.quarantineStatus === 'normal' ? 'Норма' : log.quarantineStatus === 'observation' ? 'Наблюдение' : 'Карантин' }}
-              </span>
-            </td>
-            <td class="text-muted">{{ log.vetDoctor }}</td>
-          </tr>
+          @for (log of logs(); track log) {
+            <tr>
+              <td>{{ log.date }}</td>
+              <td class="font-bold">{{ log.house }}</td>
+              <td>{{ log.flockAgeWeeks }} нед.</td>
+              <td class="text-danger font-bold">{{ log.mortalityCount }} гол.</td>
+              <td>{{ log.clinicalSigns }}</td>
+              <td>
+                <span class="status-indicator" [class]="'status-' + log.quarantineStatus">
+                  {{ log.quarantineStatus === 'normal' ? 'Норма' : log.quarantineStatus === 'observation' ? 'Наблюдение' : 'Карантин' }}
+                </span>
+              </td>
+              <td class="text-muted">{{ log.vetDoctor }}</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>

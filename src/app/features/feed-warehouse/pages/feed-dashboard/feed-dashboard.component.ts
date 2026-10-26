@@ -1,5 +1,5 @@
-﻿import { Component, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+﻿import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedWarehouseService } from '../../services/feed-warehouse.service';
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
@@ -9,8 +9,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-feed-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './feed-dashboard.component.html',
   styleUrl: './feed-dashboard.component.css'
 })

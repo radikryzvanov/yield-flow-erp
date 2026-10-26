@@ -38,36 +38,36 @@
   <!-- Сетка силосов элеватора -->
   <div class="section-title">Силосный корпус (Металлические силосы с конусным дном)</div>
   <div class="silos-grid">
-    <div *ngFor="let s of silos()" class="silo-card" [class.need-drying]="s.status === 'drying_required'">
-      <div class="silo-header">
-        <div>
-          <h3 class="silo-name">{{ s.name }}</h3>
-          <span class="culture-tag">{{ s.culture }}</span>
+    @for (s of silos(); track s) {
+      <div class="silo-card" [class.need-drying]="s.status === 'drying_required'">
+        <div class="silo-header">
+          <div>
+            <h3 class="silo-name">{{ s.name }}</h3>
+            <span class="culture-tag">{{ s.culture }}</span>
+          </div>
+          <span class="status-indicator" [class.status-ok]="s.status === 'normal'" [class.status-alert]="s.status === 'drying_required'">
+            {{ s.status === 'normal' ? 'Хранение' : 'Требует сушки' }}
+          </span>
         </div>
-        <span class="status-indicator" [class.status-ok]="s.status === 'normal'" [class.status-alert]="s.status === 'drying_required'">
-          {{ s.status === 'normal' ? 'Хранение' : 'Требует сушки' }}
-        </span>
+        <div class="progress-wrap">
+          <div class="progress-fill" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
+        </div>
+        <div class="silo-metrics">
+          <div class="metric">
+            <label>Остаток:</label>
+            <strong>{{ s.currentTons | number }} т</strong>
+          </div>
+          <div class="metric">
+            <label>Влажность:</label>
+            <strong [class.text-danger]="s.moisturePercent > 14.5">{{ s.moisturePercent }}%</strong>
+          </div>
+          <div class="metric">
+            <label>Температура:</label>
+            <strong>{{ s.temperatureC }}°C</strong>
+          </div>
+        </div>
       </div>
-
-      <div class="progress-wrap">
-        <div class="progress-fill" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
-      </div>
-
-      <div class="silo-metrics">
-        <div class="metric">
-          <label>Остаток:</label>
-          <strong>{{ s.currentTons | number }} т</strong>
-        </div>
-        <div class="metric">
-          <label>Влажность:</label>
-          <strong [class.text-danger]="s.moisturePercent > 14.5">{{ s.moisturePercent }}%</strong>
-        </div>
-        <div class="metric">
-          <label>Температура:</label>
-          <strong>{{ s.temperatureC }}°C</strong>
-        </div>
-      </div>
-    </div>
+    }
   </div>
 
   <!-- Две колонки: Форма приёмки и Журнал -->
@@ -126,9 +126,11 @@
       <div class="form-group">
         <label>Целевой силос выгрузки</label>
         <select [ngModel]="selectedSiloId()" (ngModelChange)="selectedSiloId.set($event)" class="input-field">
-          <option *ngFor="let s of silos()" [value]="s.id">
-            {{ s.name }} ({{ s.culture }}, свободно {{ (s.capacityTons - s.currentTons) | number }} т)
-          </option>
+          @for (s of silos(); track s) {
+            <option [value]="s.id">
+              {{ s.name }} ({{ s.culture }}, свободно {{ (s.capacityTons - s.currentTons) | number }} т)
+            </option>
+          }
         </select>
       </div>
 
@@ -165,20 +167,24 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let log of intakeLogs()">
-              <td>{{ log.date }}</td>
-              <td class="font-bold">{{ log.truckNumber }}</td>
-              <td>{{ log.culture }}</td>
-              <td class="font-bold text-primary">{{ log.weightTons }} т</td>
-              <td>
-                <span [class.text-danger]="log.moisturePercent > 14.5">
-                  {{ log.moisturePercent }}%
-                </span>
-              </td>
-            </tr>
-            <tr *ngIf="intakeLogs().length === 0">
-              <td colspan="5" class="empty-state">Поступлений за смену не зафиксировано</td>
-            </tr>
+            @for (log of intakeLogs(); track log) {
+              <tr>
+                <td>{{ log.date }}</td>
+                <td class="font-bold">{{ log.truckNumber }}</td>
+                <td>{{ log.culture }}</td>
+                <td class="font-bold text-primary">{{ log.weightTons }} т</td>
+                <td>
+                  <span [class.text-danger]="log.moisturePercent > 14.5">
+                    {{ log.moisturePercent }}%
+                  </span>
+                </td>
+              </tr>
+            }
+            @if (intakeLogs().length === 0) {
+              <tr>
+                <td colspan="5" class="empty-state">Поступлений за смену не зафиксировано</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>

@@ -41,84 +41,86 @@
       </div>
     </div>
 
-    <div *ngIf="pendingDelivery() as d; else noDeliveryBlock" class="dock-body">
-      <div class="dock-info">
-        <h3>{{ d.sourceHouse }}</h3>
-        <div class="dock-sub">{{ d.deliveryTime }}</div>
-        <div class="dock-metrics">
-          <div class="metric-pill">
-            <span>Объём:</span> <strong>{{ d.birdsCount | number }} гол.</strong>
-          </div>
-          <div class="metric-pill">
-            <span>Средний вес:</span> <strong>{{ d.averageWeightKg }} кг</strong>
-          </div>
-          <div class="metric-pill">
-            <span>Брутто партии:</span> <strong>{{ (d.birdsCount * d.averageWeightKg / 1000) | number:'1.1-1' }} т</strong>
+    @if (pendingDelivery(); as d) {
+      <div class="dock-body">
+        <div class="dock-info">
+          <h3>{{ d.sourceHouse }}</h3>
+          <div class="dock-sub">{{ d.deliveryTime }}</div>
+          <div class="dock-metrics">
+            <div class="metric-pill">
+              <span>Объём:</span> <strong>{{ d.birdsCount | number }} гол.</strong>
+            </div>
+            <div class="metric-pill">
+              <span>Средний вес:</span> <strong>{{ d.averageWeightKg }} кг</strong>
+            </div>
+            <div class="metric-pill">
+              <span>Брутто партии:</span> <strong>{{ (d.birdsCount * d.averageWeightKg / 1000) | number:'1.1-1' }} т</strong>
+            </div>
           </div>
         </div>
+        <button type="button" class="btn-launch" [disabled]="isProcessingBatch()" (click)="startBatch(d.id)">
+          {{ isProcessingBatch() ? 'Запуск конвейера...' : '▶ Запустить навеску и убой' }}
+        </button>
       </div>
-
-      <button type="button" class="btn-launch" [disabled]="isProcessingBatch()" (click)="startBatch(d.id)">
-        {{ isProcessingBatch() ? 'Запуск конвейера...' : '▶ Запустить навеску и убой' }}
-      </button>
-    </div>
-
-    <ng-template #noDeliveryBlock>
+    } @else {
       <div class="dock-empty">
         Все доставленные партии обработаны. Нажмите «+ Принять партию птицы» для регистрации прибывшего транспорта.
       </div>
-    </ng-template>
+    }
+
   </div>
 
   <!-- Статус технологических линий -->
   <div class="section-title">Состояние технологических линий (Marel / Meyn)</div>
   <div class="lines-grid">
-    <div *ngFor="let l of lines()" class="line-card">
-      <div class="line-header">
-        <div>
-          <h4>{{ l.name }}</h4>
-          <span class="batch-indicator">{{ l.currentBatch }}</span>
+    @for (l of lines(); track l) {
+      <div class="line-card">
+        <div class="line-header">
+          <div>
+            <h4>{{ l.name }}</h4>
+            <span class="batch-indicator">{{ l.currentBatch }}</span>
+          </div>
+          <span class="badge"
+            [class.badge-running]="l.status === 'running'"
+            [class.badge-paused]="l.status === 'paused'"
+            [class.badge-clean]="l.status === 'sanitization'">
+            {{ l.status === 'running' ? 'В работе' : l.status === 'paused' ? 'Остановлен' : 'Санобработка' }}
+          </span>
         </div>
-        <span class="badge"
-              [class.badge-running]="l.status === 'running'"
-              [class.badge-paused]="l.status === 'paused'"
-              [class.badge-clean]="l.status === 'sanitization'">
-          {{ l.status === 'running' ? 'В работе' : l.status === 'paused' ? 'Остановлен' : 'Санобработка' }}
-        </span>
-      </div>
-
-      <div class="line-stats">
-        <div class="stat-col">
-          <label>Скорость линии</label>
-          <strong>{{ l.speedBirdsPerHour }} гол/час</strong>
+        <div class="line-stats">
+          <div class="stat-col">
+            <label>Скорость линии</label>
+            <strong>{{ l.speedBirdsPerHour }} гол/час</strong>
+          </div>
+          <div class="stat-col">
+            <label>Обработано за смену</label>
+            <strong>{{ l.birdsProcessedToday | number }} из {{ l.targetBirdsToday | number }}</strong>
+          </div>
         </div>
-        <div class="stat-col">
-          <label>Обработано за смену</label>
-          <strong>{{ l.birdsProcessedToday | number }} из {{ l.targetBirdsToday | number }}</strong>
+        <div class="line-actions">
+          <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'running')">Пуск</button>
+          <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'paused')">Пауза</button>
+          <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'sanitization')">Мойка</button>
         </div>
       </div>
-
-      <div class="line-actions">
-        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'running')">Пуск</button>
-        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'paused')">Пауза</button>
-        <button type="button" class="btn-ctrl" (click)="setLineState(l.id, 'sanitization')">Мойка</button>
-      </div>
-    </div>
+    }
   </div>
 
   <!-- Склад мясной продукции -->
   <div class="section-card">
     <h3 class="section-title">Склад готовой продукции (Фракции разделки)</h3>
     <div class="products-grid">
-      <div *ngFor="let p of products()" class="product-card">
-        <div class="prod-top">
-          <span class="prod-dest">{{ p.destination }}</span>
-          <span class="prod-share">{{ p.sharePercent }}% выхода</span>
+      @for (p of products(); track p) {
+        <div class="product-card">
+          <div class="prod-top">
+            <span class="prod-dest">{{ p.destination }}</span>
+            <span class="prod-share">{{ p.sharePercent }}% выхода</span>
+          </div>
+          <h4 class="prod-title">{{ p.category }}</h4>
+          <div class="prod-weight">{{ p.yieldKg | number }} <span class="unit">кг</span></div>
+          <div class="prod-price">{{ p.pricePerKgRub }} ₽/кг</div>
         </div>
-        <h4 class="prod-title">{{ p.category }}</h4>
-        <div class="prod-weight">{{ p.yieldKg | number }} <span class="unit">кг</span></div>
-        <div class="prod-price">{{ p.pricePerKgRub }} ₽/кг</div>
-      </div>
+      }
     </div>
   </div>
 
@@ -148,55 +150,59 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of logs()">
-            <td>{{ log.date }}</td>
-            <td class="font-bold">{{ log.sourceHouse }}</td>
-            <td>{{ log.birdsCount | number }}</td>
-            <td>{{ log.totalLiveWeightTons }} т</td>
-            <td class="font-bold text-primary">{{ log.totalMeatYieldTons }} т</td>
-            <td>{{ log.firstGradePercent }}%</td>
-            <td>
-              <span class="badge badge-passed">Годно к реализации</span>
-            </td>
-          </tr>
+          @for (log of logs(); track log) {
+            <tr>
+              <td>{{ log.date }}</td>
+              <td class="font-bold">{{ log.sourceHouse }}</td>
+              <td>{{ log.birdsCount | number }}</td>
+              <td>{{ log.totalLiveWeightTons }} т</td>
+              <td class="font-bold text-primary">{{ log.totalMeatYieldTons }} т</td>
+              <td>{{ log.firstGradePercent }}%</td>
+              <td>
+                <span class="badge badge-passed">Годно к реализации</span>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
   </div>
 
   <!-- Модальное окно приёмки партии птицы -->
-  <div class="modal-backdrop" *ngIf="isDeliveryModalOpen()">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <h2>Приёмка партии птицы на убой</h2>
-        <button type="button" class="btn-close" (click)="closeDeliveryModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="houseSelect">Птичник-источник (комплекс):</label>
-          <select id="houseSelect" [(ngModel)]="selectedHouseId" (change)="onHouseSelectChange()" class="form-control">
-            <option *ngFor="let h of poultryHouses()" [value]="h.id">
-              {{ h.name }} (Остаток: {{ h.birdCount | number }} гол.)
-            </option>
-          </select>
+  @if (isDeliveryModalOpen()) {
+    <div class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>Приёмка партии птицы на убой</h2>
+          <button type="button" class="btn-close" (click)="closeDeliveryModal()">✕</button>
         </div>
-
-        <div class="form-group">
-          <label for="birdsCount">Поголовье к навеске (гол):</label>
-          <input id="birdsCount" type="number" [(ngModel)]="birdsCountInput" min="100" class="form-control" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="houseSelect">Птичник-источник (комплекс):</label>
+            <select id="houseSelect" [(ngModel)]="selectedHouseId" (change)="onHouseSelectChange()" class="form-control">
+              @for (h of poultryHouses(); track h) {
+                <option [value]="h.id">
+                  {{ h.name }} (Остаток: {{ h.birdCount | number }} гол.)
+                </option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="birdsCount">Поголовье к навеске (гол):</label>
+            <input id="birdsCount" type="number" [(ngModel)]="birdsCountInput" min="100" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="avgWeight">Средний живой вес (кг):</label>
+            <input id="avgWeight" type="number" step="0.05" [(ngModel)]="averageWeightInput" min="0.5" class="form-control" />
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="avgWeight">Средний живой вес (кг):</label>
-          <input id="avgWeight" type="number" step="0.05" [(ngModel)]="averageWeightInput" min="0.5" class="form-control" />
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeDeliveryModal()">Отмена</button>
+          <button type="button" class="btn-save" [disabled]="isDelivering()" (click)="submitDelivery()">
+            {{ isDelivering() ? 'Регистрация...' : 'Принять в зону навески' }}
+          </button>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" (click)="closeDeliveryModal()">Отмена</button>
-        <button type="button" class="btn-save" [disabled]="isDelivering()" (click)="submitDelivery()">
-          {{ isDelivering() ? 'Регистрация...' : 'Принять в зону навески' }}
-        </button>
       </div>
     </div>
-  </div>
+  }
 </div>

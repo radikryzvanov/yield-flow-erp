@@ -30,26 +30,25 @@
   <!-- Карточки силосов -->
   <div class="section-title">Силосы готовой продукции</div>
   <div class="silos-grid">
-    <div *ngFor="let s of silos()" class="silo-card">
-      <div class="silo-header">
-        <div>
-          <h3 class="silo-title">{{ s.name }}</h3>
-          <span class="recipe-badge">{{ s.recipeCode }}</span>
+    @for (s of silos(); track s) {
+      <div class="silo-card">
+        <div class="silo-header">
+          <div>
+            <h3 class="silo-title">{{ s.name }}</h3>
+            <span class="recipe-badge">{{ s.recipeCode }}</span>
+          </div>
+          <span class="price-tag">{{ s.costPerTonRub | number }} ₽/т</span>
         </div>
-        <span class="price-tag">{{ s.costPerTonRub | number }} ₽/т</span>
+        <p class="target-bird">{{ s.targetBird }}</p>
+        <div class="progress-wrap">
+          <div class="progress-bar" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
+        </div>
+        <div class="silo-metric-row">
+          <span>Остаток:</span>
+          <strong>{{ s.currentTons }} т из {{ s.capacityTons }} т</strong>
+        </div>
       </div>
-
-      <p class="target-bird">{{ s.targetBird }}</p>
-
-      <div class="progress-wrap">
-        <div class="progress-bar" [style.width.%]="(s.currentTons / s.capacityTons) * 100"></div>
-      </div>
-
-      <div class="silo-metric-row">
-        <span>Остаток:</span>
-        <strong>{{ s.currentTons }} т из {{ s.capacityTons }} т</strong>
-      </div>
-    </div>
+    }
   </div>
 
   <!-- Формы операций: Пополнение и Списание -->
@@ -60,9 +59,11 @@
       <div class="form-group">
         <label>Целевой силос</label>
         <select [(ngModel)]="replenishSiloId" class="input-field">
-          <option *ngFor="let s of silos()" [value]="s.id">
-            {{ s.name }} — {{ s.recipeCode }} (свободно: {{ (s.capacityTons - s.currentTons) | number:'1.1-1' }} т)
-          </option>
+          @for (s of silos(); track s) {
+            <option [value]="s.id">
+              {{ s.name }} — {{ s.recipeCode }} (свободно: {{ (s.capacityTons - s.currentTons) | number:'1.1-1' }} т)
+            </option>
+          }
         </select>
       </div>
 
@@ -92,9 +93,11 @@
       <div class="form-group">
         <label>Птичник-получатель</label>
         <select [(ngModel)]="selectedHouseId" (change)="onHouseChange()" class="input-field">
-          <option *ngFor="let h of poultryHouses()" [value]="h.id">
-            {{ h.name }} ({{ h.crossType }})
-          </option>
+          @for (h of poultryHouses(); track h) {
+            <option [value]="h.id">
+              {{ h.name }} ({{ h.crossType }})
+            </option>
+          }
         </select>
       </div>
 
@@ -167,15 +170,19 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of filteredLogs()">
-            <td>{{ log.date }}</td>
-            <td class="font-bold">{{ log.houseName }}</td>
-            <td><span class="recipe-badge">{{ log.recipeCode }}</span></td>
-            <td><strong>{{ log.tonsDeducted }} т</strong></td>
-          </tr>
-          <tr *ngIf="filteredLogs().length === 0">
-            <td colspan="4" class="empty-state">Записей расхода не найдено</td>
-          </tr>
+          @for (log of filteredLogs(); track log) {
+            <tr>
+              <td>{{ log.date }}</td>
+              <td class="font-bold">{{ log.houseName }}</td>
+              <td><span class="recipe-badge">{{ log.recipeCode }}</span></td>
+              <td><strong>{{ log.tonsDeducted }} т</strong></td>
+            </tr>
+          }
+          @if (filteredLogs().length === 0) {
+            <tr>
+              <td colspan="4" class="empty-state">Записей расхода не найдено</td>
+            </tr>
+          }
         </tbody>
       </table>
     </div>

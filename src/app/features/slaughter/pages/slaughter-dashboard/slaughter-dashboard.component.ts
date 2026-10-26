@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SlaughterService } from '../../services/slaughter.service';
 import { PoultryManagementService } from '../../../poultry-management/services/poultry-management.service';
@@ -9,8 +9,8 @@ import { SlaughterBatchLog } from '../../interfaces/slaughter.interface';
 
 @Component({
   selector: 'app-slaughter-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './slaughter-dashboard.component.html',
   styleUrl: './slaughter-dashboard.component.css'
 })
