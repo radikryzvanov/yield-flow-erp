@@ -1,59 +1,58 @@
-# YieldFlowErp
+# YieldFlow ERP — учёт птицефабрики на Angular 22
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Демо-проект: система управления птицеводческим комплексом в одном окне. Это учебный макет на вымышленных данных, а не готовый продукт. Сервера нет, всё считается и хранится в браузере.
 
-## Development server
+Живая версия: https://yield-flow-erp.vercel.app
 
-To start a local development server, run:
+## Что умеет
 
-```bash
-ng serve
+Девять разделов, у каждого свой экран:
+
+- **Птичники и поголовье.** Корпуса, порода и возраст стада, сбор яйца, яйценоскость, корм, микроклимат. Поиск и фильтр по типу стада.
+- **Склад готового яйца.** Остатки по категориям (СВ, С0, С1, С2, брак).
+- **Промышленный инкубаторий.**
+- **Элеватор и приёмка зерна.** Силосы, влажность, журнал приёмки машин.
+- **Склад кормов и силосы.**
+- **Убойный цех.**
+- **Логистика и транспорт.** Карта маршрутов.
+- **Ветблок и аптека.**
+- **Финансовый директорат.** Прейскурант цен на яйцо, стоимость корма и накладные расходы. Выручка, затраты и прибыль за сутки считаются автоматически.
+
+Таблицы выгружаются в файл для Excel (CSV). Введённые цены и настройки сохраняются в браузере и не пропадают после перезагрузки.
+
+## Технологии
+
+- Angular 22, standalone-компоненты, без NgModule
+- Signals: `signal`, `computed`, собственный `persistedSignal` для сохранения в `localStorage`
+- Ленивая загрузка каждого раздела через `loadComponent`
+- Внедрение зависимостей через `inject()`
+- TypeScript, деплой на Vercel
+
+## Устройство проекта
+
+```
+src/app/
+  core/       общие интерфейсы и настройки
+  shared/     ExportService (CSV), ToastService, persistedSignal
+  features/   разделы: poultry-management, elevator, incubator,
+              feed-warehouse, slaughter, logistics, veterinary, finance-calc
+    <раздел>/ services/ (состояние на signals), interfaces/, pages/
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+В каждом разделе состояние лежит в сервисе, а страница только показывает его и вызывает методы. Финансовый раздел берёт данные из сервисов птичников, склада яйца и кормов, поэтому цифры согласованы между собой.
 
-## Code scaffolding
+## Запуск
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Нужен Node.js 22.22.3 или новее.
 
 ```bash
-ng generate --help
+npm install
+npm start        # http://localhost:4200
+npm run build    # сборка в dist/yield-flow-erp
 ```
 
-## Building
+## Что планируется
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Бэкенд и база данных вместо хранения в браузере
+- Тесты сервисов расчёта
+- Вход по ролям (зоотехник, бухгалтер, директор)
